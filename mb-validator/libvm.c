@@ -217,8 +217,11 @@ inline char lookup_point(const struct state *s, long x, long y) {
     DEBUG_ASSERT(s);
     long w, h, i;
     w = x - 1;
+    DEBUG_ASSERT(w >= 0 && w < s->world_w);
     h = s->world_h - y;
+    DEBUG_ASSERT(h >= 0 && h < s->world_h);
     i = h * (s->world_w + 1) + w;
+    DEBUG_ASSERT(i < s->world_size);
     return s->world[i];
 }
 
@@ -227,19 +230,26 @@ static void unsafe_make_one_move(struct state *s, char move) {
     DEBUG_ASSERT(s);
     DEBUG_ASSERT(s->condition == C_NONE);
     DEBUG_ASSERT(move == M_LEFT || move == M_RIGHT || move == M_UP || move == M_DOWN || move == M_WAIT || move == M_ABORT);
-    if (move == M_LEFT) {
-        ; // TODO
-    } else if (move == M_RIGHT) {
-        ; // TODO
-    } else if (move == M_UP) {
-        ; // TODO
-    } else if (move == M_DOWN) {
-        ; // TODO
-    } else if (move == M_WAIT) {
-        ; // TODO
-    } else {
+    if (move == M_LEFT || move == M_RIGHT || move == M_UP || move == M_DOWN) {
+        long x, y;
+        char object;
+        if (move == M_LEFT) {
+            x = s->robot_x - 1;
+            y = s->robot_y;
+        } else if (move == M_RIGHT) {
+            x = s->robot_x + 1;
+            y = s->robot_y;
+        } else if (move == M_UP) {
+            x = s->robot_x;
+            y = s->robot_y + 1;
+        } else if (move == M_DOWN) {
+            x = s->robot_x;
+            y = s->robot_y - 1;
+        }
+        object = lookup_point(s, x, y);
+        // TODO
+    } else if (move == M_ABORT)
         s->condition = C_ABORT;
-    }
     s->move_count++;
 }
 
