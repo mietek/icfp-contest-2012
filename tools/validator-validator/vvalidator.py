@@ -2,10 +2,11 @@
 import subprocess, sys, os
 from random import choice
 
-validators = set(['validate.py', 'lambdamine'])
+validators = set(['validate.py', 'lambdamine', 'validator'])
 
 authors = {'validate.py':'pobara',
-           'lambdamine':'divide'}
+           'lambdamine':'divide',
+           'validator':'mietek'}
 
 moves = ['L', 'R', 'U', 'D', 'W']
 
