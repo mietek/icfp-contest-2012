@@ -270,7 +270,7 @@ inline static void put(struct state *s, long x, long y, char object) {
 
 inline static void move_robot(struct state *s, long x, long y) {
     DEBUG_ASSERT(s);
-    DEBUG_ASSERT(get(s, x, y) == O_EMPTY || get(s, x, y) == O_EARTH || get(s, x, y) == O_LAMBDA || get(s, x, y) == O_OPEN_LIFT);
+    DEBUG_ASSERT(get(s, x, y) == O_EMPTY || get(s, x, y) == O_EARTH || get(s, x, y) == O_LAMBDA || get(s, x, y) == O_OPEN_LIFT || (get(s, x, y) == O_ROCK && get(s, x + x - s->robot_x, y) == O_EMPTY));
     put(s, s->robot_x, s->robot_y, O_EMPTY);
     s->robot_x = x;
     s->robot_y = y;
