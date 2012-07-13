@@ -39,6 +39,19 @@ getIntPair action s =
         return (fromEnum a, fromEnum b)
 
 
+data Object = ORobot | OWall | ORock | OLambda | OClosedLift | OOpenLift | OEarth | OEmpty deriving (Eq, Ord, Show)
+
+toObject :: Char -> Object
+toObject 'R'  = ORobot
+toObject '#'  = OWall
+toObject '*'  = ORock
+toObject '\\' = OLambda
+toObject 'L'  = OClosedLift
+toObject 'O'  = OOpenLift
+toObject '.'  = OEarth
+toObject ' '  = OEmpty
+
+
 data Move = MLeft | MRight | MUp | MDown | MWait | MAbort deriving (Eq, Ord, Show)
 
 fromMove :: Move -> Char
@@ -80,6 +93,9 @@ foreign import ccall unsafe "libvm.h get_move_count"
 
 foreign import ccall unsafe "libvm.h get_condition"
   cGetCondition :: CStatePtr -> CChar
+
+foreign import ccall unsafe "libvm.h lookup_point"
+  cLookupPoint :: CStatePtr -> CLong -> CLong -> CChar
 
 foreign import ccall unsafe "libvm.h make_one_move"
   cMakeOneMove :: CStatePtr -> CChar -> IO CStatePtr
@@ -124,6 +140,11 @@ getCondition :: State -> Condition
 getCondition s =
   unwrapState s $ \sp ->
     return (toEnum (fromEnum (castCCharToChar (cGetCondition sp))))
+
+lookupPoint :: State -> Point -> Object
+lookupPoint s (x, y) =
+  unwrapState s $ \sp ->
+    return (toObject (castCCharToChar (cLookupPoint sp (toEnum x) (toEnum y))))
 
 makeOneMove :: State -> Move -> State
 makeOneMove s0 move =

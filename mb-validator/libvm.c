@@ -213,6 +213,16 @@ char get_condition(const struct state *s) {
 }
 
 
+inline char lookup_point(const struct state *s, long x, long y) {
+    DEBUG_ASSERT(s);
+    long w, h, i;
+    w = x - 1;
+    h = s->world_h - y;
+    i = h * (s->world_w + 1) + w;
+    return s->world[i];
+}
+
+
 static void unsafe_make_one_move(struct state *s, char move) {
     DEBUG_ASSERT(s);
     DEBUG_ASSERT(s->condition == C_NONE);
