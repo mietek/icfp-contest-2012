@@ -1,6 +1,6 @@
 all: lambdamine
 
-CXXFLAGS+=-std=gnu++0x
+CXXFLAGS+=-std=gnu++0x -W -Wall
 
 OBJS = main.o map.o robot.o
 
