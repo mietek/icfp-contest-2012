@@ -1,5 +1,7 @@
 #include "map.h"
 
+#include <istream>
+
 using std::string;
 
 std::istream &Map::operator<<(std::istream &stream) 
@@ -8,14 +10,35 @@ std::istream &Map::operator<<(std::istream &stream)
   
   int y = 0;
   
+  bool mapRead = false;
+  
   while (!stream.eof()) {
-    getline(stream, tmp);
-    data.push_back(tmp);
-    int x = analyze(tmp);
-    if (x >= 0)
-      _robotPosition = Position(x, y);
+    if (!mapRead) {
+      getline(stream, tmp);
+      if (tmp.size() == 0) {
+        mapRead = true;
+        continue;
+      }
     
-    y++;
+      data.push_back(tmp);
+      int x = analyze(tmp);
+      if (x >= 0)
+        _robotPosition = Position(x, y);
+      
+      y++;
+    } else { // metadata
+      std::string tag;
+      int value;
+      stream >> tag;
+      stream >> value;
+      
+      if (tag == "Water")
+        _water = value;
+      else if (tag == "Flooding")
+        _flooding = value;
+      else if (tag == "Waterproof")
+        _waterproof = value;
+    }
   }
   
   return stream;
@@ -23,8 +46,15 @@ std::istream &Map::operator<<(std::istream &stream)
 
 std::ostream &operator<<(std::ostream &stream, const Map &map)
 {
-  for (auto it = map.data.begin(); it != map.data.end(); ++it)
-    stream << *it << std::endl;
+  unsigned int water = map.data.size() - map._water;
+  
+  for (unsigned int i = 0; i < map.data.size(); ++i) {
+    stream << map.data[i];
+    if (i == water)
+      stream << "~";
+    stream << std::endl;
+  }
+  
   return stream;
 }
 
@@ -59,13 +89,43 @@ void Map::update()
         newMap.tile(pos) = OpenLift;
     }
   }
+
+  flood();
+  if (robotUnderwater())
+    robotTakesWater();
+  else
+    _drank = 0;
   
   data = newMap;
 }
 
+void Map::flood()
+{
+  if (_water == data.size())
+    return;
+  
+  _ticks++;
+  if (_ticks == _flooding) {
+    _ticks = 0;
+    _water++;
+  }
+}
+
+bool Map::robotUnderwater() const
+{
+  return (unsigned int) _robotPosition.y >= data.size() - _water;
+}
+
+void Map::robotTakesWater()
+{
+  _drank++;
+  if (_drank > _waterproof)
+    _drowned = true;
+}
+
 bool Map::done() const
 {
-  return _won || _robotHit || _aborted;
+  return _won || _robotHit || _drowned || _aborted;
 }
 
 std::string Map::condition() const
@@ -74,6 +134,8 @@ std::string Map::condition() const
     return "aborted";
   if (_robotHit)
     return "robot hit";
+  if (_drowned)
+    return "drowned";
   if (_won)
     return "won";
   return std::string();
@@ -137,7 +199,7 @@ int Map::score() const
   int score = _collected * 25 - _moves;
   if (_won)
     return score + _collected * 50;
-  if (_robotHit)
+  if (_robotHit || _drowned)
     return score;
   if (_aborted)
     return score + _collected * 25;

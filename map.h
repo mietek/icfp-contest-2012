@@ -7,7 +7,11 @@
 
 class Map {
 public:
-  Map() : _lambdas(0), _collected(0), _moves(0), _robotHit(false), _aborted(false), _won(false) {}
+  Map() : 
+    _lambdas(0), _collected(0), _moves(0), 
+    _water(0), _flooding(0), _waterproof(10),
+    _drank(0), _ticks(0),
+    _robotHit(false), _aborted(false), _won(false), _drowned(false) {}
   
   struct Position {
     int x, y;
@@ -70,12 +74,16 @@ private:
   MapData data;
   
   int analyze(const std::string &line);
+  void flood();
+  bool robotUnderwater() const;
+  void robotTakesWater();
   
   friend std::ostream &operator<<(std::ostream &stream, const Map &map);
   
   Position _robotPosition;
   int _lambdas, _collected, _moves;
-  bool _robotHit, _aborted, _won;
+  unsigned int _water, _flooding, _waterproof, _drank, _ticks;
+  bool _robotHit, _aborted, _won, _drowned;
 };
 
 std::ostream &operator<<(std::ostream &stream, const Map &map);
