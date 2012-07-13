@@ -44,7 +44,20 @@ getIntPair action s =
         return (fromEnum a, fromEnum b)
 
 
-data Object = ORobot | OWall | ORock | OLambda | OClosedLift | OOpenLift | OEarth | OEmpty deriving (Eq, Ord, Show)
+data Object = ORobot | OWall | ORock | OLambda | OClosedLift | OOpenLift | OEarth | OEmpty deriving (Eq, Ord)
+
+instance Show Object where
+  show object = [fromObject object]
+
+fromObject :: Object -> Char
+fromObject ORobot      = 'R'
+fromObject OWall       = '#'
+fromObject ORock       = '*'
+fromObject OLambda     = '\\'
+fromObject OClosedLift = 'L'
+fromObject OOpenLift   = 'O'
+fromObject OEarth      = '.'
+fromObject OEmpty      = ' '
 
 toObject :: Char -> Object
 toObject 'R'  = ORobot
@@ -57,7 +70,10 @@ toObject '.'  = OEarth
 toObject ' '  = OEmpty
 
 
-data Move = MLeft | MRight | MUp | MDown | MWait | MAbort deriving (Eq, Ord, Show)
+data Move = MLeft | MRight | MUp | MDown | MWait | MAbort deriving (Eq, Ord)
+
+instance Show Move where
+  show move = [fromMove move]
 
 fromMove :: Move -> Char
 fromMove MLeft  = 'L'
@@ -109,7 +125,7 @@ foreign import ccall unsafe "libvm.h get_condition"
   cGetCondition :: CStatePtr -> CChar
 
 foreign import ccall unsafe "libvm.h get"
-  cGetObjectAtPoint :: CStatePtr -> CLong -> CLong -> CChar
+  cGet :: CStatePtr -> CLong -> CLong -> CChar
 
 foreign import ccall unsafe "libvm.h make_one_move"
   cMakeOneMove :: CStatePtr -> CChar -> IO CStatePtr
@@ -162,10 +178,10 @@ getCondition s =
   unwrapState s $ \sp ->
     return (toEnum (fromEnum (castCCharToChar (cGetCondition sp))))
 
-getObjectAtPoint :: State -> Point -> Object
-getObjectAtPoint s (x, y) =
+get :: State -> Point -> Object
+get s (x, y) =
   unwrapState s $ \sp ->
-    return (toObject (castCCharToChar (cGetObjectAtPoint sp (toEnum x) (toEnum y))))
+    return (toObject (castCCharToChar (cGet sp (toEnum x) (toEnum y))))
 
 makeOneMove :: State -> Char -> State
 makeOneMove s0 move =

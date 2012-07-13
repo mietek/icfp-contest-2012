@@ -412,12 +412,12 @@ struct state *make_moves(const struct state *s0, const char *moves) {
         while (*moves) {
             t = copy(s);
             execute_move(t, *moves);
-            moves++;
             s = copy(t);
             update_world(s, t);
             free(t);
             if (s->condition != C_NONE)
                 break;
+            moves++;
         }
     }
     return s;
