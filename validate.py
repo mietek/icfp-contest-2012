@@ -32,7 +32,6 @@ reachable_tiles = " .\\O"
 score = 0
 final_score = 0
 
-class Crushed(Exception): pass
 class Escaped(Exception): pass
 class Aborted(Exception): pass
 
@@ -119,14 +118,20 @@ def move_down():
         pos += width
         cmap[pos] = 'R'
 
-def is_robot_crushed(rock_pos):
-    if pos == rock_pos - width:
-        raise Crushed
 
-def update_state():
+
+from copy import *
+
+def update_state(cmap_new):
+
+    crushed = False
+
+    def is_robot_crushed(rock_pos):
+        global pos
+        if pos == rock_pos - width:
+            crushed = True
 
     if lambdas_to_lift == 0:
-        # assuming one lift for now
         try:
             pos = cmap.index('L')
             cmap[pos] = 'O'
@@ -134,6 +139,7 @@ def update_state():
 
     for i in reversed(range(height)):
         for j in range(1,width-1):
+
             p    = i*width+j
             p_up = p-width
             p_r  = p+1
@@ -141,40 +147,32 @@ def update_state():
             p_l  = p-1
             p_ul = p_up-1
 
-            tile    = cmap[p]
-            tile_up = cmap[p_up]
-            tile_r  = cmap[p_r]
-            tile_ur = cmap[p_ur]
-            tile_l  = cmap[p_l]
-            tile_ul = cmap[p_ul]
-
             # rock falling down
 
-            if tile == ' ' and tile_up == '*' :
-               tile, tile_up = tile_up, tile
+            if cmap[p_up]     == '*' and \
+               cmap[p]        == ' ' :
+               cmap_new[p_up] =  ' '
+               cmap_new[p]    =  '*'
                is_robot_crushed(p)
 
             # rock falling right
 
-            elif tile_up == '*'   and tile_ur == ' ' and \
-                 tile    in '*\\' and tile_r  == ' ' :
-               tile_up, tile_r = tile_r, tile_up
-               is_robot_crushed(p_r)
+            elif cmap[p_up] == '*'   and cmap[p_ur] == ' ' and \
+                 cmap[p]    in '*\\' and cmap[p_r]  == ' ' :
+                 cmap_new[p_up] = ' '
+                 cmap_new[p_r]  = '*'
+                 is_robot_crushed(p_r)
 
             # rock falling left
 
-            elif tile_ul == ' ' and tile_up == '*' and \
-                 tile_l  == ' ' and tile    == '*' and \
-                 (tile_ur != ' ' or tile_r != ' ') :
-               tile_up, tile_l = tile_l, tile_up
-               is_robot_crushed(p_l)
+            elif cmap[p_ul] == ' ' and cmap[p_up] == '*' and \
+                 cmap[p_l]  == ' ' and cmap[p]    == '*' and \
+                 (cmap[p_ur] != ' ' or cmap[p_r] != ' ') :
+                 cmap_new[p_up] = ' '
+                 cmap_new[p_l]  = '*'
+                 is_robot_crushed(p_r)
 
-            cmap[p]    = tile
-            cmap[p_up] = tile_up
-            cmap[p_r]  = tile_r
-            cmap[p_ur] = tile_ur
-            cmap[p_l]  = tile_l
-            cmap[p_ul] = tile_ul
+    return cmap_new, crushed
 
 def abort():
     raise Aborted
@@ -193,16 +191,18 @@ final_score = 0
 moves = raw_input('')
 
 try:
+    crushed = False
     for move in moves:
         score -= 1
         move_f[move]()
-        update_state()
+        cmap, crushed = update_state(copy(cmap))
+        if crushed: break
         #print_score()
         #pprint()
-    final_score = score + (lambdas_initial - lambdas_to_lift) * 25
-except Crushed:
-    #print "crushed"
-    final_score = score + (lambdas_initial - lambdas_to_lift) * 25
+    if crushed:
+        final_score = score + (lambdas_initial - lambdas_to_lift) * 25
+    else:
+        final_score = score + (lambdas_initial - lambdas_to_lift) * 50
 except Escaped:
     #print "escaped"
     final_score = score + lambdas_initial * 75
