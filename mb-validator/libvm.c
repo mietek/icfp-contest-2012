@@ -265,9 +265,12 @@ inline static void collect_lambda(struct state *s) {
     DEBUG_ASSERT(s);
     DEBUG_ASSERT(s->lambda_count > 0);
     DEBUG_ASSERT(get_object_at_point(s, s->lift_x, s->lift_y) == O_CLOSED_LIFT);
-    if (--s->lambda_count)
-        set_object_at_point(s, s->lift_x, s->lift_y, O_OPEN_LIFT);
+    --s->lambda_count;
     DEBUG_LOG("lambda collected\n");
+    if (!s->lambda_count) {
+        set_object_at_point(s, s->lift_x, s->lift_y, O_OPEN_LIFT);
+        DEBUG_LOG("lift opened\n");
+    }
 }
 
 
