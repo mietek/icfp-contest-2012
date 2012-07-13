@@ -155,15 +155,21 @@ getObjectAtPoint s (x, y) =
   unwrapState s $ \sp ->
     return (toObject (castCCharToChar (cGetObjectAtPoint sp (toEnum x) (toEnum y))))
 
-makeOneMove :: State -> Move -> State
+makeOneMove :: State -> Char -> State
 makeOneMove s0 move =
   unwrapState s0 $ \sp0 -> do
-    sp <- cMakeOneMove sp0 (castCharToCChar (fromMove move))
+    sp <- cMakeOneMove sp0 (castCharToCChar move)
     wrapState sp
 
-makeMoves :: State -> [Move] -> State
+makeOneMove' :: State -> Move -> State
+makeOneMove' s0 move = makeOneMove s0 (fromMove move)
+
+makeMoves :: State -> String -> State
 makeMoves s0 moves =
   unwrapState s0 $ \sp0 -> do
-    withCString (map fromMove moves) $ \ms -> do
+    withCString moves $ \ms -> do
       sp <- cMakeMoves sp0 ms
       wrapState sp
+
+makeMoves' :: State -> [Move] -> State
+makeMoves' s0 moves = makeMoves s0 (map fromMove moves)
