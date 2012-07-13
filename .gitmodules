@@ -1,3 +1,0 @@
-[submodule "tools/cpp-validator"]
-	path = tools/cpp-validator
-	url = git@github.com:leastfixed/icfp2012.git
