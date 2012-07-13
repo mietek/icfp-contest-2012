@@ -2,7 +2,7 @@ module Types where
 
 import Prelude hiding (Either(..))
 
-data Object = Robot | Lambda | Rock | Wall | CLift | OLift | Earth | Empty
+data Object = Robot | Lambda | Rock | Wall | CLift | OLift | Earth | Empty | RL
   deriving (Enum,Eq)
 
 instance Show Object where
@@ -36,6 +36,9 @@ instance Read Object where
 data Move = Left | Right | Down | Up |  Wait | Abort
   deriving (Enum,Eq)
 
+data Effect idx = None | Pick idx | Win | RockL idx | RockR idx | Eat
+  deriving (Eq,Show)
+
 instance Show Move where
     show Left  = "L"
     show Right = "R"
@@ -56,10 +59,11 @@ instance Read Move where
 
 type Position = (Int,Int)
 
-evalMoves :: Move -> Position -> Position
-evalMoves Left  (x,y) = (x - 1 ,y)
-evalMoves Right (x,y) = (x + 1 ,y)
-evalMoves Up (x,y)    = (x ,y + 1)
-evalMoves Down (x,y)  = (x ,y - 1 )
+
+evalMoves :: Enum idx => Move -> (idx,idx) -> (idx,idx)
+evalMoves Left  (x,y) = (pred x  ,y)
+evalMoves Right (x,y) = (succ x  ,y)
+evalMoves Up (x,y)    = (x ,succ y )
+evalMoves Down (x,y)  = (x ,pred y )
 evalMoves Wait (x,y)  = (x  ,y)
 evalMoves Abort (x,y) = undefined -- halt ?
