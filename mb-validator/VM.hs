@@ -96,8 +96,14 @@ foreign import ccall unsafe "libvm.h get_lift_point"
 foreign import ccall unsafe "libvm.h get_lambda_count"
   cGetLambdaCount :: CStatePtr -> CLong
 
+foreign import ccall unsafe "libvm.h get_collected_lambda_count"
+  cGetCollectedLambdaCount :: CStatePtr -> CLong
+
 foreign import ccall unsafe "libvm.h get_move_count"
   cGetMoveCount :: CStatePtr -> CLong
+
+foreign import ccall unsafe "libvm.h get_score"
+  cGetScore :: CStatePtr -> CLong
 
 foreign import ccall unsafe "libvm.h get_condition"
   cGetCondition :: CStatePtr -> CChar
@@ -142,8 +148,14 @@ getLiftPoint = getIntPair cGetLiftPoint
 getLambdaCount :: State -> Int
 getLambdaCount = getInt cGetLambdaCount
 
+getCollectedLambdaCount :: State -> Int
+getCollectedLambdaCount = getInt cGetCollectedLambdaCount
+
 getMoveCount :: State -> Int
 getMoveCount = getInt cGetMoveCount
+
+getScore :: State -> Int
+getScore = getInt cGetScore
 
 getCondition :: State -> Condition
 getCondition s =

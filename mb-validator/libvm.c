@@ -65,7 +65,9 @@ struct state {
     long robot_x, robot_y;
     long lift_x, lift_y;
     long lambda_count;
+    long collected_lambda_count;
     long move_count;
+    long score;
     char condition;
     long world_length;
     char world[];
@@ -162,13 +164,15 @@ struct state *new_from_file(const char *path) {
 void dump(const struct state *s) {
     DEBUG_ASSERT(s);
     fputs("----------------------------------------------------------------\n", stderr);
-    fprintf(stderr, "world_size   = (%ld, %ld)\n", s->world_w, s->world_h);
-    fprintf(stderr, "robot_point  = (%ld, %ld)\n", s->robot_x, s->robot_y);
-    fprintf(stderr, "lift_point   = (%ld, %ld)\n", s->lift_x, s->lift_y);
-    fprintf(stderr, "lambda_count = %ld\n", s->lambda_count);
-    fprintf(stderr, "move_count   = %ld\n", s->move_count);
-    fprintf(stderr, "condition    = %d\n", s->condition);
-    fprintf(stderr, "world_length = %ld\n\n", s->world_length);
+    fprintf(stderr, "world_size             = (%ld, %ld)\n", s->world_w, s->world_h);
+    fprintf(stderr, "robot_point            = (%ld, %ld)\n", s->robot_x, s->robot_y);
+    fprintf(stderr, "lift_point             = (%ld, %ld)\n", s->lift_x, s->lift_y);
+    fprintf(stderr, "lambda_count           = %ld\n", s->lambda_count);
+    fprintf(stderr, "collected_lambda_count = %ld\n", s->collected_lambda_count);
+    fprintf(stderr, "move_count             = %ld\n", s->move_count);
+    fprintf(stderr, "score                  = %ld\n", s->score);
+    fprintf(stderr, "condition              = %d\n", s->condition);
+    fprintf(stderr, "world_length           = %ld\n\n", s->world_length);
     fputs(s->world, stderr);
     fputc('\n', stderr);
 }
@@ -211,9 +215,21 @@ long get_lambda_count(const struct state *s) {
 }
 
 
+long get_collected_lambda_count(const struct state *s) {
+    DEBUG_ASSERT(s);
+    return s->collected_lambda_count;
+}
+
+
 long get_move_count(const struct state *s) {
     DEBUG_ASSERT(s);
     return s->move_count;
+}
+
+
+long get_score(const struct state *s) {
+    DEBUG_ASSERT(s);
+    return s->score;
 }
 
 
@@ -265,15 +281,17 @@ inline static void move_robot(struct state *s, long x, long y) {
 
 inline static void collect_lambda(struct state *s) {
     DEBUG_ASSERT(s);
-    DEBUG_ASSERT(s->lambda_count > 0);
+    DEBUG_ASSERT(s->collected_lambda_count < s->lambda_count);
     DEBUG_ASSERT(get_object_at_point(s, s->lift_x, s->lift_y) == O_CLOSED_LIFT);
-    --s->lambda_count;
+    s->collected_lambda_count++;
+    s->score += 25;
     DEBUG_LOG("lambda collected\n");
-    if (!s->lambda_count) {
+    if (s->collected_lambda_count == s->lambda_count) {
         set_object_at_point(s, s->lift_x, s->lift_y, O_OPEN_LIFT);
         DEBUG_LOG("lift opened\n");
     }
 }
+
 
 
 static void unsafe_make_one_move(struct state *s, char move) {
@@ -304,6 +322,7 @@ static void unsafe_make_one_move(struct state *s, char move) {
             collect_lambda(s);
         } else if (object == O_OPEN_LIFT) {
             move_robot(s, x, y);
+            s->score += s->collected_lambda_count * 50;
             s->condition = C_WIN;
             DEBUG_LOG("won\n");
         } else if (object == O_ROCK && move == M_LEFT && get_object_at_point(s, x - 1, y) == O_EMPTY) {
@@ -318,11 +337,13 @@ static void unsafe_make_one_move(struct state *s, char move) {
         else
             DEBUG_LOG("attempted invalid move '%c' from (%ld, %ld) to (%ld, %ld) which is '%c'\n", move, s->robot_x, s->robot_y, x, y, object);
     } else if (move == M_ABORT) {
+        s->score += s->collected_lambda_count * 25;
         s->condition = C_ABORT;
         DEBUG_LOG("aborted\n");
     } else
         DEBUG_LOG("waited\n");
     s->move_count++;
+    s->score--;
 }
 
 

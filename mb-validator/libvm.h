@@ -10,7 +10,9 @@ void get_world_size(const struct state *s, long *out_world_w, long *out_world_h)
 void get_robot_point(const struct state *s, long *out_robot_x, long *out_robot_y);
 void get_lift_point(const struct state *s, long *out_lift_x, long *out_lift_y);
 long get_lambda_count(const struct state *s);
+long get_collected_lambda_count(const struct state *s);
 long get_move_count(const struct state *s);
+long get_score(const struct state *s);
 char get_condition(const struct state *s);
 char get_object_at_point(const struct state *s, long x, long y);
 
