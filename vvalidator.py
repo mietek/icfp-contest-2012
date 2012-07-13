@@ -7,12 +7,21 @@ validators = set(['v1', 'v2'])
 authors = {'v1':'mietek',
            'v2':'pobara'}
 
+moves = ['L', 'R', 'U', 'D', 'W']
+
 def testFiles():
     dirname, dirnames, filenames = next(os.walk('tests/'))
     return filenames
 
 def randomAnswer():
-    return "LLLRRRUUUDDD" #TODO
+    ans = ''
+    for i in range(choice(range(300))):
+        ans += choice(moves)
+
+    if choice(range(5)) == 1:
+        ans += 'A'
+
+    return ans
 
 def randomMapFile():
     return choice(testFiles())
