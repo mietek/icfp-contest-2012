@@ -124,17 +124,14 @@ from copy import *
 
 def update_state(cmap_new):
 
-    crushed = False
+    global pos
 
-    def is_robot_crushed(rock_pos):
-        global pos
-        if pos == rock_pos - width:
-            crushed = True
+    crushed = False
 
     if lambdas_to_lift == 0:
         try:
-            pos = cmap.index('L')
-            cmap[pos] = 'O'
+            lpos = cmap.index('L')
+            cmap[lpos] = 'O'
         except: pass
 
     for i in reversed(range(height)):
@@ -153,7 +150,7 @@ def update_state(cmap_new):
                cmap[p]        == ' ' :
                cmap_new[p_up] =  ' '
                cmap_new[p]    =  '*'
-               is_robot_crushed(p)
+               if pos == p + width: crushed = True
 
             # rock falling right
 
@@ -161,7 +158,7 @@ def update_state(cmap_new):
                  cmap[p]    in '*\\' and cmap[p_r]  == ' ' :
                  cmap_new[p_up] = ' '
                  cmap_new[p_r]  = '*'
-                 is_robot_crushed(p_r)
+                 if pos == p + width: crushed = True
 
             # rock falling left
 
@@ -170,7 +167,7 @@ def update_state(cmap_new):
                  (cmap[p_ur] != ' ' or cmap[p_r] != ' ') :
                  cmap_new[p_up] = ' '
                  cmap_new[p_l]  = '*'
-                 is_robot_crushed(p_r)
+                 if pos == p + width: crushed = True
 
     return cmap_new, crushed
 
