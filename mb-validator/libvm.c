@@ -292,7 +292,6 @@ inline static void collect_lambda(struct state *s) {
 static void execute_move(struct state *s, char move) {
     DEBUG_ASSERT(s);
     DEBUG_ASSERT(s->condition == C_NONE);
-    DEBUG_ASSERT(move == M_LEFT || move == M_RIGHT || move == M_UP || move == M_DOWN || move == M_WAIT || move == M_ABORT);
     if (move == M_LEFT || move == M_RIGHT || move == M_UP || move == M_DOWN) {
         long x, y;
         char object;
@@ -331,14 +330,17 @@ static void execute_move(struct state *s, char move) {
         }
         else
             DEBUG_LOG("attempted invalid move '%c' from (%ld, %ld) to (%ld, %ld) which is '%c'\n", move, s->robot_x, s->robot_y, x, y, object);
+        s->move_count++;
+        s->score--;
+    } else if (move == M_WAIT) {
+        DEBUG_LOG("waited\n");
+        s->move_count++;
+        s->score--;
     } else if (move == M_ABORT) {
         s->score += s->collected_lambda_count * 25;
         s->condition = C_ABORT;
         DEBUG_LOG("aborted\n");
-    } else
-        DEBUG_LOG("waited\n");
-    s->move_count++;
-    s->score--;
+    }
 }
 
 
