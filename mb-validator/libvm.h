@@ -14,7 +14,7 @@ long get_collected_lambda_count(const struct state *s);
 long get_move_count(const struct state *s);
 long get_score(const struct state *s);
 char get_condition(const struct state *s);
-char get_object_at_point(const struct state *s, long x, long y);
+char get(const struct state *s, long x, long y);
 
 struct state *make_one_move(const struct state *s0, char move);
 struct state *make_moves(const struct state *s0, const char *moves);

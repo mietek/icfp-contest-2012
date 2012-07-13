@@ -252,7 +252,7 @@ inline static long unmake_point(const struct state *s, long x, long y) {
 }
 
 
-inline char get_object_at_point(const struct state *s, long x, long y) {
+inline char get(const struct state *s, long x, long y) {
     DEBUG_ASSERT(s);
     long i;
     i = unmake_point(s, x, y);
@@ -260,7 +260,7 @@ inline char get_object_at_point(const struct state *s, long x, long y) {
 }
 
 
-inline static void set_object_at_point(struct state *s, long x, long y, char object) {
+inline static void put(struct state *s, long x, long y, char object) {
     DEBUG_ASSERT(s);
     long i;
     i = unmake_point(s, x, y);
@@ -270,11 +270,11 @@ inline static void set_object_at_point(struct state *s, long x, long y, char obj
 
 inline static void move_robot(struct state *s, long x, long y) {
     DEBUG_ASSERT(s);
-    DEBUG_ASSERT(get_object_at_point(s, x, y) == O_EMPTY || get_object_at_point(s, x, y) == O_EARTH || get_object_at_point(s, x, y) == O_LAMBDA || get_object_at_point(s, x, y) == O_OPEN_LIFT);
-    set_object_at_point(s, s->robot_x, s->robot_y, O_EMPTY);
+    DEBUG_ASSERT(get(s, x, y) == O_EMPTY || get(s, x, y) == O_EARTH || get(s, x, y) == O_LAMBDA || get(s, x, y) == O_OPEN_LIFT);
+    put(s, s->robot_x, s->robot_y, O_EMPTY);
     s->robot_x = x;
     s->robot_y = y;
-    set_object_at_point(s, x, y, O_ROBOT);
+    put(s, x, y, O_ROBOT);
     DEBUG_LOG("moved to (%ld, %ld)\n", x, y);
 }
 
@@ -282,19 +282,14 @@ inline static void move_robot(struct state *s, long x, long y) {
 inline static void collect_lambda(struct state *s) {
     DEBUG_ASSERT(s);
     DEBUG_ASSERT(s->collected_lambda_count < s->lambda_count);
-    DEBUG_ASSERT(get_object_at_point(s, s->lift_x, s->lift_y) == O_CLOSED_LIFT);
+    DEBUG_ASSERT(get(s, s->lift_x, s->lift_y) == O_CLOSED_LIFT);
     s->collected_lambda_count++;
     s->score += 25;
     DEBUG_LOG("lambda collected\n");
-    if (s->collected_lambda_count == s->lambda_count) {
-        set_object_at_point(s, s->lift_x, s->lift_y, O_OPEN_LIFT);
-        DEBUG_LOG("lift opened\n");
-    }
 }
 
 
-
-static void unsafe_make_one_move(struct state *s, char move) {
+static void execute_move(struct state *s, char move) {
     DEBUG_ASSERT(s);
     DEBUG_ASSERT(s->condition == C_NONE);
     DEBUG_ASSERT(move == M_LEFT || move == M_RIGHT || move == M_UP || move == M_DOWN || move == M_WAIT || move == M_ABORT);
@@ -314,7 +309,7 @@ static void unsafe_make_one_move(struct state *s, char move) {
             x = s->robot_x;
             y = s->robot_y - 1;
         }
-        object = get_object_at_point(s, x, y);
+        object = get(s, x, y);
         if (object == O_EMPTY || object == O_EARTH)
             move_robot(s, x, y);
         else if (object == O_LAMBDA) {
@@ -325,13 +320,13 @@ static void unsafe_make_one_move(struct state *s, char move) {
             s->score += s->collected_lambda_count * 50;
             s->condition = C_WIN;
             DEBUG_LOG("won\n");
-        } else if (object == O_ROCK && move == M_LEFT && get_object_at_point(s, x - 1, y) == O_EMPTY) {
+        } else if (object == O_ROCK && move == M_LEFT && get(s, x - 1, y) == O_EMPTY) {
             move_robot(s, x, y);
-            set_object_at_point(s, x - 1, y, O_ROCK);
+            put(s, x - 1, y, O_ROCK);
             DEBUG_LOG("moved rock from (%ld, %ld) to (%ld, %ld)\n", x, y, x - 1, y);
-        } else if (object == O_ROCK && move == M_RIGHT && get_object_at_point(s, x + 1, y) == O_EMPTY) {
+        } else if (object == O_ROCK && move == M_RIGHT && get(s, x + 1, y) == O_EMPTY) {
             move_robot(s, x, y);
-            set_object_at_point(s, x + 1, y, O_ROCK);
+            put(s, x + 1, y, O_ROCK);
             DEBUG_LOG("moved rock from (%ld, %ld) to (%ld, %ld\n", x, y, x + 1, y);
         }
         else
@@ -347,22 +342,62 @@ static void unsafe_make_one_move(struct state *s, char move) {
 }
 
 
+static void update_world(struct state *s, const struct state *t) {
+    DEBUG_ASSERT(s && t);
+    long x, y;
+    if (t->condition != C_NONE)
+        return;
+    for (y = 1; y <= s->world_h; y++) {
+        for (x = 1; x <= s->world_w; x++) {
+            object = get(t, x, y);
+            if (object == O_ROCK && get(t, x, y - 1) == O_EMPTY) {
+                put(s, x, y, O_EMPTY);
+                put(s, x, y - 1, O_ROCK);
+            } else if (object == O_ROCK && get(t, x, y - 1) == O_ROCK && get(t, x + 1, y) == O_EMPTY && get(t, x + 1, y - 1) == O_EMPTY) {
+                put(s, x, y, O_EMPTY);
+                put(s, x + 1, y - 1, O_ROCK);
+            } else if (object == O_ROCK && get(t, x, y - 1) == O_ROCK && (get(t, x + 1, y) != O_EMPTY && get(t, x + 1, y - 1) != O_EMPTY) && get(t, x - 1, y) == O_EMPTY && get(t, x - 1, y - 1) == O_EMPTY) {
+                put(s, x, y, O_EMPTY);
+                put(s, x - 1, y - 1, O_ROCK);
+            } else if (object == O_ROCK && get(t, x, y - 1) == O_LAMBDA && get(t, x + 1, y) == O_EMPTY && get(t, x + 1, y - 1) == O_EMPTY) {
+                put(s, x, y, O_EMPTY);
+                put(s, x + 1, y - 1, O_ROCK);
+            } else if (object == O_CLOSED_LIFT && t->collected_lambda_count == t->lambda_count) {
+                put(s, x, y, O_OPEN_LIFT);
+                DEBUG_LOG("lift opened\n");
+            }
+        }
+    }
+}
+
+
 struct state *make_one_move(const struct state *s0, char move) {
     DEBUG_ASSERT(s0);
-    struct state *s;
-    s = copy(s0);
-    unsafe_make_one_move(s, move);
+    struct state *s, *t;
+    t = copy(s0);
+    execute_move(t, move);
+    s = copy(t);
+    update_world(s, t);
+    free(t);
     return s;
 }
 
 
 struct state *make_moves(const struct state *s0, const char *moves) {
     DEBUG_ASSERT(s0 && moves);
-    struct state *s;
-    s = copy(s0);
-    while (*moves) {
-        unsafe_make_one_move(s, *moves);
-        moves++;
+    struct state *s, *t;
+    if (!*moves)
+        s = copy(s0);
+    else {
+        s = (struct state *)s0;
+        while (*moves) {
+            t = copy(s);
+            execute_move(t, *moves);
+            moves++;
+            s = copy(t);
+            update_world(s, t);
+            free(t);
+        }
     }
     return s;
 }
