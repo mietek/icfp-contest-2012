@@ -356,28 +356,28 @@ static void update_world(struct state *s, const struct state *t) {
             if (object == O_ROCK && get(t, x, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x, y - 1, O_ROCK);
-                if (x == t->robot_x && y == t->robot_y + 1) {
+                if (t->robot_x == x && t->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("lost\n");
                 }
             } else if (object == O_ROCK && get(t, x, y - 1) == O_ROCK && get(t, x + 1, y) == O_EMPTY && get(t, x + 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x + 1, y - 1, O_ROCK);
-                if (x == t->robot_x && y == t->robot_y + 1) {
+                if (t->robot_x == x + 1 && t->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("lost\n");
                 }
             } else if (object == O_ROCK && get(t, x, y - 1) == O_ROCK && (get(t, x + 1, y) != O_EMPTY || get(t, x + 1, y - 1) != O_EMPTY) && get(t, x - 1, y) == O_EMPTY && get(t, x - 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x - 1, y - 1, O_ROCK);
-                if (x == t->robot_x && y == t->robot_y + 1) {
+                if (t->robot_x == x - 1 && t->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("lost\n");
                 }
             } else if (object == O_ROCK && get(t, x, y - 1) == O_LAMBDA && get(t, x + 1, y) == O_EMPTY && get(t, x + 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x + 1, y - 1, O_ROCK);
-                if (x == t->robot_x && y == t->robot_y + 1) {
+                if (t->robot_x == x + 1 && t->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("lost\n");
                 }
