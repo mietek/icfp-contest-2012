@@ -5,6 +5,7 @@ void Robot::execute(const Robot::Command &cmd)
   switch (cmd) {
     case Left:
       map.moveRobot(map.robotPosition().left());
+      break;
     case Right:
       map.moveRobot(map.robotPosition().right());
       break;
