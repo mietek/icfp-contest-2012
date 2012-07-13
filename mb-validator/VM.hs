@@ -28,6 +28,11 @@ wrapState sp = do
   sfp <- newForeignPtr finalizerFree sp
   return (State sfp)
 
+getInt :: (CStatePtr -> CLong) -> State -> Int
+getInt action s =
+  unwrapState s $ \sp ->
+    return (fromEnum (cGetMoveCount sp))
+
 getIntPair :: (CStatePtr -> Ptr CLong -> Ptr CLong -> IO ()) -> State -> (Int, Int)
 getIntPair action s =
   unwrapState s $ \sp ->
@@ -88,6 +93,9 @@ foreign import ccall unsafe "libvm.h get_robot_point"
 foreign import ccall unsafe "libvm.h get_lift_point"
   cGetLiftPoint :: CStatePtr -> Ptr CLong -> Ptr CLong -> IO ()
 
+foreign import ccall unsafe "libvm.h get_lambda_count"
+  cGetLambdaCount :: CStatePtr -> CLong
+
 foreign import ccall unsafe "libvm.h get_move_count"
   cGetMoveCount :: CStatePtr -> CLong
 
@@ -131,10 +139,11 @@ getRobotPoint = getIntPair cGetRobotPoint
 getLiftPoint :: State -> Point
 getLiftPoint = getIntPair cGetLiftPoint
 
+getLambdaCount :: State -> Int
+getLambdaCount = getInt cGetLambdaCount
+
 getMoveCount :: State -> Int
-getMoveCount s =
-  unwrapState s $ \sp ->
-    return (fromEnum (cGetMoveCount sp))
+getMoveCount = getInt cGetMoveCount
 
 getCondition :: State -> Condition
 getCondition s =

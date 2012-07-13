@@ -64,6 +64,7 @@ struct state {
     long world_w, world_h;
     long robot_x, robot_y;
     long lift_x, lift_y;
+    long lambda_count;
     long move_count;
     char condition;
     long world_size;
@@ -111,6 +112,8 @@ static void copy_input(struct state *s, long input_size, const char* input) {
         } else {
             if (input[i] == O_ROBOT)
                 make_point(s, w, h, &s->robot_x, &s->robot_y);
+            else if (input[i] == O_LAMBDA)
+                s->lambda_count++;
             else if (input[i] == O_CLOSED_LIFT)
                 make_point(s, w, h, &s->lift_x, &s->lift_y);
             s->world[j++] = input[i];
@@ -159,12 +162,13 @@ struct state *new_from_file(const char *path) {
 void dump(const struct state *s) {
     DEBUG_ASSERT(s);
     fputs("----------------------------------------------------------------\n", stderr);
-    fprintf(stderr, "world_size  = (%ld, %ld)\n", s->world_w, s->world_h);
-    fprintf(stderr, "robot_point = (%ld, %ld)\n", s->robot_x, s->robot_y);
-    fprintf(stderr, "lift_point  = (%ld, %ld)\n", s->lift_x, s->lift_y);
-    fprintf(stderr, "move_count  = %ld\n", s->move_count);
-    fprintf(stderr, "condition   = %d\n", s->condition);
-    fprintf(stderr, "world_size  = %ld\n\n", s->world_size);
+    fprintf(stderr, "world_size   = (%ld, %ld)\n", s->world_w, s->world_h);
+    fprintf(stderr, "robot_point  = (%ld, %ld)\n", s->robot_x, s->robot_y);
+    fprintf(stderr, "lift_point   = (%ld, %ld)\n", s->lift_x, s->lift_y);
+    fprintf(stderr, "lambda_count = %ld\n", s->lambda_count);
+    fprintf(stderr, "move_count   = %ld\n", s->move_count);
+    fprintf(stderr, "condition    = %d\n", s->condition);
+    fprintf(stderr, "world_size   = %ld\n\n", s->world_size);
     fputs(s->world, stderr);
     fputc('\n', stderr);
 }
@@ -198,6 +202,12 @@ void get_lift_point(const struct state *s, long *out_lift_x, long *out_lift_y) {
     DEBUG_ASSERT(s && out_lift_x && out_lift_y);
     *out_lift_x = s->lift_x;
     *out_lift_y = s->lift_y;
+}
+
+
+long get_lambda_count(const struct state *s) {
+    DEBUG_ASSERT(s);
+    return s->lambda_count;
 }
 
 
