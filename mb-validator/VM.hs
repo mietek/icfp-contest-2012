@@ -102,8 +102,8 @@ foreign import ccall unsafe "libvm.h get_move_count"
 foreign import ccall unsafe "libvm.h get_condition"
   cGetCondition :: CStatePtr -> CChar
 
-foreign import ccall unsafe "libvm.h lookup_point"
-  cLookupPoint :: CStatePtr -> CLong -> CLong -> CChar
+foreign import ccall unsafe "libvm.h get_object_at_point"
+  cGetObjectAtPoint :: CStatePtr -> CLong -> CLong -> CChar
 
 foreign import ccall unsafe "libvm.h make_one_move"
   cMakeOneMove :: CStatePtr -> CChar -> IO CStatePtr
@@ -150,10 +150,10 @@ getCondition s =
   unwrapState s $ \sp ->
     return (toEnum (fromEnum (castCCharToChar (cGetCondition sp))))
 
-lookupPoint :: State -> Point -> Object
-lookupPoint s (x, y) =
+getObjectAtPoint :: State -> Point -> Object
+getObjectAtPoint s (x, y) =
   unwrapState s $ \sp ->
-    return (toObject (castCCharToChar (cLookupPoint sp (toEnum x) (toEnum y))))
+    return (toObject (castCCharToChar (cGetObjectAtPoint sp (toEnum x) (toEnum y))))
 
 makeOneMove :: State -> Move -> State
 makeOneMove s0 move =

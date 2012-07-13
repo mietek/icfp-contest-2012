@@ -12,7 +12,7 @@ void get_lift_point(const struct state *s, long *out_lift_x, long *out_lift_y);
 long get_lambda_count(const struct state *s);
 long get_move_count(const struct state *s);
 char get_condition(const struct state *s);
-char lookup_point(const struct state *s, long x, long y);
+char get_object_at_point(const struct state *s, long x, long y);
 
 struct state *make_one_move(const struct state *s0, char move);
 struct state *make_moves(const struct state *s0, const char *moves);

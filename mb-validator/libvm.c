@@ -223,7 +223,7 @@ char get_condition(const struct state *s) {
 }
 
 
-inline char lookup_point(const struct state *s, long x, long y) {
+inline static long unmake_point(const struct state *s, long x, long y) {
     DEBUG_ASSERT(s);
     long w, h, i;
     w = x - 1;
@@ -232,7 +232,42 @@ inline char lookup_point(const struct state *s, long x, long y) {
     DEBUG_ASSERT(h >= 0 && h < s->world_h);
     i = h * (s->world_w + 1) + w;
     DEBUG_ASSERT(i < s->world_length);
+    return i;
+}
+
+
+inline char get_object_at_point(const struct state *s, long x, long y) {
+    DEBUG_ASSERT(s);
+    long i;
+    i = unmake_point(s, x, y);
     return s->world[i];
+}
+
+
+inline static void set_object_at_point(struct state *s, long x, long y, char object) {
+    DEBUG_ASSERT(s);
+    long i;
+    i = unmake_point(s, x, y);
+    s->world[i] = object;
+}
+
+
+inline static void move_robot(struct state *s, long x, long y) {
+    DEBUG_ASSERT(s);
+    DEBUG_ASSERT(get_object_at_point(s, x, y) == O_EMPTY || get_object_at_point(s, x, y) == O_EARTH || get_object_at_point(s, x, y) == O_LAMBDA || get_object_at_point(s, x, y) == O_OPEN_LIFT);
+    set_object_at_point(s, s->robot_x, s->robot_y, O_EMPTY);
+    s->robot_x = x;
+    s->robot_y = y;
+}
+
+
+inline static void collect_lambda(struct state *s) {
+    DEBUG_ASSERT(s);
+    DEBUG_ASSERT(s->lambda_count > 0);
+    DEBUG_ASSERT(get_object_at_point(s, s->lift_x, s->lift_y) == O_CLOSED_LIFT);
+    if (--s->lambda_count)
+        set_object_at_point(s, s->lift_x, s->lift_y, O_OPEN_LIFT);
+    DEBUG_LOG("lambda collected\n");
 }
 
 
@@ -256,10 +291,23 @@ static void unsafe_make_one_move(struct state *s, char move) {
             x = s->robot_x;
             y = s->robot_y - 1;
         }
-        object = lookup_point(s, x, y);
-        // TODO
-    } else if (move == M_ABORT)
+        object = get_object_at_point(s, x, y);
+        if (object == O_EMPTY || object == O_EARTH)
+            move_robot(s, x, y);
+        else if (object == O_LAMBDA) {
+            move_robot(s, x, y);
+            collect_lambda(s);
+        } else if (object == O_OPEN_LIFT) {
+            move_robot(s, x, y);
+            s->condition = C_WIN;
+            DEBUG_LOG("won");
+        }
+        else
+            DEBUG_LOG("attempted invalid move '%c' from (%ld, %ld) to (%ld, %ld) which is '%c'\n", move, s->robot_x, s->robot_y, x, y, object);
+    } else if (move == M_ABORT) {
         s->condition = C_ABORT;
+        DEBUG_LOG("aborted");
+    }
     s->move_count++;
 }
 
