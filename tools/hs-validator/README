@@ -1,0 +1,4 @@
+To run:
+
+make
+ghci -L. -lvm VM.hs
