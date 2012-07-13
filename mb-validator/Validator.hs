@@ -9,5 +9,5 @@ main :: IO ()
 main = do
   [_, path] <- getArgs
   s <- newFromFile path
-  moves <- getLine
+  moves <- getContents
   shortDump (makeMoves s moves)
