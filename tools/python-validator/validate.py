@@ -3,12 +3,11 @@
 from array import *
 import sys
 
+sys.argv.remove('-vv')
+
 if len(sys.argv) <= 1:
     print 'usage example: $ echo "LLLRRRDDDA" | ./validate.py <map_file>'
     sys.exit(0)
-
-def verbose():
-    return '-v' in sys.argv
 
 def get_map(path):
     map_file = open(path)
@@ -42,7 +41,6 @@ def pprint():
     print
 
 def print_score():
-    if not verbose(): return
     print "%d" % (score + (lambdas_initial - lambdas_to_lift) * 25)
 
 def is_left(blocks):
