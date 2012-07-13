@@ -45,13 +45,18 @@ while True:
                 print
                 print "Final map difference:"
                 print authors[v1] + ':'
-                print m1
+                print
+                for r in m1:
+                    print r
                 print
                 print authors[v2] + ':'
-                print m2
+                print
+                for r in m2:
+                    print r
                 mismatch = True
 
             if mismatch:
+                print
                 print "on mapfile: " + mapFile
                 print "on answer: " + answer
                 print "=" * 80
