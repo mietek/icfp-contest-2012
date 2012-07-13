@@ -67,15 +67,15 @@ struct state {
     long lambda_count;
     long move_count;
     char condition;
-    long world_size;
+    long world_length;
     char world[];
 };
 
 
-static void scan_input(long input_size, const char *input, long *out_world_w, long *out_world_h, long *out_world_size) {
+static void scan_input(long input_length, const char *input, long *out_world_w, long *out_world_h, long *out_world_length) {
     DEBUG_ASSERT(input && out_world_w && out_world_h);
     long world_w = 0, world_h = 0, w = 0, i;
-    for (i = 0; i < input_size; i++) {
+    for (i = 0; i < input_length; i++) {
         if (input[i] == '\n') {
             if (w > world_w)
                 world_w = w;
@@ -86,7 +86,7 @@ static void scan_input(long input_size, const char *input, long *out_world_w, lo
     }
     *out_world_w = world_w;
     *out_world_h = world_h;
-    *out_world_size = (world_w + 1) * world_h + 1;
+    *out_world_length = (world_w + 1) * world_h + 1;
 }
 
 
@@ -97,10 +97,10 @@ inline static void make_point(struct state *s, long w, long h, long *out_x, long
 }
 
 
-static void copy_input(struct state *s, long input_size, const char* input) {
+static void copy_input(struct state *s, long input_length, const char* input) {
     DEBUG_ASSERT(s && input);
     long w = 0, h = 0, j = 0, i;
-    for (i = 0; i < input_size; i++) {
+    for (i = 0; i < input_length; i++) {
         if (input[i] == '\n') {
             while (w < s->world_w) {
                 s->world[j++] = O_EMPTY;
@@ -124,18 +124,18 @@ static void copy_input(struct state *s, long input_size, const char* input) {
 }
 
 
-struct state *new(long input_size, const char *input) {
+struct state *new(long input_length, const char *input) {
     DEBUG_ASSERT(input);
-    long world_w, world_h, world_size;
+    long world_w, world_h, world_length;
     struct state *s;
-    scan_input(input_size, input, &world_w, &world_h, &world_size);
-    if (!(s = malloc(sizeof(struct state) + world_size)))
+    scan_input(input_length, input, &world_w, &world_h, &world_length);
+    if (!(s = malloc(sizeof(struct state) + world_length)))
         PERROR_EXIT("malloc");
     memset(s, 0, sizeof(struct state));
     s->world_w = world_w;
     s->world_h = world_h;
-    s->world_size = world_size;
-    copy_input(s, input_size, input);
+    s->world_length = world_length;
+    copy_input(s, input_length, input);
     return s;
 }
 
@@ -168,7 +168,7 @@ void dump(const struct state *s) {
     fprintf(stderr, "lambda_count = %ld\n", s->lambda_count);
     fprintf(stderr, "move_count   = %ld\n", s->move_count);
     fprintf(stderr, "condition    = %d\n", s->condition);
-    fprintf(stderr, "world_size   = %ld\n\n", s->world_size);
+    fprintf(stderr, "world_length = %ld\n\n", s->world_length);
     fputs(s->world, stderr);
     fputc('\n', stderr);
 }
@@ -177,9 +177,9 @@ void dump(const struct state *s) {
 struct state *copy(const struct state *s0) {
     DEBUG_ASSERT(s0);
     struct state *s;
-    if (!(s = malloc(sizeof(struct state) + s0->world_size)))
+    if (!(s = malloc(sizeof(struct state) + s0->world_length)))
         PERROR_EXIT("malloc");
-    memcpy(s, s0, sizeof(struct state) + s0->world_size);
+    memcpy(s, s0, sizeof(struct state) + s0->world_length);
     return s;
 }
 
@@ -231,7 +231,7 @@ inline char lookup_point(const struct state *s, long x, long y) {
     h = s->world_h - y;
     DEBUG_ASSERT(h >= 0 && h < s->world_h);
     i = h * (s->world_w + 1) + w;
-    DEBUG_ASSERT(i < s->world_size);
+    DEBUG_ASSERT(i < s->world_length);
     return s->world[i];
 }
 

@@ -1,7 +1,7 @@
 struct state;
 
 
-struct state *new(long input_size, const char *input);
+struct state *new(long input_length, const char *input);
 struct state *new_from_file(const char *path);
 
 void dump(const struct state *s);
