@@ -258,6 +258,7 @@ inline static void move_robot(struct state *s, long x, long y) {
     set_object_at_point(s, s->robot_x, s->robot_y, O_EMPTY);
     s->robot_x = x;
     s->robot_y = y;
+    DEBUG_LOG("moved to (%ld, %ld)\n", x, y);
 }
 
 
@@ -303,14 +304,15 @@ static void unsafe_make_one_move(struct state *s, char move) {
         } else if (object == O_OPEN_LIFT) {
             move_robot(s, x, y);
             s->condition = C_WIN;
-            DEBUG_LOG("won");
+            DEBUG_LOG("won\n");
         }
         else
             DEBUG_LOG("attempted invalid move '%c' from (%ld, %ld) to (%ld, %ld) which is '%c'\n", move, s->robot_x, s->robot_y, x, y, object);
     } else if (move == M_ABORT) {
         s->condition = C_ABORT;
-        DEBUG_LOG("aborted");
-    }
+        DEBUG_LOG("aborted\n");
+    } else
+        DEBUG_LOG("waited\n");
     s->move_count++;
 }
 
