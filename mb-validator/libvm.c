@@ -258,6 +258,7 @@ inline static void move_robot(struct state *s, long x, long y) {
     set_object_at_point(s, s->robot_x, s->robot_y, O_EMPTY);
     s->robot_x = x;
     s->robot_y = y;
+    set_object_at_point(s, x, y, O_ROBOT);
     DEBUG_LOG("moved to (%ld, %ld)\n", x, y);
 }
 
