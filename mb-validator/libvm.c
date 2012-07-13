@@ -354,15 +354,31 @@ static void update_world(struct state *s, const struct state *t) {
             if (object == O_ROCK && get(t, x, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x, y - 1, O_ROCK);
+                if (x == t->robot_x && y == t->robot_y + 1) {
+                    s->condition = C_LOSE;
+                    DEBUG_LOG("lost\n");
+                }
             } else if (object == O_ROCK && get(t, x, y - 1) == O_ROCK && get(t, x + 1, y) == O_EMPTY && get(t, x + 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x + 1, y - 1, O_ROCK);
+                if (x == t->robot_x && y == t->robot_y + 1) {
+                    s->condition = C_LOSE;
+                    DEBUG_LOG("lost\n");
+                }
             } else if (object == O_ROCK && get(t, x, y - 1) == O_ROCK && (get(t, x + 1, y) != O_EMPTY && get(t, x + 1, y - 1) != O_EMPTY) && get(t, x - 1, y) == O_EMPTY && get(t, x - 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x - 1, y - 1, O_ROCK);
+                if (x == t->robot_x && y == t->robot_y + 1) {
+                    s->condition = C_LOSE;
+                    DEBUG_LOG("lost\n");
+                }
             } else if (object == O_ROCK && get(t, x, y - 1) == O_LAMBDA && get(t, x + 1, y) == O_EMPTY && get(t, x + 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x + 1, y - 1, O_ROCK);
+                if (x == t->robot_x && y == t->robot_y + 1) {
+                    s->condition = C_LOSE;
+                    DEBUG_LOG("lost\n");
+                }
             } else if (object == O_CLOSED_LIFT && t->collected_lambda_count == t->lambda_count) {
                 put(s, x, y, O_OPEN_LIFT);
                 DEBUG_LOG("lift opened\n");
@@ -398,6 +414,8 @@ struct state *make_moves(const struct state *s0, const char *moves) {
             s = copy(t);
             update_world(s, t);
             free(t);
+            if (s->condition != C_NONE)
+                break;
         }
     }
     return s;
