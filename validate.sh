@@ -1,5 +1,6 @@
 #!/bin/bash
-## usage: ./validate.sh nr ans or echo ans |./validate.sh nr
+### usage: ./validate.sh nr ans
+###        echo ans |./validate.sh nr
 
 map=$1
 if [ $# -eq 1 ]; then read sol ; else sol=$2 ; fi
