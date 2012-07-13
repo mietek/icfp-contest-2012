@@ -28,12 +28,16 @@ int main(int argc, char **argv)
   
   Map m;
   m << mapFile;
+  if (!vvMode)
+    std::cout << m;
   
   Robot r{m};
   Robot::Command c;
   
   do {
     std::cin.get(c);
+    if (c == '\n')
+      continue;
     if (std::cin.eof())
       c = Robot::Abort;
     r.execute(c);
