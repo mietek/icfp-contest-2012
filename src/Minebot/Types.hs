@@ -1,4 +1,9 @@
-module Types where
+module Minebot.Types
+    (
+      Objects(..)
+    , Moves(..)
+    , Position(..)
+    ) where
 
 import Prelude hiding (Either(..))
 

@@ -1,0 +1,27 @@
+name:                minebot
+version:             0.1
+synopsis:            Lamba mining bot
+description:         Lamba mining bot
+homepage:            https://github.com/leastfixed/icfp2012
+author:              The Church of the Least Fixed Point
+copyright:           2012 The Church of the Least Fixed Point
+category:            Algorithms
+build-type:          Simple
+cabal-version:       >=1.2
+
+library
+  hs-source-dirs: src
+  exposed-modules:
+    Minebot
+    Minebot.Types
+    Minebot.Solver
+
+  build-depends:
+    base == 4.*,
+
+  ghc-options: -Wall
+
+source-repository head
+  type:     git
+  location: https://github.com/leastfixed/icfp2012
+
