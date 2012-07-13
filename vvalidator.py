@@ -1,16 +1,21 @@
 #!/usr/bin/env python -u
-import subprocess, sys
+import subprocess, sys, os
+from random import choice
 
 validators = set(['v1', 'v2'])
 
 authors = {'v1':'mietek',
            'v2':'pobara'}
 
+def testFiles():
+    dirname, dirnames, filenames = next(os.walk('tests/'))
+    return filenames
+
 def randomAnswer():
     return "LLLRRRUUUDDD" #TODO
 
 def randomMapFile():
-    return "tests/contest1.map" #TODO
+    return choice(testFiles())
 
 def validatorOutput(validatorName, mapFile, answer):
     output = subprocess.Popen(["./" + validatorName, "-vv", mapFile, answer], stdout=subprocess.PIPE).communicate()[0].rstrip()
@@ -49,7 +54,7 @@ while True:
             if mismatch:
                 print "on mapfile: " + mapFile
                 print "on answer: " + answer
-                print
+                print "=" * 80
 
         checkedValidators.add(v1)
 
