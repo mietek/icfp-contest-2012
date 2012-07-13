@@ -1,5 +1,6 @@
 module Types where
 
+import Prelude hiding (Either(..))
 
 data Objects = Robot | Lambda | Rock | Wall | CLift | OLift | Earth | Empty
   deriving (Enum,Eq)
