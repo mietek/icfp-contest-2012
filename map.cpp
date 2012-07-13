@@ -52,7 +52,7 @@ void Map::update()
         if (rockPos != pos) {
           newMap.tile(pos) = Empty;
           newMap.tile(rockPos) = Rock;
-          if (tile(pos.down()) == Robot)
+          if (tile(rockPos.down()) == Robot)
             _robotHit = true;
         }
       } else if (tile(pos) == ClosedLift && !_lambdas)
