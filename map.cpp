@@ -32,8 +32,8 @@ void Map::update()
 {
   MapData newMap(data);
 
-  for (int y = 0; y < data.size(); ++y) {
-    for (int x = 0; x < data[y].size(); ++x) {
+  for (unsigned int y = 0; y < data.size(); ++y) {
+    for (unsigned int x = 0; x < data[y].size(); ++x) {
       Position pos{x, y};
       if (tile(pos) == Rock) {
         Position rockPos{pos};
@@ -75,7 +75,7 @@ bool Map::moveRobot(const Position &newPos)
   if (newPos.x < 0 || newPos.y < 0)
     return false;
   
-  Tile target{tile(newPos)};
+  Tile target = data[newPos.y][newPos.x];
   
   bool moved = false;
   
@@ -130,13 +130,15 @@ int Map::score() const
     return score;
   if (_aborted)
     return score + _collected * 25;
+  
+  return score;
 }
 
 int Map::analyze(const std::string &line)
 {
   int robot = -1;
   
-  for (int i = 0; i < line.size(); ++i)
+  for (unsigned int i = 0; i < line.size(); ++i)
     if (line[i] == Lambda)
       _lambdas++;
     else if (line[i] == Robot)

@@ -7,7 +7,7 @@
 
 class Map {
 public:
-  Map() : _lambdas(0), _collected(0), _moves(0), _aborted(false), _won(false), _robotHit(false) {}
+  Map() : _lambdas(0), _collected(0), _moves(0), _robotHit(false), _aborted(false), _won(false) {}
   
   struct Position {
     int x, y;
@@ -35,7 +35,7 @@ public:
   
   typedef char Tile;
   Tile &tile(const Position &pos) {
-    data.tile(pos);
+    return data.tile(pos);
   }
   
   enum {
