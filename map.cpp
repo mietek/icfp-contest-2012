@@ -70,6 +70,8 @@ bool Map::done() const
 
 bool Map::moveRobot(const Position &newPos)
 {
+  _moves++;
+  
   if (newPos.x < 0 || newPos.y < 0)
     return false;
   
@@ -111,7 +113,6 @@ bool Map::moveRobot(const Position &newPos)
   }
   
   if (moved) {
-    _moves++;
     tile(robotPosition()) = Empty;
     tile(newPos) = Robot;
     _robotPosition = newPos;
