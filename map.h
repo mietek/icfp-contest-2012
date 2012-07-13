@@ -7,7 +7,7 @@
 
 class Map {
 public:
-  Map() : _lambdas(0), _collected(0), _moves(0) {}
+  Map() : _lambdas(0), _collected(0), _moves(0), _aborted(false), _won(false), _robotHit(false) {}
   
   struct Position {
     int x, y;
