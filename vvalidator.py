@@ -27,7 +27,8 @@ def randomMapFile():
     return choice(testFiles())
 
 def validatorOutput(validatorName, mapFile, answer):
-    output = subprocess.Popen(["./" + validatorName, "-vv", mapFile, answer], stdout=subprocess.PIPE).communicate()[0].rstrip()
+    p = subprocess.Popen(["./" + validatorName, "-vv", mapFile], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    output = p.communicate(input=answer+'\n')[0].rstrip()
     lines = output.split('\n')
     score = lines[0]
     finalMap = lines[1:]
