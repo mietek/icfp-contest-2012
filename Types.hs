@@ -2,19 +2,28 @@ module Types where
 
 import Prelude hiding (Either(..))
 
-data Objects = Robot | Lambda | Rock | Wall | CLift | OLift | Earth | Empty
+data Object = Robot | Lambda | Rock | Wall | CLift | OLift | Earth | Empty
   deriving (Enum,Eq)
 
-instance Show Objects where
+instance Show Object where
     show Rock   = "*"
     show Lambda = "\\"
     show Robot  = "R"
     show Wall   = "#"
-    show OLift  = "L"
+    show CLift  = "L"
     show Earth  = "."
     show Empty  = " "
 
-instance Read Objects where
+readObj :: Char -> Object
+readObj 'R'  = Robot
+readObj '*'  = Rock
+readObj '#'  = Wall
+readObj '\\' = Lambda
+readObj 'L'  = CLift
+readObj '.'  = Earth
+readObj ' '  = Empty
+
+instance Read Object where
     readsPrec n ('R':rest)  = [(Robot,rest)]
     readsPrec n ('*':rest)  = [(Rock,rest)]
     readsPrec n ('#':rest)  = [(Wall,rest)]
@@ -24,10 +33,10 @@ instance Read Objects where
     readsPrec n (' ':rest)  = [(Empty,rest)]
 
 
-data Moves = Left | Right | Down | Up |  Wait | Abort
+data Move = Left | Right | Down | Up |  Wait | Abort
   deriving (Enum,Eq)
 
-instance Show Moves where
+instance Show Move where
     show Left  = "L"
     show Right = "R"
     show Down  = "D"
@@ -35,7 +44,7 @@ instance Show Moves where
     show Wait  = "W"
     show Abort = "A"
 
-instance Read Moves where
+instance Read Move where
     readsPrec n ('L':rest) = [(Left,rest)]
     readsPrec n ('R':rest) = [(Right,rest)]
     readsPrec n ('D':rest) = [(Down,rest)]
@@ -47,7 +56,7 @@ instance Read Moves where
 
 type Position = (Int,Int)
 
-evalMoves :: Moves -> Position -> Position
+evalMoves :: Move -> Position -> Position
 evalMoves Left  (x,y) = (x - 1 ,y)
 evalMoves Right (x,y) = (x + 1 ,y)
 evalMoves Up (x,y)    = (x ,y + 1)
