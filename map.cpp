@@ -68,6 +68,17 @@ bool Map::done() const
   return _won || _robotHit || _aborted;
 }
 
+std::string Map::condition() const
+{
+  if (_aborted)
+    return "aborted";
+  if (_robotHit)
+    return "robot hit";
+  if (_won)
+    return "won";
+  return std::string();
+}
+
 bool Map::moveRobot(const Position &newPos)
 {
   _moves++;

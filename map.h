@@ -55,6 +55,7 @@ public:
   void abort() { _aborted = true; }
   bool done() const;
   int score() const;
+  std::string condition() const;
 
   bool moveRobot(const Position &newPos);
   const Position &robotPosition() const { return _robotPosition; }
