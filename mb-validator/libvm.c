@@ -177,6 +177,12 @@ void dump(const struct state *s) {
     fputc('\n', stderr);
 }
 
+void short_dump(const struct state *s) {
+    DEBUG_ASSERT(s);
+    fprintf(stdout, "%ld\n", s->score);
+    fputs(s->world, stdout);
+}
+
 
 struct state *copy(const struct state *s0) {
     DEBUG_ASSERT(s0);

@@ -68,6 +68,7 @@ toObject 'L'  = OClosedLift
 toObject 'O'  = OOpenLift
 toObject '.'  = OEarth
 toObject ' '  = OEmpty
+toObject _    = undefined
 
 
 data Move = MLeft | MRight | MUp | MDown | MWait | MAbort deriving (Eq, Ord)
@@ -99,6 +100,9 @@ foreign import ccall unsafe "libvm.h new_from_file"
 
 foreign import ccall unsafe "libvm.h dump"
   cDump :: CStatePtr -> IO ()
+
+foreign import ccall unsafe "libvm.h short_dump"
+  cShortDump :: CStatePtr -> IO ()
 
 foreign import ccall unsafe "libvm.h get_world_size"
   cGetWorldSize :: CStatePtr -> Ptr CLong -> Ptr CLong -> IO ()
@@ -151,6 +155,11 @@ dump :: State -> IO ()
 dump s =
   unwrapState s $ \sp ->
     return (cDump sp)
+
+shortDump :: State -> IO ()
+shortDump s =
+  unwrapState s $ \sp ->
+    return (cShortDump sp)
 
 getWorldSize :: State -> Size
 getWorldSize = getIntPair cGetWorldSize

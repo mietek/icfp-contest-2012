@@ -5,6 +5,7 @@ struct state *new(long input_length, const char *input);
 struct state *new_from_file(const char *path);
 
 void dump(const struct state *s);
+void short_dump(const struct state *s);
 
 void get_world_size(const struct state *s, long *out_world_w, long *out_world_h);
 void get_robot_point(const struct state *s, long *out_robot_x, long *out_robot_y);
