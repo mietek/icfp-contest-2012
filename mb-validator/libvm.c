@@ -306,6 +306,14 @@ static void unsafe_make_one_move(struct state *s, char move) {
             move_robot(s, x, y);
             s->condition = C_WIN;
             DEBUG_LOG("won\n");
+        } else if (object == O_ROCK && move == M_LEFT && get_object_at_point(s, x - 1, y) == O_EMPTY) {
+            move_robot(s, x, y);
+            set_object_at_point(s, x - 1, y, O_ROCK);
+            DEBUG_LOG("moved rock from (%ld, %ld) to (%ld, %ld)\n", x, y, x - 1, y);
+        } else if (object == O_ROCK && move == M_RIGHT && get_object_at_point(s, x + 1, y) == O_EMPTY) {
+            move_robot(s, x, y);
+            set_object_at_point(s, x + 1, y, O_ROCK);
+            DEBUG_LOG("moved rock from (%ld, %ld) to (%ld, %ld\n", x, y, x + 1, y);
         }
         else
             DEBUG_LOG("attempted invalid move '%c' from (%ld, %ld) to (%ld, %ld) which is '%c'\n", move, s->robot_x, s->robot_y, x, y, object);
