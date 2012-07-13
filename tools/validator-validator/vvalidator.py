@@ -1,17 +1,17 @@
-#!/usr/bin/env python -u
+#!/usr/bin/env python
 import subprocess, sys, os
 from random import choice
 
-validators = set(['v1', 'v2'])
+validators = set(['validate.py', 'lambdamine'])
 
-authors = {'v1':'mietek',
-           'v2':'pobara'}
+authors = {'validate.py':'pobara',
+           'lambdamine':'divide'}
 
 moves = ['L', 'R', 'U', 'D', 'W']
 
 def testFiles():
-    dirname, dirnames, filenames = next(os.walk('tests/'))
-    return filenames
+    dirname, dirnames, filenames = next(os.walk('../../tests/'))
+    return map (lambda s: '../../tests/' + s, filenames)
 
 def randomAnswer():
     ans = ''

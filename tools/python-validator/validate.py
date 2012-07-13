@@ -22,7 +22,12 @@ def get_map(path):
         cmap.fromstring(line)
     return (n, m), cmap
 
-size, cmap = get_map(sys.argv[1])
+maparg = ''
+if sys.argv[1] == '-vv':
+    maparg = sys.argv[2]
+else:
+    maparg = sys.argv[1]
+size, cmap = get_map(maparg)
 width, height = size
 pos = cmap.index('R')
 lambdas_to_lift = cmap.count('\\')
