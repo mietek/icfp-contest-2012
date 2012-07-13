@@ -31,7 +31,7 @@ wrapState sp = do
 getInt :: (CStatePtr -> CLong) -> State -> Int
 getInt action s =
   unwrapState s $ \sp ->
-    return (fromEnum (cGetMoveCount sp))
+    return (fromEnum (action sp))
 
 getIntPair :: (CStatePtr -> Ptr CLong -> Ptr CLong -> IO ()) -> State -> (Int, Int)
 getIntPair action s =
