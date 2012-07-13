@@ -79,6 +79,8 @@ static void scan_input(long input_length, const char *input, long *out_world_w, 
     long world_w = 0, world_h = 0, w = 0, i;
     for (i = 0; i < input_length; i++) {
         if (input[i] == '\n') {
+            if (w == 0)
+                break;
             if (w > world_w)
                 world_w = w;
             world_h++;
@@ -104,6 +106,8 @@ static void copy_input(struct state *s, long input_length, const char* input) {
     long w = 0, h = 0, j = 0, i;
     for (i = 0; i < input_length; i++) {
         if (input[i] == '\n') {
+            if (w == 0)
+                break;
             while (w < s->world_w) {
                 s->world[j++] = O_EMPTY;
                 w++;
