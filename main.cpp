@@ -36,10 +36,10 @@ int main(int argc, char **argv)
   
   do {
     std::cin.get(c);
-    if (c == '\n')
-      continue;
     if (std::cin.eof())
       c = Robot::Abort;
+    if (c == '\n')
+      continue;
     r.execute(c);
     m.update();
     if (!vvMode)
