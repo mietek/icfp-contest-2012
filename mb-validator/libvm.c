@@ -349,6 +349,7 @@ static void update_world(struct state *s, const struct state *t) {
         return;
     for (y = 1; y <= s->world_h; y++) {
         for (x = 1; x <= s->world_w; x++) {
+            char object;
             object = get(t, x, y);
             if (object == O_ROCK && get(t, x, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
