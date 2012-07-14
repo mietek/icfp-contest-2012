@@ -1,6 +1,5 @@
 module Main where
 
-import Control.Monad (foldM_)
 import System.Environment (getArgs)
 
 import VM
@@ -16,12 +15,16 @@ runWithFile v path = do
   case v of
     Score     -> print (getScore (makeMoves s0 moves))
     FinalDump -> dump (makeMoves s0 moves)
-    AllDumps  -> foldM_ dumpAndMove s0 moves
+    AllDumps  -> dumpAndMove s0 moves
       where
-        dumpAndMove s m = do
-          let s' = makeOneMove s m
-          dump s'
-          return s'
+        dumpAndMove _ [] = return ()
+        dumpAndMove s (m : ms) = do
+          let s1 = makeOneMove s m
+          if s1 /= s
+            then do
+              dump s1
+              dumpAndMove s1 ms
+            else return ()
 
 main :: IO ()
 main = do
