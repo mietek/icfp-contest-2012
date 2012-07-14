@@ -59,6 +59,7 @@ You can use the following functions:
 
     new :: ByteString -> State
     newFromFile :: String -> IO State
+    (==) :: State -> State -> Bool
 
     dump :: State -> IO ()
 
@@ -71,6 +72,10 @@ You can use the following functions:
     getUsedRobotWaterproofing :: State -> Int
     getLambdaCount :: State -> Int
     getCollectedLambdaCount :: State -> Int
+    getTrampolineCount :: State -> Int
+    getTrampolinePoint :: State -> Char -> Maybe Point
+    getTargetPoint :: State -> Char -> Maybe Point
+    getTrampolineTarget :: State -> Char -> Maybe Char
     getMoveCount :: State -> Int
     getScore :: State -> Int
     getCondition :: State -> Condition
