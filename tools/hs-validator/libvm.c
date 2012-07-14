@@ -53,12 +53,10 @@
 #define M_WAIT  'W'
 #define M_ABORT 'A'
 
-enum {
-    C_NONE,
-    C_WIN,
-    C_LOSE,
-    C_ABORT
-};
+#define C_NONE  'N'
+#define C_WIN   'W'
+#define C_LOSE  'L'
+#define C_ABORT 'A'
 
 struct state {
     long world_w, world_h;
@@ -201,6 +199,7 @@ struct state *new(long input_length, const char *input) {
     s->world_w = world_w;
     s->world_h = world_h;
     s->robot_waterproofing = DEFAULT_ROBOT_WATERPROOFING;
+    s->condition = C_NONE;
     s->world_length = world_length;
     copy_input(s, input_length, input);
     return s;
@@ -239,7 +238,7 @@ void dump(const struct state *s) {
     DEBUG_LOG("collected_lambda_count   = %ld\n", s->collected_lambda_count);
     DEBUG_LOG("move_count               = %ld\n", s->move_count);
     DEBUG_LOG("score                    = %ld\n", s->score);
-    DEBUG_LOG("condition                = %d\n", s->condition);
+    DEBUG_LOG("condition                = %c\n", s->condition);
     DEBUG_LOG("world_length             = %ld\n", s->world_length);
     printf("%ld\n%s", s->score, s->world);
 }

@@ -85,7 +85,23 @@ fromMove MWait  = 'W'
 fromMove MAbort = 'A'
 
 
-data Condition = CNone | CWin | CLose | CAbort deriving (Enum, Eq, Ord, Show)
+data Condition = CNone | CWin | CLose | CAbort deriving (Eq, Ord)
+
+instance Show Condition where
+  show condition = [fromCondition condition]
+
+fromCondition :: Condition -> Char
+fromCondition CNone  = 'N'
+fromCondition CWin   = 'W'
+fromCondition CLose  = 'L'
+fromCondition CAbort = 'A'
+
+toCondition :: Char -> Condition
+toCondition 'N' = CNone
+toCondition 'W' = CWin
+toCondition 'L' = CLose
+toCondition 'A' = CAbort
+toCondition _   = undefined
 
 
 type Size = (Int, Int)
@@ -201,7 +217,7 @@ getScore = getInt cGetScore
 getCondition :: State -> Condition
 getCondition s =
   unwrapState s $ \sp ->
-    return (toEnum (fromEnum (castCCharToChar (cGetCondition sp))))
+    return (toCondition (castCCharToChar (cGetCondition sp)))
 
 get :: State -> Point -> Object
 get s (x, y) =
