@@ -141,9 +141,13 @@ class Board
 
   def clone
     new_board = []
-    @data.each do |line|
-      new_board = line.clone
+    @data.each_with_index do |line,idx|
+      new_board[idx] = []
+      line.each do |char|
+        new_board[idx] << char.clone
+      end
     end
+    new_board
   end
 
   def abort
