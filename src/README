@@ -1,3 +1,13 @@
+# Lifter
+
+To run lifter:
+
+    $ make
+    $ ./lifter < MAP_FILE
+
+
+# Validator
+
 To run validator with debug output:
 
     $ make
@@ -9,6 +19,8 @@ To run validator without debug output:
     $ make
     $ echo MOVE_SEQUENCE | ./validator MAP_FILE 2> /dev/null
 
+
+# VM
 
 To use VM functions interactively:
 
@@ -28,7 +40,6 @@ Which VM functions to use:
     newFromFile :: String -> IO State
 
     dump :: State -> IO ()
-    shortDump :: State -> IO ()
 
     getWorldSize :: State -> Size
     getRobotPoint :: State -> Point

@@ -8,7 +8,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "libvm.h"
+#include "vm.h"
 
 
 #define LOG(fmt, ...) \
