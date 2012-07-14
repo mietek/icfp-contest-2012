@@ -176,7 +176,7 @@ int main(int argc, char *argv[]){
 	do{
 		t = copy(s);
 		status=goSomewhere(t, &answer, i);
-		free(t);
+//		free(t);
 		t = copy(s);
 		if(status==0) 
 			s = make_moves(s, answer);
