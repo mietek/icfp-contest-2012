@@ -117,40 +117,8 @@ struct state {
 };
 
 
-inline void size_to_point(const struct state *s, long w, long h, long *out_x, long *out_y) {
-    DEBUG_ASSERT(s && out_x && out_y);
-    *out_x = w + 1;
-    *out_y = s->world_h - h;
-}
-
-inline void point_to_size(const struct state *s, long x, long y, long *out_w, long *out_h) {
-    DEBUG_ASSERT(s && out_w && out_h);
-    *out_w = x - 1;
-    *out_h = s->world_h - y;
-}
-
-inline long point_to_index(const struct state *s, long x, long y) {
-    DEBUG_ASSERT(s);
-    long w, h, i;
-    point_to_size(s, x, y, &w, &h);
-    i = h * (s->world_w + 1) + w;
-    return i;
-}
-
-inline char make_trampoline(long i) {
-    return O_FIRST_TRAMPOLINE + i - 1;
-}
-
-inline long unmake_trampoline(char trampoline) {
-    return trampoline - O_FIRST_TRAMPOLINE + 1;
-}
-
-inline char make_target(long i) {
-    return O_FIRST_TRAMPOLINE_TARGET + i - 1;
-}
-
-inline long unmake_target(char target) {
-    return target - O_FIRST_TRAMPOLINE_TARGET + 1;
+inline bool is_valid_point(long x, long y) {
+    return x && y;
 }
 
 inline bool is_valid_move(char move) {
@@ -166,13 +134,63 @@ inline bool is_valid_target(char target) {
 }
 
 
+inline void size_to_point(const struct state *s, long w, long h, long *out_x, long *out_y) {
+    DEBUG_ASSERT(s && out_x && out_y);
+    *out_x = w + 1;
+    *out_y = s->world_h - h;
+}
+
+inline void point_to_size(const struct state *s, long x, long y, long *out_w, long *out_h) {
+    DEBUG_ASSERT(s && out_w && out_h);
+    *out_w = x - 1;
+    *out_h = s->world_h - y;
+}
+
+
+inline long point_to_index(const struct state *s, long x, long y) {
+    DEBUG_ASSERT(s);
+    long w, h, i;
+    point_to_size(s, x, y, &w, &h);
+    i = h * (s->world_w + 1) + w;
+    return i;
+}
+
+
+inline char index_to_trampoline(long i) {
+    return O_FIRST_TRAMPOLINE + i - 1;
+}
+
+inline long trampoline_to_index(char trampoline) {
+    DEBUG_ASSERT(is_valid_trampoline(trampoline));
+    return trampoline - O_FIRST_TRAMPOLINE + 1;
+}
+
+
+inline char index_to_target(long i) {
+    return O_FIRST_TRAMPOLINE_TARGET + i - 1;
+}
+
+inline long target_to_index(char target) {
+    DEBUG_ASSERT(is_valid_target(target));
+    return target - O_FIRST_TRAMPOLINE_TARGET + 1;
+}
+
+
+inline char get(const struct state *s, long x, long y) {
+    DEBUG_ASSERT(s && x >= 1 && x <= s->world_w && y >= 1 && y <= s->world_h);
+    return s->world[point_to_index(s, x, y)];
+}
+
+inline void put(struct state *s, long x, long y, char object) {
+    DEBUG_ASSERT(s && x >= 1 && x <= s->world_w && y >= 1 && y <= s->world_h);
+    s->world[point_to_index(s, x, y)] = object;
+}
+
+
 void scan_input(long input_length, const char *input, long *out_world_w, long *out_world_h, long *out_world_length);
 
 void copy_input_metadata(struct state *s, long input_length, const char *input);
 void copy_input(struct state *s, long input_length, const char *input);
-
-char get(const struct state *s, long x, long y);
-void put(struct state *s, long x, long y, char object);
 
 void move_robot(struct state *s, long x, long y);
 void collect_lambda(struct state *s);

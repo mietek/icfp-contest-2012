@@ -83,10 +83,10 @@ void dump(const struct state *s) {
     char trampoline, target;
     long i, j;
     for (i = 1; i <= MAX_TRAMPOLINE_COUNT; i++) {
-        if (s->trampoline_x[i]) {
-            trampoline = make_trampoline(i);
+        if (is_valid_point(s->trampoline_x[i], s->trampoline_y[i])) {
+            trampoline = index_to_trampoline(i);
             j = s->trampoline_index_to_target_index[i];
-            target = make_target(j);
+            target = index_to_target(j);
             DEBUG_LOG("trampoline '%c' (%ld, %ld) -> '%c' (%ld, %ld)\n", trampoline, s->trampoline_x[i], s->trampoline_y[i], target, s->target_x[j], s->target_y[j]);
         }
     }
@@ -154,8 +154,8 @@ long get_trampoline_count(const struct state *s) {
 
 bool get_trampoline_point(const struct state *s, char trampoline, long *out_trampoline_x, long *out_trampoline_y) {
     DEBUG_ASSERT(s && is_valid_trampoline(trampoline) && out_trampoline_x && out_trampoline_y);
-    int i = unmake_trampoline(trampoline);
-    if (s->trampoline_x[i]) {
+    int i = trampoline_to_index(trampoline);
+    if (is_valid_point(s->trampoline_x[i], s->trampoline_y[i])) {
         *out_trampoline_x = s->trampoline_x[i];
         *out_trampoline_y = s->trampoline_y[i];
         return true;
@@ -165,8 +165,8 @@ bool get_trampoline_point(const struct state *s, char trampoline, long *out_tram
 
 bool get_target_point(const struct state *s, char target, long *out_target_x, long *out_target_y) {
     DEBUG_ASSERT(s && is_valid_target(target) && out_target_x && out_target_y);
-    int i = unmake_target(target);
-    if (s->target_x[i]) {
+    int i = target_to_index(target);
+    if (is_valid_point(s->target_x[i], s->target_y[i])) {
         *out_target_x = s->target_x[i];
         *out_target_y = s->target_y[i];
         return true;
@@ -176,9 +176,9 @@ bool get_target_point(const struct state *s, char target, long *out_target_x, lo
 
 bool get_trampoline_target(const struct state *s, char trampoline, char *out_target) {
     DEBUG_ASSERT(s && is_valid_trampoline(trampoline));
-    int i = unmake_trampoline(trampoline);
-    if (s->trampoline_x[i]) {
-        *out_target = make_target(s->trampoline_index_to_target_index[i]);
+    int i = trampoline_to_index(trampoline);
+    if (is_valid_point(s->trampoline_x[i], s->trampoline_y[i])) {
+        *out_target = index_to_target(s->trampoline_index_to_target_index[i]);
         return true;
     }
     return false;
@@ -197,11 +197,6 @@ long get_score(const struct state *s) {
 char get_condition(const struct state *s) {
     DEBUG_ASSERT(s);
     return s->condition;
-}
-
-inline char get(const struct state *s, long x, long y) {
-    DEBUG_ASSERT(s && x >= 1 && x <= s->world_w && y >= 1 && y <= s->world_h);
-    return s->world[point_to_index(s, x, y)];
 }
 
 char safe_get(const struct state *s, long x, long y) {
@@ -324,12 +319,12 @@ void copy_input_metadata(struct state *s, long input_length, const char *input) 
                     s->robot_waterproofing = atoi(token);
                     key = K_NONE;
                 } else if (key == K_TRAMPOLINE) {
-                    trampoline_i = unmake_trampoline(*token);
+                    trampoline_i = trampoline_to_index(*token);
                     key = K_TRAMPOLINE_TARGET_KEYWORD;
                 } else if (key == K_TRAMPOLINE_TARGET_KEYWORD)
                     key = K_TRAMPOLINE_TARGET;
                 else if (key == K_TRAMPOLINE_TARGET) {
-                    target_i = unmake_target(*token);
+                    target_i = target_to_index(*token);
                     s->trampoline_index_to_target_index[trampoline_i] = target_i;
                     s->trampoline_count++;
                     key = K_NONE;
@@ -355,10 +350,10 @@ void copy_input(struct state *s, long input_length, const char *input) {
             else if (input[i] == O_CLOSED_LIFT)
                 size_to_point(s, w, h, &s->lift_x, &s->lift_y);
             else if (is_valid_trampoline(input[i])) {
-                trampoline_i = unmake_trampoline(input[i]);
+                trampoline_i = trampoline_to_index(input[i]);
                 size_to_point(s, w, h, &s->trampoline_x[trampoline_i], &s->trampoline_y[trampoline_i]);
             } else if (is_valid_target(input[i])) {
-                target_i = unmake_target(input[i]);
+                target_i = target_to_index(input[i]);
                 size_to_point(s, w, h, &s->target_x[target_i], &s->target_y[target_i]);
             }
             s->world[j] = input[i];
@@ -386,12 +381,6 @@ void copy_input(struct state *s, long input_length, const char *input) {
     i++;
     s->world[j] = 0;
     copy_input_metadata(s, input_length - i, input + i);
-}
-
-
-inline void put(struct state *s, long x, long y, char object) {
-    DEBUG_ASSERT(s && x >= 1 && x <= s->world_w && y >= 1 && y <= s->world_h);
-    s->world[point_to_index(s, x, y)] = object;
 }
 
 
@@ -456,7 +445,7 @@ void execute_move(struct state *s, char move) {
             DEBUG_LOG("robot pushed rock from (%ld, %ld) to (%ld, %ld\n", x, y, x + 1, y);
         } else if (is_valid_trampoline(object)) {
             long trampoline_i, target_i, i;
-            trampoline_i = unmake_trampoline(object);
+            trampoline_i = trampoline_to_index(object);
             DEBUG_ASSERT(s->trampoline_x[trampoline_i]);
             target_i = s->trampoline_index_to_target_index[trampoline_i];
             DEBUG_ASSERT(s->target_x[target_i]);
