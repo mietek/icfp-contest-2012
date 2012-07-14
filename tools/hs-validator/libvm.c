@@ -384,9 +384,15 @@ inline static void collect_lambda(struct state *s) {
 }
 
 
+inline static bool is_valid_move(char move) {
+    return move == M_LEFT || move == M_RIGHT || move == M_UP || move == M_DOWN || move == M_WAIT || move == M_ABORT;
+}
+
+
 static void execute_move(struct state *s, char move) {
     DEBUG_ASSERT(s);
     DEBUG_ASSERT(s->condition == C_NONE);
+    DEBUG_ASSERT(is_valid_move(move));
     if (move == M_LEFT || move == M_RIGHT || move == M_UP || move == M_DOWN) {
         long x, y;
         char object;
@@ -500,10 +506,13 @@ struct state *make_one_move(const struct state *s0, char move) {
     DEBUG_ASSERT(s0);
     struct state *s, *t;
     t = copy(s0);
-    execute_move(t, move);
-    s = copy(t);
-    update_world(s, t);
-    free(t);
+    if (is_valid_move(move)) {
+        execute_move(t, move);
+        s = copy(t);
+        update_world(s, t);
+        free(t);
+    } else
+        s = t;
     return s;
 }
 
@@ -517,12 +526,15 @@ struct state *make_moves(const struct state *s0, const char *moves) {
         s = (struct state *)s0;
         while (*moves) {
             t = copy(s);
-            execute_move(t, *moves);
-            s = copy(t);
-            update_world(s, t);
-            free(t);
-            if (s->condition != C_NONE)
-                break;
+            if (is_valid_move(*moves)) {
+                execute_move(t, *moves);
+                s = copy(t);
+                update_world(s, t);
+                free(t);
+                if (s->condition != C_NONE)
+                    break;
+            } else
+                s = t;
             moves++;
         }
     }
