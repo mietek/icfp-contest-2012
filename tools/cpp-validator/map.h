@@ -8,10 +8,11 @@
 class Map {
 public:
   Map() : 
-    _lambdas(0), _collected(0), _moves(0), 
+    _lambdas(0), _collected(0), _moves(-1), 
     _water(0), _flooding(0), _waterproof(10),
     _drank(0), _ticks(0),
-    _robotHit(false), _aborted(false), _won(false), _drowned(false) {}
+    _robotHit(false), _aborted(false), _won(false), _drowned(false),
+    _vvMode(false) {}
   
   struct Position {
     int x, y;
@@ -63,6 +64,7 @@ public:
 
   bool moveRobot(const Position &newPos);
   const Position &robotPosition() const { return _robotPosition; }
+  void setVv(bool state = true) { _vvMode = state; }
 
 private:
   class MapData : public std::vector<std::string> {
@@ -84,6 +86,7 @@ private:
   int _lambdas, _collected, _moves;
   unsigned int _water, _flooding, _waterproof, _drank, _ticks;
   bool _robotHit, _aborted, _won, _drowned;
+  bool _vvMode;
 };
 
 std::ostream &operator<<(std::ostream &stream, const Map &map);

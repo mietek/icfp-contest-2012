@@ -2,12 +2,14 @@ class Board
   attr_reader :data
   attr_reader :moves_log
   attr_reader :score
+  attr_reader :finished
 
-  def initialize(params)
-    @data = parse_board(params)
+  def initialize(file, interactive = true)
+    @data = parse_board(file)
     @moves_log = []
     @score = 0
     @lambdas = 0
+    @interactive = interactive
   end
 
   def make_move(direction)
@@ -27,20 +29,57 @@ class Board
     when 'W' then
       ;
     when 'A' then
-      abort
+      abort!
     end
     tick
   end
 
   def draw
     50.times { puts '' }
+    puts "Moves log: #{@moves_log.join('')}"
     puts "Score: #{@score}"
     @data.reverse.each do |line|
       puts line.join('')
     end
   end
 
+  def formatted_draw
+    puts @score
+    @data.reverse.each do |line|
+      puts line.join('')
+    end
+  end
+
+  def finished?
+    !!@finished
+  end
+
   private 
+
+  def win!
+    @score += 50 * @lambdas
+    finish('win')
+  end
+
+  def abort!
+    @score += 25 * @lambdas
+    finish('abort')
+  end
+
+  def lose!
+    finish('were crushed')
+  end
+
+  def finish(reason)
+    @finished = true
+    unless @interactive
+      formatted_draw
+    else
+      draw
+      puts "You #{reason}! #{@score} points."
+      exit
+    end
+  end
 
   def move_to(y, x)
     current_x, current_y = current_position
@@ -50,9 +89,9 @@ class Board
       @data[current_y][current_x] = ' '
 
     elsif @data[y][x] == 'O'
-      @score += 50 * @lambdas
-      puts "You won! #{@score} points."
-      exit
+      @data[y][x] = 'R'
+      @data[current_y][current_x] = ' '
+      win!
 
     elsif @data[y][x] == "\\"
       @score += 25
@@ -111,8 +150,7 @@ class Board
   def check_crushing(y, x)
     current_x, current_y = current_position
     if current_x == x && current_y == y
-      puts "Robot crushed. #{@score} points."
-      exit
+      lose!
     end
   end
 
@@ -141,15 +179,13 @@ class Board
 
   def clone
     new_board = []
-    @data.each do |line|
-      new_board = line.clone
+    @data.each_with_index do |line,idx|
+      new_board[idx] = []
+      line.each do |char|
+        new_board[idx] << char.clone
+      end
     end
-  end
-
-  def abort
-    @score += 25 * @lambdas
-    puts "Mission aborted. #{@score} points."
-    exit
+    new_board
   end
 
 end

@@ -33,6 +33,9 @@ def validatorOutput(validatorName, mapFile, answer):
     lines = output.split('\n')
     score = lines[0]
     finalMap = lines[1:]
+    finalMap = map (lambda line: line.rstrip(), finalMap)
+    while finalMap[-1] == '':
+      finalMap = finalMap[0:-2]
     return (score, finalMap)
 
 dotter = 0

@@ -85,7 +85,23 @@ fromMove MWait  = 'W'
 fromMove MAbort = 'A'
 
 
-data Condition = CNone | CWin | CLose | CAbort deriving (Enum, Eq, Ord, Show)
+data Condition = CNone | CWin | CLose | CAbort deriving (Eq, Ord)
+
+instance Show Condition where
+  show condition = [fromCondition condition]
+
+fromCondition :: Condition -> Char
+fromCondition CNone  = 'N'
+fromCondition CWin   = 'W'
+fromCondition CLose  = 'L'
+fromCondition CAbort = 'A'
+
+toCondition :: Char -> Condition
+toCondition 'N' = CNone
+toCondition 'W' = CWin
+toCondition 'L' = CLose
+toCondition 'A' = CAbort
+toCondition _   = undefined
 
 
 type Size = (Int, Int)
@@ -101,9 +117,6 @@ foreign import ccall unsafe "libvm.h new_from_file"
 foreign import ccall unsafe "libvm.h dump"
   cDump :: CStatePtr -> IO ()
 
-foreign import ccall unsafe "libvm.h short_dump"
-  cShortDump :: CStatePtr -> IO ()
-
 foreign import ccall unsafe "libvm.h get_world_size"
   cGetWorldSize :: CStatePtr -> Ptr CLong -> Ptr CLong -> IO ()
 
@@ -112,6 +125,18 @@ foreign import ccall unsafe "libvm.h get_robot_point"
 
 foreign import ccall unsafe "libvm.h get_lift_point"
   cGetLiftPoint :: CStatePtr -> Ptr CLong -> Ptr CLong -> IO ()
+
+foreign import ccall unsafe "libvm.h get_water_level"
+  cGetWaterLevel :: CStatePtr -> CLong
+
+foreign import ccall unsafe "libvm.h get_flooding_rate"
+  cGetFloodingRate :: CStatePtr -> CLong
+
+foreign import ccall unsafe "libvm.h get_robot_waterproofing"
+  cGetRobotWaterproofing :: CStatePtr -> CLong
+
+foreign import ccall unsafe "libvm.h get_used_robot_waterproofing"
+  cGetUsedRobotWaterproofing :: CStatePtr -> CLong
 
 foreign import ccall unsafe "libvm.h get_lambda_count"
   cGetLambdaCount :: CStatePtr -> CLong
@@ -156,11 +181,6 @@ dump s =
   unwrapState s $ \sp ->
     return (cDump sp)
 
-shortDump :: State -> IO ()
-shortDump s =
-  unwrapState s $ \sp ->
-    return (cShortDump sp)
-
 getWorldSize :: State -> Size
 getWorldSize = getIntPair cGetWorldSize
 
@@ -169,6 +189,18 @@ getRobotPoint = getIntPair cGetRobotPoint
 
 getLiftPoint :: State -> Point
 getLiftPoint = getIntPair cGetLiftPoint
+
+getWaterLevel :: State -> Int
+getWaterLevel = getInt cGetWaterLevel
+
+getFloodingRate :: State -> Int
+getFloodingRate = getInt cGetFloodingRate
+
+getRobotWaterproofing :: State -> Int
+getRobotWaterproofing = getInt cGetRobotWaterproofing
+
+getUsedRobotWaterproofing :: State -> Int
+getUsedRobotWaterproofing = getInt cGetUsedRobotWaterproofing
 
 getLambdaCount :: State -> Int
 getLambdaCount = getInt cGetLambdaCount
@@ -185,7 +217,7 @@ getScore = getInt cGetScore
 getCondition :: State -> Condition
 getCondition s =
   unwrapState s $ \sp ->
-    return (toEnum (fromEnum (castCCharToChar (cGetCondition sp))))
+    return (toCondition (castCCharToChar (cGetCondition sp)))
 
 get :: State -> Point -> Object
 get s (x, y) =

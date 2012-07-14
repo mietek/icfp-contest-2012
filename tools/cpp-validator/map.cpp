@@ -50,7 +50,7 @@ std::ostream &operator<<(std::ostream &stream, const Map &map)
   
   for (unsigned int i = 0; i < map.data.size(); ++i) {
     stream << map.data[i];
-    if (i == water)
+    if (!map._vvMode && i == water)
       stream << "~";
     stream << std::endl;
   }
@@ -60,6 +60,8 @@ std::ostream &operator<<(std::ostream &stream, const Map &map)
 
 void Map::update() 
 {
+  _moves++;
+  
   MapData newMap(data);
 
   for (unsigned int y = 0; y < data.size(); ++y) {
@@ -143,8 +145,6 @@ std::string Map::condition() const
 
 bool Map::moveRobot(const Position &newPos)
 {
-  _moves++;
-  
   if (newPos.x < 0 || newPos.y < 0)
     return false;
   

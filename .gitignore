@@ -1,2 +1,2 @@
-*.a
-tools/hs-validator/validator
+icfp-*.tgz
+lifter
