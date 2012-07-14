@@ -36,15 +36,13 @@ bin/debugvalidator: bin src/Validator.hs src/VM.hs bin/libdebugvm.o
 
 tarball: $(TARBALL)
 
-$(TARBALL): lifter
+$(TARBALL): bin/lifter
+	cp bin/lifter lifter
 	rm -f src/*.hi src/*.o
 	tar zcvf $(TARBALL) install lifter Makefile PACKAGES-TESTING README src
-
-lifter: bin/lifter
-	cp bin/lifter lifter
 
 
 clean:
 	rm -f bin/* src/*.hi src/*.o lifter $(TARBALL)
 
-.PHONY: all clean
+.PHONY: all tarball clean
