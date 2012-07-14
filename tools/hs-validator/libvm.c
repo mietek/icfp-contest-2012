@@ -28,7 +28,7 @@
     } while (0)
 #define ASSERT(val) assert(val)
 
-#if 1
+#if DEBUG
 #define DEBUG_LOG(fmt, ...) LOG(fmt, ##__VA_ARGS__)
 #define DEBUG_ASSERT(val) ASSERT(val)
 #else
@@ -64,6 +64,10 @@ struct state {
     long world_w, world_h;
     long robot_x, robot_y;
     long lift_x, lift_y;
+    long water_level;
+    long flooding_rate;
+    long robot_waterproofing;
+    long used_robot_waterproofing;
     long lambda_count;
     long collected_lambda_count;
     long move_count;
@@ -102,7 +106,57 @@ inline static void make_point(struct state *s, long w, long h, long *out_x, long
 }
 
 
-static void copy_input(struct state *s, long input_length, const char* input) {
+enum {
+    K_NONE,
+    K_WATER,
+    K_FLOODING,
+    K_WATERPROOF,
+    K_INVALID
+};
+
+#define MAX_TOKEN_SIZE 16
+
+static void copy_input_metadata(struct state *s, long input_length, const char *input) {
+    DEBUG_ASSERT(s && input);
+    char key = K_NONE, token[MAX_TOKEN_SIZE + 1];
+    long w = 0, i;
+    for (i = 0; i < input_length; i++) {
+        if (input[i] != ' ' && input[i] != '\n')
+            w++;
+        if (i == input_length - 1 || input[i] == ' ' || input[i] == '\n') {
+            if (w == 0)
+                continue;
+            if (w > MAX_TOKEN_SIZE)
+                w = MAX_TOKEN_SIZE;
+            memcpy(token, input + i - w, w);
+            token[w] = 0;
+            if (key == K_NONE) {
+                if (!strcmp(token, "Water"))
+                    key = K_WATER;
+                else if (!strcmp(token, "Flooding"))
+                    key = K_FLOODING;
+                else if (!strcmp(token, "Waterproof"))
+                    key = K_WATERPROOF;
+                else {
+                    key = K_INVALID;
+                    DEBUG_LOG("found invalid metadata key '%s'\n", token);
+                }
+            } else {
+                if (key == K_WATER)
+                    s->water_level = atoi(token);
+                else if (key == K_FLOODING)
+                    s->flooding_rate = atoi(token);
+                else if (key == K_WATERPROOF)
+                    s->robot_waterproofing = atoi(token);
+                key = K_NONE;
+            }
+            w = 0;
+        }
+    }
+}
+
+
+static void copy_input(struct state *s, long input_length, const char *input) {
     DEBUG_ASSERT(s && input);
     long w = 0, h = 0, j = 0, i;
     for (i = 0; i < input_length; i++) {
@@ -128,9 +182,13 @@ static void copy_input(struct state *s, long input_length, const char* input) {
             w = 0;
         }
     }
+    i++;
     s->world[j] = 0;
+    copy_input_metadata(s, input_length - i, input + i);
 }
 
+
+#define DEFAULT_ROBOT_WATERPROOFING 10
 
 struct state *new(long input_length, const char *input) {
     DEBUG_ASSERT(input);
@@ -142,6 +200,7 @@ struct state *new(long input_length, const char *input) {
     memset(s, 0, sizeof(struct state));
     s->world_w = world_w;
     s->world_h = world_h;
+    s->robot_waterproofing = DEFAULT_ROBOT_WATERPROOFING;
     s->world_length = world_length;
     copy_input(s, input_length, input);
     return s;
@@ -169,26 +228,20 @@ struct state *new_from_file(const char *path) {
 
 void dump(const struct state *s) {
     DEBUG_ASSERT(s);
-    fputs("----------------------------------------------------------------\n", stderr);
-    fprintf(stderr, "world_size             = (%ld, %ld)\n", s->world_w, s->world_h);
-    fprintf(stderr, "robot_point            = (%ld, %ld)\n", s->robot_x, s->robot_y);
-    fprintf(stderr, "lift_point             = (%ld, %ld)\n", s->lift_x, s->lift_y);
-    fprintf(stderr, "lambda_count           = %ld\n", s->lambda_count);
-    fprintf(stderr, "collected_lambda_count = %ld\n", s->collected_lambda_count);
-    fprintf(stderr, "move_count             = %ld\n", s->move_count);
-    fprintf(stderr, "score                  = %ld\n", s->score);
-    fprintf(stderr, "condition              = %d\n", s->condition);
-    fprintf(stderr, "world_length           = %ld\n\n", s->world_length);
-    fputs(s->world, stderr);
-    fputc('\n', stderr);
-}
-
-
-void short_dump(const struct state *s) {
-    DEBUG_ASSERT(s);
-    fprintf(stdout, "%ld\n", s->score);
-    fputs(s->world, stdout);
-    fputc('\n', stdout);
+    DEBUG_LOG("world_size               = (%ld, %ld)\n", s->world_w, s->world_h);
+    DEBUG_LOG("robot_point              = (%ld, %ld)\n", s->robot_x, s->robot_y);
+    DEBUG_LOG("lift_point               = (%ld, %ld)\n", s->lift_x, s->lift_y);
+    DEBUG_LOG("water_level              = %ld\n", s->water_level);
+    DEBUG_LOG("flooding_rate            = %ld\n", s->flooding_rate);
+    DEBUG_LOG("robot_waterproofing      = %ld\n", s->robot_waterproofing);
+    DEBUG_LOG("used_robot_waterproofing = %ld\n", s->used_robot_waterproofing);
+    DEBUG_LOG("lambda_count             = %ld\n", s->lambda_count);
+    DEBUG_LOG("collected_lambda_count   = %ld\n", s->collected_lambda_count);
+    DEBUG_LOG("move_count               = %ld\n", s->move_count);
+    DEBUG_LOG("score                    = %ld\n", s->score);
+    DEBUG_LOG("condition                = %d\n", s->condition);
+    DEBUG_LOG("world_length             = %ld\n", s->world_length);
+    LOG("%ld\n%s", s->score, s->world);
 }
 
 
@@ -220,6 +273,30 @@ void get_lift_point(const struct state *s, long *out_lift_x, long *out_lift_y) {
     DEBUG_ASSERT(s && out_lift_x && out_lift_y);
     *out_lift_x = s->lift_x;
     *out_lift_y = s->lift_y;
+}
+
+
+long get_water_level(const struct state *s) {
+    DEBUG_ASSERT(s);
+    return s->water_level;
+}
+
+
+long get_flooding_rate(const struct state *s) {
+    DEBUG_ASSERT(s);
+    return s->flooding_rate;
+}
+
+
+long get_robot_waterproofing(const struct state *s) {
+    DEBUG_ASSERT(s);
+    return s->robot_waterproofing;
+}
+
+
+long get_used_robot_waterproofing(const struct state *s) {
+    DEBUG_ASSERT(s);
+    return s->used_robot_waterproofing;
 }
 
 
@@ -290,6 +367,10 @@ inline static void move_robot(struct state *s, long x, long y) {
     s->robot_y = y;
     put(s, x, y, O_ROBOT);
     DEBUG_LOG("moved to (%ld, %ld)\n", x, y);
+    if (s->used_robot_waterproofing && y > s->water_level) {
+        s->used_robot_waterproofing = 0;
+        DEBUG_LOG("waterproofing restored\n");
+    }
 }
 
 
@@ -303,9 +384,15 @@ inline static void collect_lambda(struct state *s) {
 }
 
 
+inline static bool is_valid_move(char move) {
+    return move == M_LEFT || move == M_RIGHT || move == M_UP || move == M_DOWN || move == M_WAIT || move == M_ABORT;
+}
+
+
 static void execute_move(struct state *s, char move) {
     DEBUG_ASSERT(s);
     DEBUG_ASSERT(s->condition == C_NONE);
+    DEBUG_ASSERT(is_valid_move(move));
     if (move == M_LEFT || move == M_RIGHT || move == M_UP || move == M_DOWN) {
         long x, y;
         char object;
@@ -372,34 +459,45 @@ static void update_world(struct state *s, const struct state *t) {
                 put(s, x, y - 1, O_ROCK);
                 if (t->robot_x == x && t->robot_y == y - 2) {
                     s->condition = C_LOSE;
-                    DEBUG_LOG("lost\n");
+                    DEBUG_LOG("lost by crushing\n");
                 }
             } else if (object == O_ROCK && get(t, x, y - 1) == O_ROCK && get(t, x + 1, y) == O_EMPTY && get(t, x + 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x + 1, y - 1, O_ROCK);
                 if (t->robot_x == x + 1 && t->robot_y == y - 2) {
                     s->condition = C_LOSE;
-                    DEBUG_LOG("lost\n");
+                    DEBUG_LOG("lost by crushing\n");
                 }
             } else if (object == O_ROCK && get(t, x, y - 1) == O_ROCK && (get(t, x + 1, y) != O_EMPTY || get(t, x + 1, y - 1) != O_EMPTY) && get(t, x - 1, y) == O_EMPTY && get(t, x - 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x - 1, y - 1, O_ROCK);
                 if (t->robot_x == x - 1 && t->robot_y == y - 2) {
                     s->condition = C_LOSE;
-                    DEBUG_LOG("lost\n");
+                    DEBUG_LOG("lost by crushing\n");
                 }
             } else if (object == O_ROCK && get(t, x, y - 1) == O_LAMBDA && get(t, x + 1, y) == O_EMPTY && get(t, x + 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x + 1, y - 1, O_ROCK);
                 if (t->robot_x == x + 1 && t->robot_y == y - 2) {
                     s->condition = C_LOSE;
-                    DEBUG_LOG("lost\n");
+                    DEBUG_LOG("lost by crushing\n");
                 }
             } else if (object == O_CLOSED_LIFT && t->collected_lambda_count == t->lambda_count) {
                 put(s, x, y, O_OPEN_LIFT);
                 DEBUG_LOG("lift opened\n");
             }
         }
+    }
+    if (t->robot_y <= s->water_level) {
+        s->used_robot_waterproofing++;
+        if (s->used_robot_waterproofing > s->robot_waterproofing) {
+            s->condition = C_LOSE;
+            DEBUG_LOG("lost by drowning\n");
+        }
+    }
+    if (s->flooding_rate && !(s->move_count % s->flooding_rate)) {
+        s->water_level++;
+        DEBUG_LOG("water level increased to %ld\n", s->water_level);
     }
 }
 
@@ -408,10 +506,13 @@ struct state *make_one_move(const struct state *s0, char move) {
     DEBUG_ASSERT(s0);
     struct state *s, *t;
     t = copy(s0);
-    execute_move(t, move);
-    s = copy(t);
-    update_world(s, t);
-    free(t);
+    if (is_valid_move(move)) {
+        execute_move(t, move);
+        s = copy(t);
+        update_world(s, t);
+        free(t);
+    } else
+        s = t;
     return s;
 }
 
@@ -425,12 +526,15 @@ struct state *make_moves(const struct state *s0, const char *moves) {
         s = (struct state *)s0;
         while (*moves) {
             t = copy(s);
-            execute_move(t, *moves);
-            s = copy(t);
-            update_world(s, t);
-            free(t);
-            if (s->condition != C_NONE)
-                break;
+            if (is_valid_move(*moves)) {
+                execute_move(t, *moves);
+                s = copy(t);
+                update_world(s, t);
+                free(t);
+                if (s->condition != C_NONE)
+                    break;
+            } else
+                s = t;
             moves++;
         }
     }

@@ -1,4 +1,48 @@
-To run:
+To run validator with debug output:
 
-make
-ghci -L. -lvm VM.hs
+    $ make
+    $ echo MOVE_SEQUENCE | ./validator MAP_FILE
+
+
+To run validator with short output, as intended for validator-validator:
+
+    $ make
+    $ echo MOVE_SEQUENCE | ./validator -vv MAP_FILE
+
+
+To use VM functions interactively:
+
+    $ make
+    $ ghci -L. -lvm VM.hs
+
+    > s <- newFromFile "MAP_FILE"
+    > dump s
+    > dump (makeMoves s "MOVE_SEQUENCE")
+    > print (getRobotPoint s)
+    > print (get s (getRobotPoint s))
+
+
+Which VM functions to use:
+
+    new :: ByteString -> State
+    newFromFile :: String -> IO State
+
+    dump :: State -> IO ()
+    shortDump :: State -> IO ()
+
+    getWorldSize :: State -> Size
+    getRobotPoint :: State -> Point
+    getLiftPoint :: State -> Point
+    getWaterLevel :: State -> Int
+    getFloodingRate :: State -> Int
+    getRobotWaterproofing :: State -> Int
+    getUsedRobotWaterproofing :: State -> Int
+    getLambdaCount :: State -> Int
+    getCollectedLambdaCount :: State -> Int
+    getMoveCount :: State -> Int
+    getScore :: State -> Int
+    getCondition :: State -> Condition
+    get :: State -> Point -> Object
+
+    makeOneMove :: State -> Char -> State
+    makeMoves :: State -> String -> State
