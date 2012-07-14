@@ -21,7 +21,7 @@ bin/validator: src/Validator.hs src/VM.hs bin/libvm.o
 
 
 bin/libdebugvm.o: src/libvm.h src/libvm.c
-	gcc -c $(DEBUFCFLAGS) -o bin/libdebugvm.o src/libvm.c
+	gcc -c $(DEBUGCFLAGS) -o bin/libdebugvm.o src/libvm.c
 
 bin/debuglifter: src/Lifter.hs src/VM.hs bin/libdebugvm.o
 	cd src; ghc $(HSFLAGS) -o ../bin/debuglifter Lifter.hs ../bin/libdebugvm.o
