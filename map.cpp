@@ -61,7 +61,9 @@ std::ostream &operator<<(std::ostream &stream, const Map &map)
 void Map::update() 
 {
   MapData newMap(data);
-
+  
+  _moves++;
+  
   for (unsigned int y = 0; y < data.size(); ++y) {
     for (unsigned int x = 0; x < data[y].size(); ++x) {
       Position pos{x, y};
@@ -143,8 +145,6 @@ std::string Map::condition() const
 
 bool Map::moveRobot(const Position &newPos)
 {
-  _moves++;
-  
   if (newPos.x < 0 || newPos.y < 0)
     return false;
   

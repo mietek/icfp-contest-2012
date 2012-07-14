@@ -8,7 +8,7 @@
 class Map {
 public:
   Map() : 
-    _lambdas(0), _collected(0), _moves(0), 
+    _lambdas(0), _collected(0), _moves(-1), 
     _water(0), _flooding(0), _waterproof(10),
     _drank(0), _ticks(0),
     _robotHit(false), _aborted(false), _won(false), _drowned(false) {}
