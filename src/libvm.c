@@ -159,38 +159,35 @@ inline char get(const struct state *s, long x, long y) {
 
 struct state *make_one_move(const struct state *s0, char move) {
     DEBUG_ASSERT(s0);
-    struct state *s, *t;
-    t = copy(s0);
-    if (is_valid_move(move)) {
-        execute_move(t, move);
-        s = copy(t);
-        update_world(s, t);
-        free(t);
-    } else
-        s = t;
+    struct state *s;
+    s = copy(s0);
+    if (s->condition == C_NONE && is_valid_move(move)) {
+        execute_move(s, move);
+        if (s->condition == C_NONE) {
+            struct state *s1;
+            s1 = copy(s);
+            update_world(s1, s);
+            free(s);
+            s = s1;
+        }
+    }
     return s;
 }
 
 struct state *make_moves(const struct state *s0, const char *moves) {
     DEBUG_ASSERT(s0 && moves);
-    struct state *s, *t;
-    if (!*moves)
-        s = copy(s0);
-    else {
-        s = (struct state *)s0;
-        while (*moves) {
-            t = copy(s);
-            if (is_valid_move(*moves)) {
-                execute_move(t, *moves);
-                s = copy(t);
-                update_world(s, t);
-                free(t);
-                if (s->condition != C_NONE)
-                    break;
-            } else
-                s = t;
-            moves++;
+    struct state *s;
+    s = copy(s0);
+    while (s->condition == C_NONE && is_valid_move(*moves)) {
+        execute_move(s, *moves);
+        if (s->condition == C_NONE) {
+            struct state *s1;
+            s1 = copy(s);
+            update_world(s1, s);
+            free(s);
+            s = s1;
         }
+        moves++;
     }
     return s;
 }
@@ -385,50 +382,49 @@ void execute_move(struct state *s, char move) {
     }
 }
 
-void update_world(struct state *s, const struct state *t) {
-    DEBUG_ASSERT(s && t);
+void update_world(struct state *s, const struct state *s0) {
+    DEBUG_ASSERT(s && s0);
+    DEBUG_ASSERT(s->condition == C_NONE);
     long x, y;
-    if (t->condition != C_NONE)
-        return;
     for (y = 1; y <= s->world_h; y++) {
         for (x = 1; x <= s->world_w; x++) {
             char object;
-            object = get(t, x, y);
-            if (object == O_ROCK && get(t, x, y - 1) == O_EMPTY) {
+            object = get(s0, x, y);
+            if (object == O_ROCK && get(s0, x, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x, y - 1, O_ROCK);
-                if (t->robot_x == x && t->robot_y == y - 2) {
+                if (s0->robot_x == x && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("lost by crushing\n");
                 }
-            } else if (object == O_ROCK && get(t, x, y - 1) == O_ROCK && get(t, x + 1, y) == O_EMPTY && get(t, x + 1, y - 1) == O_EMPTY) {
+            } else if (object == O_ROCK && get(s0, x, y - 1) == O_ROCK && get(s0, x + 1, y) == O_EMPTY && get(s0, x + 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x + 1, y - 1, O_ROCK);
-                if (t->robot_x == x + 1 && t->robot_y == y - 2) {
+                if (s0->robot_x == x + 1 && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("lost by crushing\n");
                 }
-            } else if (object == O_ROCK && get(t, x, y - 1) == O_ROCK && (get(t, x + 1, y) != O_EMPTY || get(t, x + 1, y - 1) != O_EMPTY) && get(t, x - 1, y) == O_EMPTY && get(t, x - 1, y - 1) == O_EMPTY) {
+            } else if (object == O_ROCK && get(s0, x, y - 1) == O_ROCK && (get(s0, x + 1, y) != O_EMPTY || get(s0, x + 1, y - 1) != O_EMPTY) && get(s0, x - 1, y) == O_EMPTY && get(s0, x - 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x - 1, y - 1, O_ROCK);
-                if (t->robot_x == x - 1 && t->robot_y == y - 2) {
+                if (s0->robot_x == x - 1 && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("lost by crushing\n");
                 }
-            } else if (object == O_ROCK && get(t, x, y - 1) == O_LAMBDA && get(t, x + 1, y) == O_EMPTY && get(t, x + 1, y - 1) == O_EMPTY) {
+            } else if (object == O_ROCK && get(s0, x, y - 1) == O_LAMBDA && get(s0, x + 1, y) == O_EMPTY && get(s0, x + 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x + 1, y - 1, O_ROCK);
-                if (t->robot_x == x + 1 && t->robot_y == y - 2) {
+                if (s0->robot_x == x + 1 && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("lost by crushing\n");
                 }
-            } else if (object == O_CLOSED_LIFT && t->collected_lambda_count == t->lambda_count) {
+            } else if (object == O_CLOSED_LIFT && s0->collected_lambda_count == s0->lambda_count) {
                 put(s, x, y, O_OPEN_LIFT);
                 DEBUG_LOG("lift opened\n");
             }
         }
     }
-    if (t->robot_y <= s->water_level) {
+    if (s0->robot_y <= s->water_level) {
         s->used_robot_waterproofing++;
         if (s->used_robot_waterproofing > s->robot_waterproofing) {
             s->condition = C_LOSE;
