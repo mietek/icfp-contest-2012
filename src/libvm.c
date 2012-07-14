@@ -314,10 +314,10 @@ void move_robot(struct state *s, long x, long y) {
     s->robot_x = x;
     s->robot_y = y;
     put(s, x, y, O_ROBOT);
-    DEBUG_LOG("moved to (%ld, %ld)\n", x, y);
+    DEBUG_LOG("robot moved to (%ld, %ld)\n", x, y);
     if (s->used_robot_waterproofing && y > s->water_level) {
         s->used_robot_waterproofing = 0;
-        DEBUG_LOG("waterproofing restored\n");
+        DEBUG_LOG("robot waterproofing restored\n");
     }
 }
 
@@ -327,7 +327,7 @@ void collect_lambda(struct state *s) {
     DEBUG_ASSERT(get(s, s->lift_x, s->lift_y) == O_CLOSED_LIFT);
     s->collected_lambda_count++;
     s->score += 25;
-    DEBUG_LOG("lambda collected\n");
+    DEBUG_LOG("robot collected lambda\n");
 }
 
 void execute_move(struct state *s, char move) {
@@ -357,28 +357,28 @@ void execute_move(struct state *s, char move) {
             move_robot(s, x, y);
             s->score += s->collected_lambda_count * 50;
             s->condition = C_WIN;
-            DEBUG_LOG("won\n");
+            DEBUG_LOG("robot won\n");
         } else if (object == O_ROCK && move == M_LEFT && get(s, x - 1, y) == O_EMPTY) {
             move_robot(s, x, y);
             put(s, x - 1, y, O_ROCK);
-            DEBUG_LOG("moved rock from (%ld, %ld) to (%ld, %ld)\n", x, y, x - 1, y);
+            DEBUG_LOG("robot pushed rock from (%ld, %ld) to (%ld, %ld)\n", x, y, x - 1, y);
         } else if (object == O_ROCK && move == M_RIGHT && get(s, x + 1, y) == O_EMPTY) {
             move_robot(s, x, y);
             put(s, x + 1, y, O_ROCK);
-            DEBUG_LOG("moved rock from (%ld, %ld) to (%ld, %ld\n", x, y, x + 1, y);
+            DEBUG_LOG("robot pushed rock from (%ld, %ld) to (%ld, %ld\n", x, y, x + 1, y);
         }
         else
-            DEBUG_LOG("attempted invalid move '%c' from (%ld, %ld) to (%ld, %ld) which is '%c'\n", move, s->robot_x, s->robot_y, x, y, object);
+            DEBUG_LOG("robot attempted invalid move '%c' from (%ld, %ld) to (%ld, %ld) which is '%c'\n", move, s->robot_x, s->robot_y, x, y, object);
         s->move_count++;
         s->score--;
     } else if (move == M_WAIT) {
-        DEBUG_LOG("waited\n");
+        DEBUG_LOG("robot waited\n");
         s->move_count++;
         s->score--;
     } else if (move == M_ABORT) {
         s->score += s->collected_lambda_count * 25;
         s->condition = C_ABORT;
-        DEBUG_LOG("aborted\n");
+        DEBUG_LOG("robot aborted\n");
     }
 }
 
@@ -395,44 +395,45 @@ void update_world(struct state *s, const struct state *s0) {
                 put(s, x, y - 1, O_ROCK);
                 if (s0->robot_x == x && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
-                    DEBUG_LOG("lost by crushing\n");
+                    DEBUG_LOG("robot lost by crushing\n");
                 }
             } else if (object == O_ROCK && get(s0, x, y - 1) == O_ROCK && get(s0, x + 1, y) == O_EMPTY && get(s0, x + 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x + 1, y - 1, O_ROCK);
                 if (s0->robot_x == x + 1 && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
-                    DEBUG_LOG("lost by crushing\n");
+                    DEBUG_LOG("robot lost by crushing\n");
                 }
             } else if (object == O_ROCK && get(s0, x, y - 1) == O_ROCK && (get(s0, x + 1, y) != O_EMPTY || get(s0, x + 1, y - 1) != O_EMPTY) && get(s0, x - 1, y) == O_EMPTY && get(s0, x - 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x - 1, y - 1, O_ROCK);
                 if (s0->robot_x == x - 1 && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
-                    DEBUG_LOG("lost by crushing\n");
+                    DEBUG_LOG("robot lost by crushing\n");
                 }
             } else if (object == O_ROCK && get(s0, x, y - 1) == O_LAMBDA && get(s0, x + 1, y) == O_EMPTY && get(s0, x + 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x + 1, y - 1, O_ROCK);
                 if (s0->robot_x == x + 1 && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
-                    DEBUG_LOG("lost by crushing\n");
+                    DEBUG_LOG("robot lost by crushing\n");
                 }
             } else if (object == O_CLOSED_LIFT && s0->collected_lambda_count == s0->lambda_count) {
                 put(s, x, y, O_OPEN_LIFT);
-                DEBUG_LOG("lift opened\n");
+                DEBUG_LOG("robot opened lift\n");
             }
         }
     }
     if (s0->robot_y <= s->water_level) {
+        DEBUG_LOG("robot is underwater\n");
         s->used_robot_waterproofing++;
         if (s->used_robot_waterproofing > s->robot_waterproofing) {
             s->condition = C_LOSE;
-            DEBUG_LOG("lost by drowning\n");
+            DEBUG_LOG("robot lost by drowning\n");
         }
     }
     if (s->flooding_rate && !(s->move_count % s->flooding_rate)) {
         s->water_level++;
-        DEBUG_LOG("water level increased to %ld\n", s->water_level);
+        DEBUG_LOG("robot increased water level to %ld\n", s->water_level);
     }
 }
