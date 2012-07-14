@@ -13,7 +13,7 @@ void reverse(char *x, int beg, int end){
 }
 
 int bounded(struct state *s, int w, int h){
-	return (w>=1 && w>=1 && w<= s->world_w && h<= s->world_h);
+	return (w>=1 && h>=1 && w<= s->world_w && h<= s->world_h);
 }
 
 
