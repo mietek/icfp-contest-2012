@@ -78,7 +78,7 @@ static void scan_input(long input_length, const char *input, long *out_world_w, 
     DEBUG_ASSERT(input && out_world_w && out_world_h);
     long world_w = 0, world_h = 0, w = 0, i;
     for (i = 0; i < input_length; i++) {
-        if (input[i] == '\n') {
+        if (i == input_length || input[i] == '\n') {
             if (w == 0)
                 break;
             if (w > world_w)
@@ -105,7 +105,7 @@ static void copy_input(struct state *s, long input_length, const char* input) {
     DEBUG_ASSERT(s && input);
     long w = 0, h = 0, j = 0, i;
     for (i = 0; i < input_length; i++) {
-        if (input[i] == '\n') {
+        if (i == input_length || input[i] == '\n') {
             if (w == 0)
                 break;
             while (w < s->world_w) {
@@ -181,10 +181,12 @@ void dump(const struct state *s) {
     fputc('\n', stderr);
 }
 
+
 void short_dump(const struct state *s) {
     DEBUG_ASSERT(s);
     fprintf(stdout, "%ld\n", s->score);
     fputs(s->world, stdout);
+    fputc('\n', stdout);
 }
 
 
