@@ -15,10 +15,10 @@ libdebugvm.o: libvm.h libvm.c
 	gcc -c -g -DDEBUG --std=c99 -Wall -O2 -o libdebugvm.o libvm.c
 
 debuglifter: libdebugvm.o VM.hs Lifter.hs
-	ghc --make -Wall -O2 -o lifter Lifter.hs libdebugvm.o
+	ghc --make -Wall -O2 -o debuglifter Lifter.hs libdebugvm.o
 
 debugvalidator: libdebugvm.o VM.hs Validator.hs
-	ghc --make -Wall -O2 -o validator Validator.hs libdebugvm.o
+	ghc --make -Wall -O2 -o debugvalidator Validator.hs libdebugvm.o
 
 
 clean:
