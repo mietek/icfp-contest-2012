@@ -8,7 +8,7 @@ To run lifter:
 
 # Validator
 
-To run validator with debug output:
+To run validator:
 
     $ make
     $ echo MOVE_SEQUENCE | ./validator MAP_FILE
@@ -18,6 +18,12 @@ To run validator without debug output:
 
     $ make
     $ echo MOVE_SEQUENCE | ./validator MAP_FILE 2> /dev/null
+
+
+You can specify the following flags:
+    -v      Just the score
+    -vv     Dump state once after all moves
+    -vvv    Dump state after every move
 
 
 # VM
