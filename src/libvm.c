@@ -69,19 +69,32 @@ bool equal(const struct state *s1, const struct state *s2) {
 
 void dump(const struct state *s) {
     DEBUG_ASSERT(s);
-    DEBUG_LOG("world_size               = (%ld, %ld)\n", s->world_w, s->world_h);
-    DEBUG_LOG("robot_point              = (%ld, %ld)\n", s->robot_x, s->robot_y);
-    DEBUG_LOG("lift_point               = (%ld, %ld)\n", s->lift_x, s->lift_y);
-    DEBUG_LOG("water_level              = %ld\n", s->water_level);
-    DEBUG_LOG("flooding_rate            = %ld\n", s->flooding_rate);
-    DEBUG_LOG("robot_waterproofing      = %ld\n", s->robot_waterproofing);
-    DEBUG_LOG("used_robot_waterproofing = %ld\n", s->used_robot_waterproofing);
-    DEBUG_LOG("lambda_count             = %ld\n", s->lambda_count);
-    DEBUG_LOG("collected_lambda_count   = %ld\n", s->collected_lambda_count);
-    DEBUG_LOG("move_count               = %ld\n", s->move_count);
-    DEBUG_LOG("score                    = %ld\n", s->score);
-    DEBUG_LOG("condition                = %c\n", s->condition);
-    DEBUG_LOG("world_length             = %ld\n", s->world_length);
+    DEBUG_LOG("world_size                 = (%ld, %ld)\n", s->world_w, s->world_h);
+    DEBUG_LOG("robot_point                = (%ld, %ld)\n", s->robot_x, s->robot_y);
+    DEBUG_LOG("lift_point                 = (%ld, %ld)\n", s->lift_x, s->lift_y);
+    DEBUG_LOG("water_level                = %ld\n", s->water_level);
+    DEBUG_LOG("flooding_rate              = %ld\n", s->flooding_rate);
+    DEBUG_LOG("robot_waterproofing        = %ld\n", s->robot_waterproofing);
+    DEBUG_LOG("used_robot_waterproofing   = %ld\n", s->used_robot_waterproofing);
+    DEBUG_LOG("lambda_count               = %ld\n", s->lambda_count);
+    DEBUG_LOG("collected_lambda_count     = %ld\n", s->collected_lambda_count);
+    DEBUG_LOG("trampoline_count           = %ld\n", s->trampoline_count);
+#ifdef DEBUG
+    char trampoline, target;
+    long i, j;
+    for (i = 1; i <= MAX_TRAMPOLINE_COUNT; i++) {
+        if (s->trampoline_x[i]) {
+            trampoline = make_trampoline(i);
+            j = s->trampoline_index_to_target_index[i];
+            target = make_target(j);
+            DEBUG_LOG("trampoline '%c' (%ld, %ld) -> '%c' (%ld, %ld)\n", trampoline, s->trampoline_x[i], s->trampoline_y[i], target, s->target_x[j], s->target_y[j]);
+        }
+    }
+#endif
+    DEBUG_LOG("move_count                 = %ld\n", s->move_count);
+    DEBUG_LOG("score                      = %ld\n", s->score);
+    DEBUG_LOG("condition                  = '%c'\n", s->condition);
+    DEBUG_LOG("world_length               = %ld\n", s->world_length);
     printf("%ld\n%s", s->score, s->world);
 }
 
@@ -132,6 +145,43 @@ long get_lambda_count(const struct state *s) {
 long get_collected_lambda_count(const struct state *s) {
     DEBUG_ASSERT(s);
     return s->collected_lambda_count;
+}
+
+long get_trampoline_count(const struct state *s) {
+    DEBUG_ASSERT(s);
+    return s->trampoline_count;
+}
+
+bool get_trampoline_point(const struct state *s, char trampoline, long *out_trampoline_x, long *out_trampoline_y) {
+    DEBUG_ASSERT(s && is_valid_trampoline(trampoline) && out_trampoline_x && out_trampoline_y);
+    int i = unmake_trampoline(trampoline);
+    if (s->trampoline_x[i]) {
+        *out_trampoline_x = s->trampoline_x[i];
+        *out_trampoline_y = s->trampoline_y[i];
+        return true;
+    }
+    return false;
+}
+
+bool get_target_point(const struct state *s, char target, long *out_target_x, long *out_target_y) {
+    DEBUG_ASSERT(s && is_valid_target(target) && out_target_x && out_target_y);
+    int i = unmake_target(target);
+    if (s->target_x[i]) {
+        *out_target_x = s->target_x[i];
+        *out_target_y = s->target_y[i];
+        return true;
+    }
+    return false;
+}
+
+bool get_trampoline_target(const struct state *s, char trampoline, char *out_target) {
+    DEBUG_ASSERT(s && is_valid_trampoline(trampoline));
+    int i = unmake_trampoline(trampoline);
+    if (s->trampoline_x[i]) {
+        *out_target = make_target(s->trampoline_index_to_target_index[i]);
+        return true;
+    }
+    return false;
 }
 
 long get_move_count(const struct state *s) {
@@ -220,9 +270,12 @@ void scan_input(long input_length, const char *input, long *out_world_w, long *o
 
 enum {
     K_NONE,
-    K_WATER,
-    K_FLOODING,
-    K_WATERPROOF,
+    K_WATER_LEVEL,
+    K_FLOODING_RATE,
+    K_ROBOT_WATERPROOFING,
+    K_TRAMPOLINE,
+    K_TRAMPOLINE_TARGET_KEYWORD,
+    K_TRAMPOLINE_TARGET,
     K_INVALID
 };
 
@@ -231,7 +284,7 @@ enum {
 void copy_input_metadata(struct state *s, long input_length, const char *input) {
     DEBUG_ASSERT(s && input);
     char key = K_NONE, token[MAX_TOKEN_SIZE + 1];
-    long w = 0, i;
+    long w = 0, i, trampoline_i, target_i;
     for (i = 0; i < input_length; i++) {
         if (input[i] != ' ' && input[i] != '\n')
             w++;
@@ -244,23 +297,41 @@ void copy_input_metadata(struct state *s, long input_length, const char *input) 
             token[w] = 0;
             if (key == K_NONE) {
                 if (!strcmp(token, "Water"))
-                    key = K_WATER;
+                    key = K_WATER_LEVEL;
                 else if (!strcmp(token, "Flooding"))
-                    key = K_FLOODING;
+                    key = K_FLOODING_RATE;
                 else if (!strcmp(token, "Waterproof"))
-                    key = K_WATERPROOF;
+                    key = K_ROBOT_WATERPROOFING;
+                else if (!strcmp(token, "Trampoline"))
+                    key = K_TRAMPOLINE;
                 else {
                     key = K_INVALID;
                     DEBUG_LOG("found invalid metadata key '%s'\n", token);
                 }
             } else {
-                if (key == K_WATER)
+                if (key == K_WATER_LEVEL) {
                     s->water_level = atoi(token);
-                else if (key == K_FLOODING)
+                    key = K_NONE;
+                } else if (key == K_FLOODING_RATE) {
                     s->flooding_rate = atoi(token);
-                else if (key == K_WATERPROOF)
+                    key = K_NONE;
+                } else if (key == K_ROBOT_WATERPROOFING) {
                     s->robot_waterproofing = atoi(token);
-                key = K_NONE;
+                    key = K_NONE;
+                } else if (key == K_TRAMPOLINE) {
+                    trampoline_i = unmake_trampoline(*token);
+                    key = K_TRAMPOLINE_TARGET_KEYWORD;
+                } else if (key == K_TRAMPOLINE_TARGET_KEYWORD)
+                    key = K_TRAMPOLINE_TARGET;
+                else if (key == K_TRAMPOLINE_TARGET) {
+                    target_i = unmake_target(*token);
+                    s->trampoline_index_to_target_index[trampoline_i] = target_i;
+                    s->trampoline_count++;
+                    key = K_NONE;
+                } else {
+                    key = K_NONE;
+                    DEBUG_LOG("found invalid metadata value '%s'\n", token);
+                }
             }
             w = 0;
         }
@@ -269,7 +340,7 @@ void copy_input_metadata(struct state *s, long input_length, const char *input) 
 
 void copy_input(struct state *s, long input_length, const char *input) {
     DEBUG_ASSERT(s && input);
-    long w = 0, h = 0, j = 0, i;
+    long w = 0, h = 0, j = 0, i, trampoline_i, target_i;
     for (i = 0; i < input_length; i++) {
         if (input[i] != '\n') {
             if (input[i] == O_ROBOT)
@@ -278,6 +349,13 @@ void copy_input(struct state *s, long input_length, const char *input) {
                 s->lambda_count++;
             else if (input[i] == O_CLOSED_LIFT)
                 make_point(s, w, h, &s->lift_x, &s->lift_y);
+            else if (is_valid_trampoline(input[i])) {
+                trampoline_i = unmake_trampoline(input[i]);
+                make_point(s, w, h, &s->trampoline_x[trampoline_i], &s->trampoline_y[trampoline_i]);
+            } else if (is_valid_target(input[i])) {
+                target_i = unmake_target(input[i]);
+                make_point(s, w, h, &s->target_x[target_i], &s->target_y[target_i]);
+            }
             s->world[j++] = input[i];
             w++;
         }
@@ -309,7 +387,7 @@ inline void put(struct state *s, long x, long y, char object) {
 
 void move_robot(struct state *s, long x, long y) {
     DEBUG_ASSERT(s);
-    DEBUG_ASSERT(get(s, x, y) == O_EMPTY || get(s, x, y) == O_EARTH || get(s, x, y) == O_LAMBDA || get(s, x, y) == O_OPEN_LIFT || (get(s, x, y) == O_ROCK && get(s, x + x - s->robot_x, y) == O_EMPTY));
+    DEBUG_ASSERT(get(s, x, y) == O_EMPTY || get(s, x, y) == O_EARTH || get(s, x, y) == O_LAMBDA || get(s, x, y) == O_OPEN_LIFT || (get(s, x, y) == O_ROCK && get(s, x + x - s->robot_x, y) == O_EMPTY) || is_valid_target(get(s, x, y)));
     put(s, s->robot_x, s->robot_y, O_EMPTY);
     s->robot_x = x;
     s->robot_y = y;
@@ -366,8 +444,23 @@ void execute_move(struct state *s, char move) {
             move_robot(s, x, y);
             put(s, x + 1, y, O_ROCK);
             DEBUG_LOG("robot pushed rock from (%ld, %ld) to (%ld, %ld\n", x, y, x + 1, y);
-        }
-        else
+        } else if (is_valid_trampoline(object)) {
+            long trampoline_i, target_i, i;
+            trampoline_i = unmake_trampoline(object);
+            DEBUG_ASSERT(s->trampoline_x[trampoline_i]);
+            target_i = s->trampoline_index_to_target_index[trampoline_i];
+            DEBUG_ASSERT(s->target_x[target_i]);
+            move_robot(s, s->target_x[target_i], s->target_y[target_i]);
+            for (i = 1; i <= MAX_TRAMPOLINE_COUNT; i++) {
+                if (s->trampoline_index_to_target_index[i] == target_i) {
+                    put(s, s->trampoline_x[i], s->trampoline_y[i], O_EMPTY);
+                    s->trampoline_x[i] = 0;
+                    s->trampoline_y[i] = 0;
+                    s->trampoline_index_to_target_index[i] = 0;
+                    s->trampoline_count--;
+                }
+            }
+        } else
             DEBUG_LOG("robot attempted invalid move '%c' from (%ld, %ld) to (%ld, %ld) which is '%c'\n", move, s->robot_x, s->robot_y, x, y, object);
         s->move_count++;
         s->score--;

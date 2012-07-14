@@ -10,6 +10,7 @@ import Foreign.ForeignPtr (ForeignPtr, newForeignPtr, withForeignPtr)
 import Foreign.C.String (CString, castCharToCChar, castCCharToChar, withCString)
 import Foreign.C.Types (CChar (..), CLong (..))
 import Foreign.Marshal.Alloc (alloca, finalizerFree)
+import Foreign.Marshal.Utils (toBool)
 import Foreign.Storable (peek)
 import System.IO.Unsafe (unsafePerformIO)
 
@@ -150,6 +151,18 @@ foreign import ccall unsafe "libvm.h get_lambda_count"
 foreign import ccall unsafe "libvm.h get_collected_lambda_count"
   cGetCollectedLambdaCount :: CStatePtr -> CLong
 
+foreign import ccall unsafe "libvm.h get_trampoline_count"
+  cGetTrampolineCount :: CStatePtr -> CLong
+
+foreign import ccall unsafe "libvm.h get_trampoline_point"
+  cGetTrampolinePoint :: CStatePtr -> CChar -> Ptr CLong -> Ptr CLong -> CChar
+
+foreign import ccall unsafe "libvm.h get_target_point"
+  cGetTargetPoint :: CStatePtr -> CChar -> Ptr CLong -> Ptr CLong -> CChar
+
+foreign import ccall unsafe "libvm.h get_trampoline_target"
+  cGetTrampolineTarget :: CStatePtr -> CChar -> Ptr CChar -> CChar
+
 foreign import ccall unsafe "libvm.h get_move_count"
   cGetMoveCount :: CStatePtr -> CLong
 
@@ -219,6 +232,46 @@ getLambdaCount = getInt cGetLambdaCount
 
 getCollectedLambdaCount :: State -> Int
 getCollectedLambdaCount = getInt cGetCollectedLambdaCount
+
+getTrampolineCount :: State -> Int
+getTrampolineCount = getInt cGetTrampolineCount
+
+getTrampolinePoint :: State -> Char -> Maybe Point
+getTrampolinePoint s trampoline =
+  unwrapState s $ \sp ->
+    alloca $ \xp ->
+      alloca $ \yp -> do
+        let ok = toBool (cGetTrampolinePoint sp (castCharToCChar trampoline) xp yp)
+        if ok
+          then do
+            x <- peek xp
+            y <- peek yp
+            return (Just (fromEnum x, fromEnum y))
+          else return Nothing
+
+getTargetPoint :: State -> Char -> Maybe Point
+getTargetPoint s target =
+  unwrapState s $ \sp ->
+    alloca $ \xp ->
+      alloca $ \yp -> do
+        let ok = toBool (cGetTargetPoint sp (castCharToCChar target) xp yp)
+        if ok
+          then do
+            x <- peek xp
+            y <- peek yp
+            return (Just (fromEnum x, fromEnum y))
+          else return Nothing
+
+getTrampolineTarget :: State -> Char -> Maybe Char
+getTrampolineTarget s trampoline =
+  unwrapState s $ \sp ->
+    alloca $ \tp -> do
+      let ok = toBool (cGetTrampolineTarget sp (castCharToCChar trampoline) tp)
+      if ok
+        then do
+          target <- peek tp
+          return (Just (castCCharToChar target))
+        else return Nothing
 
 getMoveCount :: State -> Int
 getMoveCount = getInt cGetMoveCount

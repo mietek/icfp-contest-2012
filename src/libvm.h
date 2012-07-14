@@ -11,6 +11,12 @@
 #define O_EARTH       '.'
 #define O_EMPTY       ' '
 
+#define O_FIRST_TRAMPOLINE 'A'
+#define O_LAST_TRAMPOLINE  'I'
+
+#define O_FIRST_TRAMPOLINE_TARGET '1'
+#define O_LAST_TRAMPOLINE_TARGET  '9'
+
 #define M_LEFT        'L'
 #define M_RIGHT       'R'
 #define M_UP          'U'
@@ -40,6 +46,10 @@ long get_robot_waterproofing(const struct state *s);
 long get_used_robot_waterproofing(const struct state *s);
 long get_lambda_count(const struct state *s);
 long get_collected_lambda_count(const struct state *s);
+long get_trampoline_count(const struct state *s);
+bool get_trampoline_point(const struct state *s, char trampoline, long *out_trampoline_x, long *out_trampoline_y);
+bool get_target_point(const struct state *s, char target, long *out_target_x, long *out_target_y);
+bool get_trampoline_target(const struct state *s, char trampoline, char *out_target);
 long get_move_count(const struct state *s);
 long get_score(const struct state *s);
 char get_condition(const struct state *s);
@@ -80,6 +90,8 @@ struct state *make_moves(const struct state *s0, const char *moves);
 
 
 #define DEFAULT_ROBOT_WATERPROOFING 10
+#define MAX_TRAMPOLINE_COUNT 9
+
 
 struct state {
     long world_w, world_h;
@@ -91,6 +103,10 @@ struct state {
     long used_robot_waterproofing;
     long lambda_count;
     long collected_lambda_count;
+    long trampoline_count;
+    long trampoline_x[MAX_TRAMPOLINE_COUNT + 1], trampoline_y[MAX_TRAMPOLINE_COUNT + 1];
+    long target_x[MAX_TRAMPOLINE_COUNT + 1], target_y[MAX_TRAMPOLINE_COUNT + 1];
+    long trampoline_index_to_target_index[MAX_TRAMPOLINE_COUNT+ 1];
     long move_count;
     long score;
     char condition;
@@ -117,8 +133,32 @@ inline long unmake_point(const struct state *s, long x, long y) {
     return i;
 }
 
+inline char make_trampoline(long i) {
+    return O_FIRST_TRAMPOLINE + i - 1;
+}
+
+inline long unmake_trampoline(char trampoline) {
+    return trampoline - O_FIRST_TRAMPOLINE + 1;
+}
+
+inline char make_target(long i) {
+    return O_FIRST_TRAMPOLINE_TARGET + i - 1;
+}
+
+inline long unmake_target(char target) {
+    return target - O_FIRST_TRAMPOLINE_TARGET + 1;
+}
+
 inline bool is_valid_move(char move) {
     return move == M_LEFT || move == M_RIGHT || move == M_UP || move == M_DOWN || move == M_WAIT || move == M_ABORT;
+}
+
+inline bool is_valid_trampoline(char trampoline) {
+    return trampoline >= O_FIRST_TRAMPOLINE && trampoline <= O_LAST_TRAMPOLINE;
+}
+
+inline bool is_valid_target(char target) {
+    return target >= O_FIRST_TRAMPOLINE_TARGET && target <= O_LAST_TRAMPOLINE_TARGET;
 }
 
 
