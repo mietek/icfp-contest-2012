@@ -7,7 +7,7 @@ def run_cycle(cmd, key)
     @board.make_move(cmd)
     @board.draw
   else
-    puts 'Unknown input: #{key}'
+    puts "Unknown input: #{key}"
     exit
   end
 end
@@ -23,8 +23,8 @@ while key = input.shift
   run_cycle(key, key)
 end
 
-while true 
+while true
   char = get_character.chr
   cmd = KEY_MAPPINGS[char]
-  run_cycle(cmd, key)
+  run_cycle(cmd, char)
 end
