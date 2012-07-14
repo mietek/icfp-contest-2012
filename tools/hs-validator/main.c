@@ -171,7 +171,7 @@ int main(int argc, char *argv[]){
 	strcpy(result, "");
 	free(s);
 	s = copy(s0);
-	i= 12*(j%30+1)/5-1;
+	i= j%80+1;
 		
 	do{
 		t = copy(s);
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]){
 		if(status==1 || s->condition == C_LOSE || (j>30 && rand()*100>180-j)){
 			free(s);
 			s=copy(t);
-			anyMove(t, &answer, rand()*10);
+			anyMove(t, &answer, rand()*5);
 			stage++;
      		s = make_moves(s, answer);
 		}
