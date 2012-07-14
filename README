@@ -1,2 +1,80 @@
 The Church of the Least Fixed Point
 ICFP Programming Contest 2012
+
+TODO: Team members
+
+
+# Instructions
+
+## Building
+
+    $ make
+
+
+## Packaging
+
+    $ make tarball
+
+
+## Running lifter
+
+    $ bin/lifter < MAP_FILE
+
+...or:
+
+    $ bin/debuglifter < MAP_FILE
+
+
+## Running validator
+
+    $ echo MOVE_SEQUENCE | bin/validator MAP_FILE
+
+...or:
+
+    $ echo MOVE_SEQUENCE | bin/debugvalidator MAP_FILE
+
+You can specify the following flags:
+    -v      Just the score
+    -vv     Dump state once after all moves
+    -vvv    Dump state after every move
+
+
+# Using VM functions interactively
+
+    $ ghci bin/libvm.o src/VM.hs
+
+...or:
+
+    $ ghci bin/libdebugvm.o src/VM.hs
+
+...then:
+
+    > s <- newFromFile "MAP_FILE"
+    > dump s
+    > dump (makeMoves s "MOVE_SEQUENCE")
+    > print (getRobotPoint s)
+    > print (get s (getRobotPoint s))
+
+You can use the following functions:
+
+    new :: ByteString -> State
+    newFromFile :: String -> IO State
+
+    dump :: State -> IO ()
+
+    getWorldSize :: State -> Size
+    getRobotPoint :: State -> Point
+    getLiftPoint :: State -> Point
+    getWaterLevel :: State -> Int
+    getFloodingRate :: State -> Int
+    getRobotWaterproofing :: State -> Int
+    getUsedRobotWaterproofing :: State -> Int
+    getLambdaCount :: State -> Int
+    getCollectedLambdaCount :: State -> Int
+    getMoveCount :: State -> Int
+    getScore :: State -> Int
+    getCondition :: State -> Condition
+    get :: State -> Point -> Object
+
+    makeOneMove :: State -> Char -> State
+    makeMoves :: State -> String -> State
