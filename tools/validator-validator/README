@@ -1,0 +1,13 @@
+To run the validator-validator just do:
+
+ ./vvalidator.py 2>/dev/null
+
+To add a new validator, symlink your executable to this directory and add the executable name to validators and your
+name in the authors dictionary in the vvalidator.py.
+
+validators = set(['validate.py', 'lambdamine', 'validator'])
+
+authors = {'validate.py':'pobara',
+           'lambdamine':'divide',
+	   'validator':'mietek'}
+
