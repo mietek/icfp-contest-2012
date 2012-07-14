@@ -1,9 +1,7 @@
-#!/bin/env python
+#!/usr/bin/env python
 
 from array import *
 import sys
-
-sys.argv.remove('-vv')
 
 if len(sys.argv) <= 1:
     print 'usage example: $ echo "LLLRRRDDDA" | ./validate.py <map_file>'
