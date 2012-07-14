@@ -34,6 +34,7 @@ class Board
 
   def draw
     50.times { puts '' }
+    puts "Moves log: #{@moves_log.join('')}"
     puts "Score: #{@score}"
     @data.reverse.each do |line|
       puts line.join('')
@@ -141,9 +142,13 @@ class Board
 
   def clone
     new_board = []
-    @data.each do |line|
-      new_board = line.clone
+    @data.each_with_index do |line,idx|
+      new_board[idx] = []
+      line.each do |char|
+        new_board[idx] << char.clone
+      end
     end
+    new_board
   end
 
   def abort
