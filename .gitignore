@@ -1,5 +1,2 @@
 icfp-*.tgz
 lifter
-bin
-*.hi
-*.o
