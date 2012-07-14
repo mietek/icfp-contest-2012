@@ -4,10 +4,10 @@ To run validator with debug output:
     $ echo MOVE_SEQUENCE | ./validator MAP_FILE
 
 
-To run validator with short output, as intended for validator-validator:
+To run validator without debug output:
 
     $ make
-    $ echo MOVE_SEQUENCE | ./validator -vv MAP_FILE
+    $ echo MOVE_SEQUENCE | ./validator MAP_FILE 2> /dev/null
 
 
 To use VM functions interactively:
