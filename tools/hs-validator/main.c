@@ -1,5 +1,12 @@
-#include "libvm.c"
 #include <limits.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#include "libvm.h"
+
 
 //reverse string (str, 0, strlen-1)
 void reverse(char *x, int beg, int end){
@@ -192,7 +199,7 @@ int main(int argc, char *argv[]){
 	}while(s->condition == C_NONE && stage < s->world_h*8 && s->score>-1000 );
 	
 	s = make_moves(s0, result);
-	printf("%d: %d\n", j, s->score);
+	printf("%d: %ld\n", j, s->score);
 	if(s->score > bestv){
 		strcpy(best, result);
 		bestv = s->score;
