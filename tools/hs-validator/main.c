@@ -17,12 +17,12 @@ void anyMove(struct state *s, char **a, int stage){
 	char *answer = malloc( (2)*sizeof( char ));
 	struct state *t=copy(s);
 	answer[1]='\0';
-	for(k=0; k<=5 ; k++){
+	for(k=0; k<=25 ; k++){
 		if((k+stage)%5==0){answer[0]='R';is=-1; js=0;}
 		if((k+stage)%5==1){answer[0]='L';is=1; js=0;}						
 		if((k+stage)%5==2){answer[0]='U';is=0; js=-1;}
 		if((k+stage)%5==3){answer[0]='D';is=0; js=1;}
-		if((k+stage)%5==4){answer[0]='W';is=0; js=0;}
+		if(k==4){answer[0]='W';is=0; js=0;}
 //		if(k<5 && s->robot_y+js<s->world_h&& s->robot_x+is<s->world_w && get(s,s->robot_x+is, s->robot_y+js) == O_WALL)
 //			continue;
 		if(k==5) answer[0]='A';
@@ -35,15 +35,15 @@ void anyMove(struct state *s, char **a, int stage){
 	return;
 }
 
-int goSomewhere(struct state *s, char **a){
+int goSomewhere(struct state *s, char **a, int penalty){
     int i,j, is, js, k, wx=0, wy=0, stage=-1;
 	unsigned int change = 0, end = 0;
     struct state *ns;
 	char * answer;
 	char move='U';
 	unsigned int *c = malloc( ((s-> world_w+1) * s->world_h+1) * sizeof( unsigned int ));
-	if (c == NULL ){}
 	
+	if (c == NULL ){}
 	for(i=0; i<((s-> world_w+1) * s->world_h+1); i++){
 		c[i]=UINT_MAX;  
 	}
@@ -58,7 +58,7 @@ int goSomewhere(struct state *s, char **a){
 	    free(s);
 	    s = copy(ns);
 		update_world(ns, s);
-		change = 0;
+		change++;
 		stage++;
 		end = 0;
 		for(i=1; i <= s->world_w; i++){
@@ -77,16 +77,22 @@ int goSomewhere(struct state *s, char **a){
 						if(k==3) {is=-1 ; js= 0;}
 						if(k==4) {is= 1 ; js= 0;}						
 						if(i+is>0 && j+js > 0
-							&& i+is < s->world_w && j+js < s->world_h 
+							&& i+is <= s->world_w && j+js <= s->world_h 
 							&& c[unmake_point(s, i+is, j+js)]==UINT_MAX){
 							//can we go there?
-							if(	get(s, i+is, j+js+1) != O_EMPTY || get(ns, i+is, j+js+1) != O_ROCK){	
+							if(	j+js+1 < s->world_h && (get(s, i+is, j+js+1) != O_EMPTY || get(ns, i+is, j+js+1) != O_ROCK)){	
 								if(get(s, i+is, j+js)==O_OPEN_LIFT 
 								|| get(s, i+is, j+js)==O_LAMBDA 
 								|| get(s, i+is, j+js)==O_EARTH 
 								|| get(s, i+is, j+js)==O_EMPTY){
-									c[unmake_point(s, i+is, j+js)]=stage+1;
-									change = 1;
+									if((j+js+1 < s->world_h && get(s, i+is, j+js+1)==O_ROCK)
+										|| (j+js+1 <= s->world_h && i+is+1 <= s->world_h && get(s, i+is+1, j+js)==O_ROCK && get(s, i+is+1, j+js+1)==O_ROCK)
+										|| (j+js+1 <= s->world_h && i+is-1 > 0 && get(s, i+is-1, j+js)==O_ROCK && get(s, i+is-1, j+js+1)==O_ROCK)){
+										c[unmake_point(s, i+is, j+js)]=stage+penalty;
+									}else{
+										c[unmake_point(s, i+is, j+js)]=stage+1;
+									}
+									change = 0;
 							    }
 							}
 						}
@@ -94,9 +100,12 @@ int goSomewhere(struct state *s, char **a){
 				}
 			}
 		}
-	}while(change == 1 && end == 0);
+	}while(change <= penalty && end == 0);
 	
-	if(0){
+	//debug
+	dump(s);
+	
+	if(1){
 		for(j=s->world_h; j>0; j--){
 			for(i=1; i<=s->world_w; i++){
 				if(c[unmake_point(s, i, j)]==UINT_MAX){
@@ -107,6 +116,7 @@ int goSomewhere(struct state *s, char **a){
 			}
 			printf("\n");
 		}
+		printf("\n");
 	}
 	
 	i=0;
@@ -158,7 +168,7 @@ int main(int argc, char *argv[]){
 	
 	do{
 		t = copy(s);
-		status=goSomewhere(t, &answer);
+		status=goSomewhere(t, &answer, 30);
 		free(t);
 		t = copy(s);
 		if(status==0) 
