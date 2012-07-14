@@ -108,58 +108,58 @@ type Size = (Int, Int)
 type Point = (Int, Int)
 
 
-foreign import ccall unsafe "vm.h new"
+foreign import ccall unsafe "libvm.h new"
   cNew :: CLong -> Ptr CChar -> IO CStatePtr
 
-foreign import ccall unsafe "vm.h new_from_file"
+foreign import ccall unsafe "libvm.h new_from_file"
   cNewFromFile :: CString -> IO CStatePtr
 
-foreign import ccall unsafe "vm.h dump"
+foreign import ccall unsafe "libvm.h dump"
   cDump :: CStatePtr -> IO ()
 
-foreign import ccall unsafe "vm.h get_world_size"
+foreign import ccall unsafe "libvm.h get_world_size"
   cGetWorldSize :: CStatePtr -> Ptr CLong -> Ptr CLong -> IO ()
 
-foreign import ccall unsafe "vm.h get_robot_point"
+foreign import ccall unsafe "libvm.h get_robot_point"
   cGetRobotPoint :: CStatePtr -> Ptr CLong -> Ptr CLong -> IO ()
 
-foreign import ccall unsafe "vm.h get_lift_point"
+foreign import ccall unsafe "libvm.h get_lift_point"
   cGetLiftPoint :: CStatePtr -> Ptr CLong -> Ptr CLong -> IO ()
 
-foreign import ccall unsafe "vm.h get_water_level"
+foreign import ccall unsafe "libvm.h get_water_level"
   cGetWaterLevel :: CStatePtr -> CLong
 
-foreign import ccall unsafe "vm.h get_flooding_rate"
+foreign import ccall unsafe "libvm.h get_flooding_rate"
   cGetFloodingRate :: CStatePtr -> CLong
 
-foreign import ccall unsafe "vm.h get_robot_waterproofing"
+foreign import ccall unsafe "libvm.h get_robot_waterproofing"
   cGetRobotWaterproofing :: CStatePtr -> CLong
 
-foreign import ccall unsafe "vm.h get_used_robot_waterproofing"
+foreign import ccall unsafe "libvm.h get_used_robot_waterproofing"
   cGetUsedRobotWaterproofing :: CStatePtr -> CLong
 
-foreign import ccall unsafe "vm.h get_lambda_count"
+foreign import ccall unsafe "libvm.h get_lambda_count"
   cGetLambdaCount :: CStatePtr -> CLong
 
-foreign import ccall unsafe "vm.h get_collected_lambda_count"
+foreign import ccall unsafe "libvm.h get_collected_lambda_count"
   cGetCollectedLambdaCount :: CStatePtr -> CLong
 
-foreign import ccall unsafe "vm.h get_move_count"
+foreign import ccall unsafe "libvm.h get_move_count"
   cGetMoveCount :: CStatePtr -> CLong
 
-foreign import ccall unsafe "vm.h get_score"
+foreign import ccall unsafe "libvm.h get_score"
   cGetScore :: CStatePtr -> CLong
 
-foreign import ccall unsafe "vm.h get_condition"
+foreign import ccall unsafe "libvm.h get_condition"
   cGetCondition :: CStatePtr -> CChar
 
-foreign import ccall unsafe "vm.h get"
+foreign import ccall unsafe "libvm.h get"
   cGet :: CStatePtr -> CLong -> CLong -> CChar
 
-foreign import ccall unsafe "vm.h make_one_move"
+foreign import ccall unsafe "libvm.h make_one_move"
   cMakeOneMove :: CStatePtr -> CChar -> IO CStatePtr
 
-foreign import ccall unsafe "vm.h make_moves"
+foreign import ccall unsafe "libvm.h make_moves"
   cMakeMoves :: CStatePtr -> CString -> IO CStatePtr
 
 
