@@ -5,6 +5,10 @@ To run lifter:
     $ make
     $ ./lifter < MAP_FILE
 
+...or:
+
+    $ ./debuglifter < MAP_FILE
+
 
 # Validator
 
@@ -13,11 +17,9 @@ To run validator:
     $ make
     $ echo MOVE_SEQUENCE | ./validator MAP_FILE
 
+...or:
 
-To run validator without debug output:
-
-    $ make
-    $ echo MOVE_SEQUENCE | ./validator MAP_FILE 2> /dev/null
+    $ echo MOVE_SEQUENCE | ./debugvalidator MAP_FILE
 
 
 You can specify the following flags:
@@ -31,7 +33,13 @@ You can specify the following flags:
 To use VM functions interactively:
 
     $ make
-    $ ghci -L. -lvm VM.hs
+    $ ghci libvm.o VM.hs
+
+...or:
+
+    $ ghci libdebugvm.o VM.hs
+
+Then:
 
     > s <- newFromFile "MAP_FILE"
     > dump s
