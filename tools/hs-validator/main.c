@@ -12,19 +12,22 @@ void reverse(char *x, int beg, int end){
    reverse(x, ++beg, --end);
 }
 
+int bounded(struct state *s, int w, int h){
+	return (w>=1 && w>=1 && w<= s->world_w && h<= s->world_h);
+}
+
+
 void anyMove(struct state *s, char **a, int stage){
 	int k,is,js;
 	char *answer = malloc( (2)*sizeof( char ));
 	struct state *t=copy(s);
 	answer[1]='\0';
-	for(k=0; k<=25 ; k++){
-		if((k+stage)%5==0){answer[0]='R';is=-1; js=0;}
-		if((k+stage)%5==1){answer[0]='L';is=1; js=0;}						
-		if((k+stage)%5==2){answer[0]='U';is=0; js=-1;}
-		if((k+stage)%5==3){answer[0]='D';is=0; js=1;}
-		if(k==4){answer[0]='W';is=0; js=0;}
-//		if(k<5 && s->robot_y+js<s->world_h&& s->robot_x+is<s->world_w && get(s,s->robot_x+is, s->robot_y+js) == O_WALL)
-//			continue;
+	for(k=0; k<=5 ; k++){
+		if((k+stage)%5==0){answer[0]='R';is=-1; js= 0;}
+		if((k+stage)%5==1){answer[0]='L';is= 1; js= 0;}						
+		if((k+stage)%5==2){answer[0]='U';is= 0; js=-1;}
+		if((k+stage)%5==3){answer[0]='D';is= 0; js= 1;}
+		if(k==4)          {answer[0]='W';is= 0; js= 0;}
 		if(k==5) answer[0]='A';
 		t = make_moves(s, answer);
 		if(t->condition == C_NONE)
@@ -76,18 +79,16 @@ int goSomewhere(struct state *s, char **a, int penalty){
 						if(k==2) {is= 0 ; js= 1;}
 						if(k==3) {is=-1 ; js= 0;}
 						if(k==4) {is= 1 ; js= 0;}						
-						if(i+is>0 && j+js > 0
-							&& i+is <= s->world_w && j+js <= s->world_h 
-							&& c[unmake_point(s, i+is, j+js)]==UINT_MAX){
+						if(bounded(s,i+is,j+js)	&& c[unmake_point(s, i+is, j+js)]==UINT_MAX){
 							//can we go there?
-							if(	j+js+1 < s->world_h && (get(s, i+is, j+js+1) != O_EMPTY || get(ns, i+is, j+js+1) != O_ROCK)){	
+							if(	!bounded(s, i+is, j+js+1) || (get(s, i+is, j+js+1) != O_EMPTY || get(ns, i+is, j+js+1) != O_ROCK)){	
 								if(get(s, i+is, j+js)==O_OPEN_LIFT 
 								|| get(s, i+is, j+js)==O_LAMBDA 
 								|| get(s, i+is, j+js)==O_EARTH 
 								|| get(s, i+is, j+js)==O_EMPTY){
-									if((j+js+1 < s->world_h && get(s, i+is, j+js+1)==O_ROCK)
-										|| (j+js+1 <= s->world_h && i+is+1 <= s->world_h && get(s, i+is+1, j+js)==O_ROCK && get(s, i+is+1, j+js+1)==O_ROCK)
-										|| (j+js+1 <= s->world_h && i+is-1 > 0 && get(s, i+is-1, j+js)==O_ROCK && get(s, i+is-1, j+js+1)==O_ROCK)){
+									if((bounded(s, i+is, j+js+1) && get(s, i+is, j+js+1)==O_ROCK)
+										|| (bounded(s, i+is+1, j+js+1) && get(s, i+is+1, j+js)==O_ROCK && get(s, i+is+1, j+js+1)==O_ROCK)
+										|| (bounded(s, i+is-1, j+js+1) && get(s, i+is-1, j+js)==O_ROCK && get(s, i+is-1, j+js+1)==O_ROCK)){
 										c[unmake_point(s, i+is, j+js)]=stage+penalty;
 									}else{
 										c[unmake_point(s, i+is, j+js)]=stage+1;
@@ -103,9 +104,9 @@ int goSomewhere(struct state *s, char **a, int penalty){
 	}while(change <= penalty && end == 0);
 	
 	//debug
-	dump(s);
+	//dump(s);
 	
-	if(1){
+	if(0){
 		for(j=s->world_h; j>0; j--){
 			for(i=1; i<=s->world_w; i++){
 				if(c[unmake_point(s, i, j)]==UINT_MAX){
@@ -126,13 +127,11 @@ int goSomewhere(struct state *s, char **a, int penalty){
 		
 		while(end>0){
 			for(k=1; k<=4;k++){
-				if(k==1) {is=-1; js=0;move='R';}
-				if(k==2) {is=1; js=0;move='L';}						
-				if(k==3) {is=0; js=-1;move='U';}
-				if(k==4) {is=0; js=1;move='D';}
-				if( wx+is > 1 && wy+js > 1 
-				 && wx+is < s->world_w && wy+js < s->world_h 
-				 && c[unmake_point(s, wx+is, wy+js)] < end) {
+				if(k==1) {is=-1; js= 0;move='R';}
+				if(k==2) {is= 1; js= 0;move='L';}						
+				if(k==3) {is= 0; js=-1;move='U';}
+				if(k==4) {is= 0; js= 1;move='D';}
+				if( bounded(s, wx+is, wy+js) && c[unmake_point(s, wx+is, wy+js)] < end) {
 					end = c[unmake_point(s, wx+is, wy+js)];
 					answer[i++]=move;
 					wx = wx+is;
@@ -148,32 +147,40 @@ int goSomewhere(struct state *s, char **a, int penalty){
 		if (answer == NULL ){}
 		answer[0]='\0';
      	*a=answer;
+		free(c);
 		return 1;
 	}
 	*a=answer;
+	free(c);
 	return 0;
 }
 
 int main(int argc, char *argv[]){
 	struct state *s = new_from_file(argv[1]);
-	printf("%c",  get(s, 1,1));
 	struct state *t, *s0;
 	char *answer;
-	int status, stage=0;
+	int status, stage, i, j, bestv=0;
 	char *result = malloc (((s-> world_w+1) * s->world_h * sizeof(char)));
+	char *best = malloc (((s-> world_w+1) * s->world_h * sizeof(char)));
 
-	strcpy(result, "");
 	s0 = copy(s);
 	srand(time(NULL));
-	
+
+  for(j=1; j<150; j++){
+    stage=0;
+	strcpy(result, "");
+	free(s);
+	s = copy(s0);
+	i= 12*(j%30+1)/5-1;
+		
 	do{
 		t = copy(s);
-		status=goSomewhere(t, &answer, 30);
+		status=goSomewhere(t, &answer, i);
 		free(t);
 		t = copy(s);
 		if(status==0) 
 			s = make_moves(s, answer);
-		if(status==1 || s->condition == C_LOSE){
+		if(status==1 || s->condition == C_LOSE || (j>30 && rand()*100>180-j)){
 			free(s);
 			s=copy(t);
 			anyMove(t, &answer, rand()*10);
@@ -182,10 +189,18 @@ int main(int argc, char *argv[]){
 		}
 		strcat(result, answer);
 		free(t);
-	}while(s->condition == C_NONE && stage<s->world_h*8);
-
+	}while(s->condition == C_NONE && stage < s->world_h*8 && s->score>-1000 );
+	
 	s = make_moves(s0, result);
-	dump(s);
-	printf("%s", result);	
-	return 0;
+	printf("%d: %d\n", j, s->score);
+	if(s->score > bestv){
+		strcpy(best, result);
+		bestv = s->score;
+	}
+  }
+  s = make_moves(s0, best);
+  dump(s);
+  printf("%s\n", best);
+  fflush(stdout);
+  return 0;
 }
