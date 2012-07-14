@@ -34,6 +34,7 @@ class Board
 
   def draw
     50.times { puts '' }
+    puts "Moves log: #{@moves_log.join('')}"
     puts "Score: #{@score}"
     @data.reverse.each do |line|
       puts line.join('')
