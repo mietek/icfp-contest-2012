@@ -395,19 +395,16 @@ static void execute_move(struct state *s, char move) {
     if (move == M_LEFT || move == M_RIGHT || move == M_UP || move == M_DOWN) {
         long x, y;
         char object;
-        if (move == M_LEFT) {
+        x = s->robot_x;
+        y = s->robot_y;
+        if (move == M_LEFT)
             x = s->robot_x - 1;
-            y = s->robot_y;
-        } else if (move == M_RIGHT) {
+        else if (move == M_RIGHT)
             x = s->robot_x + 1;
-            y = s->robot_y;
-        } else if (move == M_UP) {
-            x = s->robot_x;
+        else if (move == M_UP)
             y = s->robot_y + 1;
-        } else if (move == M_DOWN) {
-            x = s->robot_x;
+        else if (move == M_DOWN)
             y = s->robot_y - 1;
-        }
         object = get(s, x, y);
         if (object == O_EMPTY || object == O_EARTH)
             move_robot(s, x, y);
