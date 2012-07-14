@@ -241,7 +241,7 @@ void dump(const struct state *s) {
     DEBUG_LOG("score                    = %ld\n", s->score);
     DEBUG_LOG("condition                = %d\n", s->condition);
     DEBUG_LOG("world_length             = %ld\n", s->world_length);
-    LOG("%ld\n%s", s->score, s->world);
+    printf("%ld\n%s", s->score, s->world);
 }
 
 
