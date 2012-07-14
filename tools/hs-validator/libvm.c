@@ -188,6 +188,8 @@ static void copy_input(struct state *s, long input_length, const char *input) {
 }
 
 
+#define DEFAULT_ROBOT_WATERPROOFING 10
+
 struct state *new(long input_length, const char *input) {
     DEBUG_ASSERT(input);
     long world_w, world_h, world_length;
@@ -198,6 +200,7 @@ struct state *new(long input_length, const char *input) {
     memset(s, 0, sizeof(struct state));
     s->world_w = world_w;
     s->world_h = world_h;
+    s->robot_waterproofing = DEFAULT_ROBOT_WATERPROOFING;
     s->world_length = world_length;
     copy_input(s, input_length, input);
     return s;
@@ -364,6 +367,10 @@ inline static void move_robot(struct state *s, long x, long y) {
     s->robot_y = y;
     put(s, x, y, O_ROBOT);
     DEBUG_LOG("moved to (%ld, %ld)\n", x, y);
+    if (s->used_robot_waterproofing && y > s->water_level) {
+        s->used_robot_waterproofing = 0;
+        DEBUG_LOG("waterproofing restored\n");
+    }
 }
 
 
@@ -446,33 +453,44 @@ static void update_world(struct state *s, const struct state *t) {
                 put(s, x, y - 1, O_ROCK);
                 if (t->robot_x == x && t->robot_y == y - 2) {
                     s->condition = C_LOSE;
-                    DEBUG_LOG("lost\n");
+                    DEBUG_LOG("lost by crushing\n");
                 }
             } else if (object == O_ROCK && get(t, x, y - 1) == O_ROCK && get(t, x + 1, y) == O_EMPTY && get(t, x + 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x + 1, y - 1, O_ROCK);
                 if (t->robot_x == x + 1 && t->robot_y == y - 2) {
                     s->condition = C_LOSE;
-                    DEBUG_LOG("lost\n");
+                    DEBUG_LOG("lost by crushing\n");
                 }
             } else if (object == O_ROCK && get(t, x, y - 1) == O_ROCK && (get(t, x + 1, y) != O_EMPTY || get(t, x + 1, y - 1) != O_EMPTY) && get(t, x - 1, y) == O_EMPTY && get(t, x - 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x - 1, y - 1, O_ROCK);
                 if (t->robot_x == x - 1 && t->robot_y == y - 2) {
                     s->condition = C_LOSE;
-                    DEBUG_LOG("lost\n");
+                    DEBUG_LOG("lost by crushing\n");
                 }
             } else if (object == O_ROCK && get(t, x, y - 1) == O_LAMBDA && get(t, x + 1, y) == O_EMPTY && get(t, x + 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x + 1, y - 1, O_ROCK);
                 if (t->robot_x == x + 1 && t->robot_y == y - 2) {
                     s->condition = C_LOSE;
-                    DEBUG_LOG("lost\n");
+                    DEBUG_LOG("lost by crushing\n");
                 }
             } else if (object == O_CLOSED_LIFT && t->collected_lambda_count == t->lambda_count) {
                 put(s, x, y, O_OPEN_LIFT);
                 DEBUG_LOG("lift opened\n");
             }
+        }
+    }
+    if (s->flooding_rate && !(s->move_count % s->flooding_rate)) {
+        s->water_level++;
+        DEBUG_LOG("water level increased to %ld\n", s->water_level);
+    }
+    if (t->robot_y <= s->water_level) {
+        s->used_robot_waterproofing++;
+        if (s->used_robot_waterproofing > s->robot_waterproofing) {
+            s->condition = C_LOSE;
+            DEBUG_LOG("lost by drowning\n");
         }
     }
 }
