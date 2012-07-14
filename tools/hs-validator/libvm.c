@@ -28,7 +28,7 @@
     } while (0)
 #define ASSERT(val) assert(val)
 
-#if 1
+#if DEBUG
 #define DEBUG_LOG(fmt, ...) LOG(fmt, ##__VA_ARGS__)
 #define DEBUG_ASSERT(val) ASSERT(val)
 #else
@@ -225,30 +225,20 @@ struct state *new_from_file(const char *path) {
 
 void dump(const struct state *s) {
     DEBUG_ASSERT(s);
-    fputs("----------------------------------------------------------------\n", stderr);
-    fprintf(stderr, "world_size               = (%ld, %ld)\n", s->world_w, s->world_h);
-    fprintf(stderr, "robot_point              = (%ld, %ld)\n", s->robot_x, s->robot_y);
-    fprintf(stderr, "lift_point               = (%ld, %ld)\n", s->lift_x, s->lift_y);
-    fprintf(stderr, "water_level              = %ld\n", s->water_level);
-    fprintf(stderr, "flooding_rate            = %ld\n", s->flooding_rate);
-    fprintf(stderr, "robot_waterproofing      = %ld\n", s->robot_waterproofing);
-    fprintf(stderr, "used_robot_waterproofing = %ld\n", s->used_robot_waterproofing);
-    fprintf(stderr, "lambda_count             = %ld\n", s->lambda_count);
-    fprintf(stderr, "collected_lambda_count   = %ld\n", s->collected_lambda_count);
-    fprintf(stderr, "move_count               = %ld\n", s->move_count);
-    fprintf(stderr, "score                    = %ld\n", s->score);
-    fprintf(stderr, "condition                = %d\n", s->condition);
-    fprintf(stderr, "world_length             = %ld\n\n", s->world_length);
-    fputs(s->world, stderr);
-    fputc('\n', stderr);
-}
-
-
-void short_dump(const struct state *s) {
-    DEBUG_ASSERT(s);
-    fprintf(stdout, "%ld\n", s->score);
-    fputs(s->world, stdout);
-    fputc('\n', stdout);
+    DEBUG_LOG("world_size               = (%ld, %ld)\n", s->world_w, s->world_h);
+    DEBUG_LOG("robot_point              = (%ld, %ld)\n", s->robot_x, s->robot_y);
+    DEBUG_LOG("lift_point               = (%ld, %ld)\n", s->lift_x, s->lift_y);
+    DEBUG_LOG("water_level              = %ld\n", s->water_level);
+    DEBUG_LOG("flooding_rate            = %ld\n", s->flooding_rate);
+    DEBUG_LOG("robot_waterproofing      = %ld\n", s->robot_waterproofing);
+    DEBUG_LOG("used_robot_waterproofing = %ld\n", s->used_robot_waterproofing);
+    DEBUG_LOG("lambda_count             = %ld\n", s->lambda_count);
+    DEBUG_LOG("collected_lambda_count   = %ld\n", s->collected_lambda_count);
+    DEBUG_LOG("move_count               = %ld\n", s->move_count);
+    DEBUG_LOG("score                    = %ld\n", s->score);
+    DEBUG_LOG("condition                = %d\n", s->condition);
+    DEBUG_LOG("world_length             = %ld\n", s->world_length);
+    LOG("%ld\n%s", s->score, s->world);
 }
 
 

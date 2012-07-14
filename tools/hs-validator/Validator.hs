@@ -7,7 +7,15 @@ import VM
 
 main :: IO ()
 main = do
-  [_, path] <- getArgs
+  args <- getArgs
+  case args of
+    ["-vv", path] -> runWithFile path
+    [path] -> runWithFile path
+    _ -> putStrLn "Usage: echo <moves> | ./validator [-vv] <map>"
+
+
+runWithFile :: String -> IO ()
+runWithFile path = do
   s <- newFromFile path
   moves <- getContents
-  shortDump (makeMoves s moves)
+  dump (makeMoves s moves)
