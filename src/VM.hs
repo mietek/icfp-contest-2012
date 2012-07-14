@@ -172,7 +172,7 @@ foreign import ccall unsafe "libvm.h get_score"
 foreign import ccall unsafe "libvm.h get_condition"
   cGetCondition :: CStatePtr -> CChar
 
-foreign import ccall unsafe "libvm.h get"
+foreign import ccall unsafe "libvm.h safe_get"
   cGet :: CStatePtr -> CLong -> CLong -> CChar
 
 foreign import ccall unsafe "libvm.h make_one_move"

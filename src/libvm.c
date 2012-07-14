@@ -200,10 +200,15 @@ char get_condition(const struct state *s) {
 }
 
 inline char get(const struct state *s, long x, long y) {
+    DEBUG_ASSERT(s && x >= 1 && x <= s->world_w && y >= 1 && y <= s->world_h);
+    return s->world[point_to_index(s, x, y)];
+}
+
+char safe_get(const struct state *s, long x, long y) {
     DEBUG_ASSERT(s);
-    long i;
-    i = unmake_point(s, x, y);
-    return s->world[i];
+    if (x < 1 || x > s->world_w || y < 1 || y > s->world_h)
+        return O_WALL;
+    return s->world[point_to_index(s, x, y)];
 }
 
 
@@ -344,17 +349,17 @@ void copy_input(struct state *s, long input_length, const char *input) {
     for (i = 0; i < input_length; i++) {
         if (input[i] != '\n') {
             if (input[i] == O_ROBOT)
-                make_point(s, w, h, &s->robot_x, &s->robot_y);
+                size_to_point(s, w, h, &s->robot_x, &s->robot_y);
             else if (input[i] == O_LAMBDA)
                 s->lambda_count++;
             else if (input[i] == O_CLOSED_LIFT)
-                make_point(s, w, h, &s->lift_x, &s->lift_y);
+                size_to_point(s, w, h, &s->lift_x, &s->lift_y);
             else if (is_valid_trampoline(input[i])) {
                 trampoline_i = unmake_trampoline(input[i]);
-                make_point(s, w, h, &s->trampoline_x[trampoline_i], &s->trampoline_y[trampoline_i]);
+                size_to_point(s, w, h, &s->trampoline_x[trampoline_i], &s->trampoline_y[trampoline_i]);
             } else if (is_valid_target(input[i])) {
                 target_i = unmake_target(input[i]);
-                make_point(s, w, h, &s->target_x[target_i], &s->target_y[target_i]);
+                size_to_point(s, w, h, &s->target_x[target_i], &s->target_y[target_i]);
             }
             s->world[j] = input[i];
             // TODO:
@@ -385,10 +390,8 @@ void copy_input(struct state *s, long input_length, const char *input) {
 
 
 inline void put(struct state *s, long x, long y, char object) {
-    DEBUG_ASSERT(s);
-    long i;
-    i = unmake_point(s, x, y);
-    s->world[i] = object;
+    DEBUG_ASSERT(s && x >= 1 && x <= s->world_w && y >= 1 && y <= s->world_h);
+    s->world[point_to_index(s, x, y)] = object;
 }
 
 

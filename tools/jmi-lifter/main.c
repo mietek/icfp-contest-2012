@@ -58,7 +58,7 @@ int goSomewhere(struct state *s, char **a, int penalty){
 		c[i]=UINT_MAX;  
 	}
 	
-	c[unmake_point(s, s->robot_x, s->robot_y)]=0;	
+	c[point_to_index(s, s->robot_x, s->robot_y)]=0;	
 	
 	put(s, 1, 1, O_EMPTY);
 	move_robot(s, 1, 1);
@@ -73,7 +73,7 @@ int goSomewhere(struct state *s, char **a, int penalty){
 		end = 0;
 		for(i=1; i <= s->world_w; i++){
 			for(j=1; j <= s->world_h; j++){
-				if(c[unmake_point(s,i,j)]==stage){
+				if(c[point_to_index(s,i,j)]==stage){
 					if(get(s, i, j) == O_OPEN_LIFT || get(s, i, j) == O_LAMBDA){
 						wx=i;
 						wy=j;
@@ -86,7 +86,7 @@ int goSomewhere(struct state *s, char **a, int penalty){
 						if(k==2) {is= 0 ; js= 1;}
 						if(k==3) {is=-1 ; js= 0;}
 						if(k==4) {is= 1 ; js= 0;}						
-						if(bounded(s,i+is,j+js)	&& c[unmake_point(s, i+is, j+js)]==UINT_MAX){
+						if(bounded(s,i+is,j+js)	&& c[point_to_index(s, i+is, j+js)]==UINT_MAX){
 							//can we go there?
 							if(	!bounded(s, i+is, j+js+1) || (get(s, i+is, j+js+1) != O_EMPTY || get(ns, i+is, j+js+1) != O_ROCK)){	
 								if(get(s, i+is, j+js)==O_OPEN_LIFT 
@@ -96,9 +96,9 @@ int goSomewhere(struct state *s, char **a, int penalty){
 									if((bounded(s, i+is, j+js+1) && get(s, i+is, j+js+1)==O_ROCK)
 										|| (bounded(s, i+is+1, j+js+1) && get(s, i+is+1, j+js)==O_ROCK && get(s, i+is+1, j+js+1)==O_ROCK)
 										|| (bounded(s, i+is-1, j+js+1) && get(s, i+is-1, j+js)==O_ROCK && get(s, i+is-1, j+js+1)==O_ROCK)){
-										c[unmake_point(s, i+is, j+js)]=stage+penalty;
+										c[point_to_index(s, i+is, j+js)]=stage+penalty;
 									}else{
-										c[unmake_point(s, i+is, j+js)]=stage+1;
+										c[point_to_index(s, i+is, j+js)]=stage+1;
 									}
 									change = 0;
 							    }
@@ -116,10 +116,10 @@ int goSomewhere(struct state *s, char **a, int penalty){
 	if(0){
 		for(j=s->world_h; j>0; j--){
 			for(i=1; i<=s->world_w; i++){
-				if(c[unmake_point(s, i, j)]==UINT_MAX){
+				if(c[point_to_index(s, i, j)]==UINT_MAX){
 					printf("X");
 				}else{
-					printf("%u", c[unmake_point(s, i, j)]);
+					printf("%u", c[point_to_index(s, i, j)]);
 				}
 			}
 			printf("\n");
@@ -138,8 +138,8 @@ int goSomewhere(struct state *s, char **a, int penalty){
 				if(k==2) {is= 1; js= 0;move='L';}						
 				if(k==3) {is= 0; js=-1;move='U';}
 				if(k==4) {is= 0; js= 1;move='D';}
-				if( bounded(s, wx+is, wy+js) && c[unmake_point(s, wx+is, wy+js)] < end) {
-					end = c[unmake_point(s, wx+is, wy+js)];
+				if( bounded(s, wx+is, wy+js) && c[point_to_index(s, wx+is, wy+js)] < end) {
+					end = c[point_to_index(s, wx+is, wy+js)];
 					answer[i++]=move;
 					wx = wx+is;
 					wy = wy+js;

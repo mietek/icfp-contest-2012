@@ -55,7 +55,7 @@ bool get_trampoline_target(const struct state *s, char trampoline, char *out_tar
 long get_move_count(const struct state *s);
 long get_score(const struct state *s);
 char get_condition(const struct state *s);
-char get(const struct state *s, long x, long y);
+char safe_get(const struct state *s, long x, long y);
 
 struct state *make_one_move(const struct state *s0, char move);
 struct state *make_moves(const struct state *s0, const char *moves);
@@ -117,21 +117,23 @@ struct state {
 };
 
 
-inline void make_point(struct state *s, long w, long h, long *out_x, long *out_y) {
+inline void size_to_point(const struct state *s, long w, long h, long *out_x, long *out_y) {
     DEBUG_ASSERT(s && out_x && out_y);
     *out_x = w + 1;
     *out_y = s->world_h - h;
 }
 
-inline long unmake_point(const struct state *s, long x, long y) {
+inline void point_to_size(const struct state *s, long x, long y, long *out_w, long *out_h) {
+    DEBUG_ASSERT(s && out_w && out_h);
+    *out_w = x - 1;
+    *out_h = s->world_h - y;
+}
+
+inline long point_to_index(const struct state *s, long x, long y) {
     DEBUG_ASSERT(s);
     long w, h, i;
-    w = x - 1;
-    DEBUG_ASSERT(w >= 0 && w < s->world_w);
-    h = s->world_h - y;
-    DEBUG_ASSERT(h >= 0 && h < s->world_h);
+    point_to_size(s, x, y, &w, &h);
     i = h * (s->world_w + 1) + w;
-    DEBUG_ASSERT(i < s->world_length);
     return i;
 }
 
@@ -169,6 +171,7 @@ void scan_input(long input_length, const char *input, long *out_world_w, long *o
 void copy_input_metadata(struct state *s, long input_length, const char *input);
 void copy_input(struct state *s, long input_length, const char *input);
 
+char get(const struct state *s, long x, long y);
 void put(struct state *s, long x, long y, char object);
 
 void move_robot(struct state *s, long x, long y);
