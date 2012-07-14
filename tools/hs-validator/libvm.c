@@ -64,6 +64,10 @@ struct state {
     long world_w, world_h;
     long robot_x, robot_y;
     long lift_x, lift_y;
+    long water_level;
+    long flooding_rate;
+    long robot_waterproofing;
+    long used_robot_waterproofing;
     long lambda_count;
     long collected_lambda_count;
     long move_count;
@@ -102,7 +106,57 @@ inline static void make_point(struct state *s, long w, long h, long *out_x, long
 }
 
 
-static void copy_input(struct state *s, long input_length, const char* input) {
+enum {
+    K_NONE,
+    K_WATER,
+    K_FLOODING,
+    K_WATERPROOF,
+    K_INVALID
+};
+
+#define MAX_TOKEN_SIZE 16
+
+static void copy_input_metadata(struct state *s, long input_length, const char *input) {
+    DEBUG_ASSERT(s && input);
+    char key = K_NONE, token[MAX_TOKEN_SIZE + 1];
+    long w = 0, i;
+    for (i = 0; i < input_length; i++) {
+        if (input[i] != ' ' && input[i] != '\n')
+            w++;
+        if (i == input_length - 1 || input[i] == ' ' || input[i] == '\n') {
+            if (w == 0)
+                continue;
+            if (w > MAX_TOKEN_SIZE)
+                w = MAX_TOKEN_SIZE;
+            memcpy(token, input + i - w, w);
+            token[w] = 0;
+            if (key == K_NONE) {
+                if (!strcmp(token, "Water"))
+                    key = K_WATER;
+                else if (!strcmp(token, "Flooding"))
+                    key = K_FLOODING;
+                else if (!strcmp(token, "Waterproof"))
+                    key = K_WATERPROOF;
+                else {
+                    key = K_INVALID;
+                    DEBUG_LOG("found invalid metadata key '%s'\n", token);
+                }
+            } else {
+                if (key == K_WATER)
+                    s->water_level = atoi(token);
+                else if (key == K_FLOODING)
+                    s->flooding_rate = atoi(token);
+                else if (key == K_WATERPROOF)
+                    s->robot_waterproofing = atoi(token);
+                key = K_NONE;
+            }
+            w = 0;
+        }
+    }
+}
+
+
+static void copy_input(struct state *s, long input_length, const char *input) {
     DEBUG_ASSERT(s && input);
     long w = 0, h = 0, j = 0, i;
     for (i = 0; i < input_length; i++) {
@@ -128,7 +182,9 @@ static void copy_input(struct state *s, long input_length, const char* input) {
             w = 0;
         }
     }
+    i++;
     s->world[j] = 0;
+    copy_input_metadata(s, input_length - i, input + i);
 }
 
 
@@ -170,15 +226,19 @@ struct state *new_from_file(const char *path) {
 void dump(const struct state *s) {
     DEBUG_ASSERT(s);
     fputs("----------------------------------------------------------------\n", stderr);
-    fprintf(stderr, "world_size             = (%ld, %ld)\n", s->world_w, s->world_h);
-    fprintf(stderr, "robot_point            = (%ld, %ld)\n", s->robot_x, s->robot_y);
-    fprintf(stderr, "lift_point             = (%ld, %ld)\n", s->lift_x, s->lift_y);
-    fprintf(stderr, "lambda_count           = %ld\n", s->lambda_count);
-    fprintf(stderr, "collected_lambda_count = %ld\n", s->collected_lambda_count);
-    fprintf(stderr, "move_count             = %ld\n", s->move_count);
-    fprintf(stderr, "score                  = %ld\n", s->score);
-    fprintf(stderr, "condition              = %d\n", s->condition);
-    fprintf(stderr, "world_length           = %ld\n\n", s->world_length);
+    fprintf(stderr, "world_size               = (%ld, %ld)\n", s->world_w, s->world_h);
+    fprintf(stderr, "robot_point              = (%ld, %ld)\n", s->robot_x, s->robot_y);
+    fprintf(stderr, "lift_point               = (%ld, %ld)\n", s->lift_x, s->lift_y);
+    fprintf(stderr, "water_level              = %ld\n", s->water_level);
+    fprintf(stderr, "flooding_rate            = %ld\n", s->flooding_rate);
+    fprintf(stderr, "robot_waterproofing      = %ld\n", s->robot_waterproofing);
+    fprintf(stderr, "used_robot_waterproofing = %ld\n", s->used_robot_waterproofing);
+    fprintf(stderr, "lambda_count             = %ld\n", s->lambda_count);
+    fprintf(stderr, "collected_lambda_count   = %ld\n", s->collected_lambda_count);
+    fprintf(stderr, "move_count               = %ld\n", s->move_count);
+    fprintf(stderr, "score                    = %ld\n", s->score);
+    fprintf(stderr, "condition                = %d\n", s->condition);
+    fprintf(stderr, "world_length             = %ld\n\n", s->world_length);
     fputs(s->world, stderr);
     fputc('\n', stderr);
 }
@@ -220,6 +280,30 @@ void get_lift_point(const struct state *s, long *out_lift_x, long *out_lift_y) {
     DEBUG_ASSERT(s && out_lift_x && out_lift_y);
     *out_lift_x = s->lift_x;
     *out_lift_y = s->lift_y;
+}
+
+
+long get_water_level(const struct state *s) {
+    DEBUG_ASSERT(s);
+    return s->water_level;
+}
+
+
+long get_flooding_rate(const struct state *s) {
+    DEBUG_ASSERT(s);
+    return s->flooding_rate;
+}
+
+
+long get_robot_waterproofing(const struct state *s) {
+    DEBUG_ASSERT(s);
+    return s->robot_waterproofing;
+}
+
+
+long get_used_robot_waterproofing(const struct state *s) {
+    DEBUG_ASSERT(s);
+    return s->used_robot_waterproofing;
 }
 
 

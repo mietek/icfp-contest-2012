@@ -113,6 +113,18 @@ foreign import ccall unsafe "libvm.h get_robot_point"
 foreign import ccall unsafe "libvm.h get_lift_point"
   cGetLiftPoint :: CStatePtr -> Ptr CLong -> Ptr CLong -> IO ()
 
+foreign import ccall unsafe "libvm.h get_water_level"
+  cGetWaterLevel :: CStatePtr -> CLong
+
+foreign import ccall unsafe "libvm.h get_flooding_rate"
+  cGetFloodingRate :: CStatePtr -> CLong
+
+foreign import ccall unsafe "libvm.h get_robot_waterproofing"
+  cGetRobotWaterproofing :: CStatePtr -> CLong
+
+foreign import ccall unsafe "libvm.h get_used_robot_waterproofing"
+  cGetUsedRobotWaterproofing :: CStatePtr -> CLong
+
 foreign import ccall unsafe "libvm.h get_lambda_count"
   cGetLambdaCount :: CStatePtr -> CLong
 
@@ -169,6 +181,18 @@ getRobotPoint = getIntPair cGetRobotPoint
 
 getLiftPoint :: State -> Point
 getLiftPoint = getIntPair cGetLiftPoint
+
+getWaterLevel :: State -> Int
+getWaterLevel = getInt cGetWaterLevel
+
+getFloodingRate :: State -> Int
+getFloodingRate = getInt cGetFloodingRate
+
+getRobotWaterproofing :: State -> Int
+getRobotWaterproofing = getInt cGetRobotWaterproofing
+
+getUsedRobotWaterproofing :: State -> Int
+getUsedRobotWaterproofing = getInt cGetUsedRobotWaterproofing
 
 getLambdaCount :: State -> Int
 getLambdaCount = getInt cGetLambdaCount
