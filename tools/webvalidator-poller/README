@@ -1,0 +1,6 @@
+Run it like that:
+
+./poller.sh
+
+It generates files in format mapname-answer
+The files contain the output of comak's validate.sh
