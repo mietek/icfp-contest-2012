@@ -216,7 +216,7 @@ struct state *make_one_move(const struct state *s0, char move) {
         if (s->condition == C_NONE) {
             struct state *s1;
             s1 = copy(s);
-            update_world(s1, s);
+            update_world(s1, s, DO_NOT_IGNORE_ROBOT);
             free(s);
             s = s1;
         }
@@ -233,7 +233,7 @@ struct state *make_moves(const struct state *s0, const char *moves) {
         if (s->condition == C_NONE) {
             struct state *s1;
             s1 = copy(s);
-            update_world(s1, s);
+            update_world(s1, s, DO_NOT_IGNORE_ROBOT);
             free(s);
             s = s1;
         }
@@ -474,7 +474,7 @@ void execute_move(struct state *s, char move) {
     }
 }
 
-void update_world(struct state *s, const struct state *s0) {
+void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
     DEBUG_ASSERT(s && s0);
     DEBUG_ASSERT(s->condition == C_NONE);
     long x, y;
@@ -485,38 +485,38 @@ void update_world(struct state *s, const struct state *s0) {
             if (object == O_ROCK && get(s0, x, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x, y - 1, O_ROCK);
-                if (s0->robot_x == x && s0->robot_y == y - 2) {
+                if (!ignore_robot && s0->robot_x == x && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("robot lost by crushing\n");
                 }
             } else if (object == O_ROCK && get(s0, x, y - 1) == O_ROCK && get(s0, x + 1, y) == O_EMPTY && get(s0, x + 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x + 1, y - 1, O_ROCK);
-                if (s0->robot_x == x + 1 && s0->robot_y == y - 2) {
+                if (!ignore_robot && s0->robot_x == x + 1 && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("robot lost by crushing\n");
                 }
             } else if (object == O_ROCK && get(s0, x, y - 1) == O_ROCK && (get(s0, x + 1, y) != O_EMPTY || get(s0, x + 1, y - 1) != O_EMPTY) && get(s0, x - 1, y) == O_EMPTY && get(s0, x - 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x - 1, y - 1, O_ROCK);
-                if (s0->robot_x == x - 1 && s0->robot_y == y - 2) {
+                if (!ignore_robot && s0->robot_x == x - 1 && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("robot lost by crushing\n");
                 }
             } else if (object == O_ROCK && get(s0, x, y - 1) == O_LAMBDA && get(s0, x + 1, y) == O_EMPTY && get(s0, x + 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x + 1, y - 1, O_ROCK);
-                if (s0->robot_x == x + 1 && s0->robot_y == y - 2) {
+                if (!ignore_robot && s0->robot_x == x + 1 && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("robot lost by crushing\n");
                 }
-            } else if (object == O_CLOSED_LIFT && s0->collected_lambda_count == s0->lambda_count) {
+            } else if (!ignore_robot && object == O_CLOSED_LIFT && s0->collected_lambda_count == s0->lambda_count) {
                 put(s, x, y, O_OPEN_LIFT);
                 DEBUG_LOG("robot opened lift\n");
             }
         }
     }
-    if (s0->robot_y <= s->water_level) {
+    if (!ignore_robot && s0->robot_y <= s->water_level) {
         DEBUG_LOG("robot is underwater\n");
         s->used_robot_waterproofing++;
         if (s->used_robot_waterproofing > s->robot_waterproofing) {
@@ -524,7 +524,7 @@ void update_world(struct state *s, const struct state *s0) {
             DEBUG_LOG("robot lost by drowning\n");
         }
     }
-    if (s->flooding_rate && !(s->move_count % s->flooding_rate)) {
+    if (!ignore_robot && s->flooding_rate && !(s->move_count % s->flooding_rate)) {
         s->water_level++;
         DEBUG_LOG("robot increased water level to %ld\n", s->water_level);
     }

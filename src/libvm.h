@@ -94,6 +94,9 @@ struct state *make_moves(const struct state *s0, const char *moves);
 #define DEFAULT_ROBOT_WATERPROOFING 10
 #define MAX_TRAMPOLINE_COUNT 9
 
+#define IGNORE_ROBOT        true
+#define DO_NOT_IGNORE_ROBOT false
+
 
 struct state {
     long world_w, world_h;
@@ -195,4 +198,4 @@ void copy_input(struct state *s, long input_length, const char *input);
 void move_robot(struct state *s, long x, long y);
 void collect_lambda(struct state *s);
 void execute_move(struct state *s, char move);
-void update_world(struct state *s, const struct state *t);
+void update_world(struct state *s, const struct state *t, bool ignore_robot);
