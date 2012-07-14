@@ -1,15 +1,14 @@
 class Board
-  attr_reader :data
-  attr_reader :moves_log
-  attr_reader :score
-  attr_reader :finished
+  attr_reader :data, :moves_log, :score
 
   def initialize(file, interactive = true)
-    @data = parse_board(file)
-    @moves_log = []
-    @score = 0
-    @lambdas = 0
+    @moves_log   = []
+    @score       = 0
+    @lambdas     = 0
     @interactive = interactive
+    parse_board(file)
+    @next_flood = @flooding if @flooding > 0
+    @steps_underwater = 0
   end
 
   def make_move(direction)
@@ -35,8 +34,12 @@ class Board
   end
 
   def draw
-    50.times { puts '' }
+    40.times { puts '' }
     puts "Moves log: #{@moves_log.join('')}"
+    puts "Waterproof: #{@waterproof}"
+    puts "Water level: #{@water + 1}"
+    puts "Number of steps underwater: #{@steps_underwater}"
+    puts "Water rises in: #{@next_flood}"
     puts "Score: #{@score}"
     @data.reverse.each do |line|
       puts line.join('')
@@ -68,6 +71,10 @@ class Board
 
   def lose!
     finish('were crushed')
+  end
+
+  def drown!
+    finish('drowned')
   end
 
   def finish(reason)
@@ -145,6 +152,18 @@ class Board
         end
       end
     end
+    adjust_flood
+  end
+  
+  def adjust_flood
+    check_drowning
+    unless @flooding == 0
+      @next_flood -= 1
+      if @next_flood == 0
+        @water += 1
+        @next_flood = @flooding
+      end
+    end
   end
 
   def check_crushing(y, x)
@@ -152,6 +171,20 @@ class Board
     if current_x == x && current_y == y
       lose!
     end
+  end
+
+  def check_drowning
+    if robot_underwater?
+      drown! if @steps_underwater >= @waterproof
+      @steps_underwater += 1
+    else
+      @steps_underwater = 0
+    end
+  end
+
+  def robot_underwater?
+    current_x, current_y = current_position
+    current_y <= @water
   end
 
   def open_lift?
@@ -164,9 +197,19 @@ class Board
   def parse_board(file)
     result = []
     file.each_line do |line|
+      break if line == "\n"
       result << line.split('')
     end
-    result.reverse
+    @data       = result.reverse
+    begin
+      @water      = file.readline.split[1].to_i - 1
+      @flooding   = file.readline.split[1].to_i
+      @waterproof = file.readline.split[1].to_i
+    rescue EOFError
+      @water      = -1
+      @flooding   = 0
+      @waterproof = 10
+    end
   end
 
   def current_position
