@@ -8,6 +8,6 @@ for d in "`dirname "$0"`/tests/*"; do
     ROUTE=`basename $f`
     TMP=/tmp/$ROUTE
     echo "$ROUTE" | $VALIDATOR -vv $MAP > $TMP
-    diff $f $TMP && (echo $f ok; rm $TMP)
+    diff -B $f $TMP && (echo $f ok; rm $TMP) || echo "$f failed; output in $TMP" 
   done
 done
