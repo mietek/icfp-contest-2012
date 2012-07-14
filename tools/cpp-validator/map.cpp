@@ -50,7 +50,7 @@ std::ostream &operator<<(std::ostream &stream, const Map &map)
   
   for (unsigned int i = 0; i < map.data.size(); ++i) {
     stream << map.data[i];
-    if (i == water)
+    if (!map._vvMode && i == water)
       stream << "~";
     stream << std::endl;
   }

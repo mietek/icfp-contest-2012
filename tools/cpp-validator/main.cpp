@@ -30,6 +30,8 @@ int main(int argc, char **argv)
   m << mapFile;
   if (!vvMode)
     std::cout << m;
+  else
+    m.setVv();
   
   Robot r{m};
   Robot::Command c;
