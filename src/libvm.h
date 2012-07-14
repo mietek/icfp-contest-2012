@@ -27,6 +27,7 @@
 struct state *new(long input_length, const char *input);
 struct state *new_from_file(const char *path);
 struct state *copy(const struct state *s0);
+bool equal(const struct state *s1, const struct state *s2);
 
 void dump(const struct state *s);
 

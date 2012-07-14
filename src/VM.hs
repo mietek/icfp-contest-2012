@@ -17,7 +17,10 @@ import System.IO.Unsafe (unsafePerformIO)
 data CState
 type CStatePtr = Ptr CState
 type CStateFPtr = ForeignPtr CState
-data State = State !(CStateFPtr) deriving (Eq, Ord, Show)
+data State = State !(CStateFPtr)
+
+instance Eq State where
+  (==) = equal
 
 unwrapState :: State -> (CStatePtr -> IO a) -> a
 unwrapState (State sfp) action =
@@ -114,6 +117,9 @@ foreign import ccall unsafe "libvm.h new"
 foreign import ccall unsafe "libvm.h new_from_file"
   cNewFromFile :: CString -> IO CStatePtr
 
+foreign import ccall unsafe "libvm.h equal"
+  cEqual :: CStatePtr -> CStatePtr -> Bool
+
 foreign import ccall unsafe "libvm.h dump"
   cDump :: CStatePtr -> IO ()
 
@@ -175,6 +181,12 @@ newFromFile path =
   withCString path $ \p -> do
     sp <- cNewFromFile p
     wrapState sp
+
+equal :: State -> State -> Bool
+equal s1 s2 =
+  unwrapState s1 $ \sp1 ->
+    unwrapState s2 $ \sp2 ->
+      return (return (cEqual sp1 sp2))
 
 dump :: State -> IO ()
 dump s =

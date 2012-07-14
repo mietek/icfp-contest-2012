@@ -59,6 +59,13 @@ struct state *copy(const struct state *s0) {
     return s;
 }
 
+bool equal(const struct state *s1, const struct state *s2) {
+    DEBUG_ASSERT(s1 && s2);
+    if (s1->world_length != s2->world_length)
+        return false;
+    return !memcmp(s1, s2, sizeof(struct state) + s1->world_length);
+}
+
 
 void dump(const struct state *s) {
     DEBUG_ASSERT(s);
