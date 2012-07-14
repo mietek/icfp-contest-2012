@@ -488,16 +488,16 @@ static void update_world(struct state *s, const struct state *t) {
             }
         }
     }
-    if (s->flooding_rate && !(s->move_count % s->flooding_rate)) {
-        s->water_level++;
-        DEBUG_LOG("water level increased to %ld\n", s->water_level);
-    }
     if (t->robot_y <= s->water_level) {
         s->used_robot_waterproofing++;
         if (s->used_robot_waterproofing > s->robot_waterproofing) {
             s->condition = C_LOSE;
             DEBUG_LOG("lost by drowning\n");
         }
+    }
+    if (s->flooding_rate && !(s->move_count % s->flooding_rate)) {
+        s->water_level++;
+        DEBUG_LOG("water level increased to %ld\n", s->water_level);
     }
 }
 
