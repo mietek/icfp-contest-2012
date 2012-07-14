@@ -356,7 +356,13 @@ void copy_input(struct state *s, long input_length, const char *input) {
                 target_i = unmake_target(input[i]);
                 make_point(s, w, h, &s->target_x[target_i], &s->target_y[target_i]);
             }
-            s->world[j++] = input[i];
+            s->world[j] = input[i];
+            // TODO:
+            if (input[i] == O_BEARD)
+                s->world[j] = O_WALL;
+            else if (input[i] == O_RAZOR)
+                s->world[j] = O_EARTH;
+            j++;
             w++;
         }
         if (i == input_length - 1 || input[i] == '\n') {
@@ -366,7 +372,8 @@ void copy_input(struct state *s, long input_length, const char *input) {
                 s->world[j++] = O_EMPTY;
                 w++;
             }
-            s->world[j++] = '\n';
+            s->world[j] = '\n';
+            j++;
             h++;
             w = 0;
         }

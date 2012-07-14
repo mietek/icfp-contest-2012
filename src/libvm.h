@@ -10,6 +10,8 @@
 #define O_OPEN_LIFT   'O'
 #define O_EARTH       '.'
 #define O_EMPTY       ' '
+#define O_BEARD       'W'
+#define O_RAZOR       '!'
 
 #define O_FIRST_TRAMPOLINE 'A'
 #define O_LAST_TRAMPOLINE  'I'
