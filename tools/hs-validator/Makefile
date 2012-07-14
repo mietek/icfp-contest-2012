@@ -10,4 +10,4 @@ libvm.a: libvm.o
 	ar rcs libvm.a libvm.o
 
 validator: VM.hs libvm.o
-	ghc --make -Wall -O2 -L. -lvm -o validator Validator.hs
+	ghc --make -Wall -O2 -L. -lvm -fforce-recomp -o validator Validator.hs
