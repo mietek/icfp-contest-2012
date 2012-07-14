@@ -78,15 +78,16 @@ static void scan_input(long input_length, const char *input, long *out_world_w, 
     DEBUG_ASSERT(input && out_world_w && out_world_h);
     long world_w = 0, world_h = 0, w = 0, i;
     for (i = 0; i < input_length; i++) {
-        if (i == input_length || input[i] == '\n') {
+        if (input[i] != '\n')
+            w++;
+        if (i == input_length - 1 || input[i] == '\n') {
             if (w == 0)
                 break;
             if (w > world_w)
                 world_w = w;
             world_h++;
             w = 0;
-        } else
-            w++;
+        }
     }
     *out_world_w = world_w;
     *out_world_h = world_h;
@@ -105,7 +106,17 @@ static void copy_input(struct state *s, long input_length, const char* input) {
     DEBUG_ASSERT(s && input);
     long w = 0, h = 0, j = 0, i;
     for (i = 0; i < input_length; i++) {
-        if (i == input_length || input[i] == '\n') {
+        if (input[i] != '\n') {
+            if (input[i] == O_ROBOT)
+                make_point(s, w, h, &s->robot_x, &s->robot_y);
+            else if (input[i] == O_LAMBDA)
+                s->lambda_count++;
+            else if (input[i] == O_CLOSED_LIFT)
+                make_point(s, w, h, &s->lift_x, &s->lift_y);
+            s->world[j++] = input[i];
+            w++;
+        }
+        if (i == input_length - 1 || input[i] == '\n') {
             if (w == 0)
                 break;
             while (w < s->world_w) {
@@ -115,15 +126,6 @@ static void copy_input(struct state *s, long input_length, const char* input) {
             s->world[j++] = '\n';
             h++;
             w = 0;
-        } else {
-            if (input[i] == O_ROBOT)
-                make_point(s, w, h, &s->robot_x, &s->robot_y);
-            else if (input[i] == O_LAMBDA)
-                s->lambda_count++;
-            else if (input[i] == O_CLOSED_LIFT)
-                make_point(s, w, h, &s->lift_x, &s->lift_y);
-            s->world[j++] = input[i];
-            w++;
         }
     }
     s->world[j] = 0;
