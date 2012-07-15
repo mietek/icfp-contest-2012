@@ -430,7 +430,7 @@ iterateBoard :: State -> (Point -> Object -> [a] ) -> [a]
 iterateBoard s f = iter (1,1) [] where
     (m,n) = succ *** succ  $ getWorldSize s
     iter (x,y) acc | x == m && m == n = acc
-    iter (x,y) acc | y == n = iter (1,y+1) acc
+    iter (x,y) acc | x == m = iter (1,y+1) acc
     iter p@(x,y) acc = iter (x+1,y) (f p (get s p) ++ acc)
 
 findRocks ::  State -> [Point]
