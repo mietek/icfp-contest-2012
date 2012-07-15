@@ -83,3 +83,5 @@ You can use the following functions:
 
     makeOneMove :: State -> Char -> State
     makeMoves :: State -> String -> State
+
+    isSafe :: State -> Point -> Bool

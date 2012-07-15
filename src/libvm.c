@@ -243,6 +243,29 @@ struct state *make_moves(const struct state *s0, const char *moves) {
 }
 
 
+bool is_safe(const struct state *s0, long x, long y) {
+    DEBUG_ASSERT(s0);
+    DEBUG_ASSERT(s0->condition == C_NONE);
+    struct state *s;
+    bool safe;
+    if (!is_point_in_world(s0, x, y))
+        safe = false;
+    else if (!is_enterable(s0, x, y))
+        safe = false;
+    else if (is_point_in_world(s0, x, y + 1) && get(s0, x, y + 1) == O_EMPTY) {
+        s = copy(s0);
+        update_world(s, s0, IGNORE_ROBOT);
+        if (get(s, x, y + 1) == O_ROCK)
+            safe = false;
+        else
+            safe = true;
+        free(s);
+    } else
+        safe = true;
+    return safe;
+}
+
+
 // ---------------------------------------------------------------------------
 // Private
 // ---------------------------------------------------------------------------

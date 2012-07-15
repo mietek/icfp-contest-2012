@@ -181,6 +181,9 @@ foreign import ccall unsafe "libvm.h make_one_move"
 foreign import ccall unsafe "libvm.h make_moves"
   cMakeMoves :: CStatePtr -> CString -> IO CStatePtr
 
+foreign import ccall unsafe "libvm.h is_safe"
+  cIsSafe :: CStatePtr -> CLong -> CLong -> CChar
+
 
 new :: ByteString -> State
 new input =
@@ -307,3 +310,8 @@ makeMoves s0 moves =
 
 makeMoves' :: State -> [Move] -> State
 makeMoves' s0 moves = makeMoves s0 (map fromMove moves)
+
+isSafe :: State -> Point -> Bool
+isSafe s (x, y) =
+  unwrapState s $ \sp ->
+    return (toBool (cIsSafe sp (toEnum x) (toEnum y)))

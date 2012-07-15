@@ -60,6 +60,8 @@ char safe_get(const struct state *s, long x, long y);
 struct state *make_one_move(const struct state *s0, char move);
 struct state *make_moves(const struct state *s0, const char *moves);
 
+bool is_safe(const struct state *s0, long x, long y);
+
 
 // ---------------------------------------------------------------------------
 // Private
