@@ -12,6 +12,7 @@ do
 	VALIDATOR="./${v}"
 	for t in `ls tests`
 	do
+		echo -e "\033[30;1m---------------------------------------------------------------------------------\033[0m"
 		TESTFILE="tests/${t}"
 		m=`echo ${t} | cut -d'-' -f 1`
 		MAP="../../tests/${m}.map"
@@ -20,10 +21,10 @@ do
 		echo ${ANSWER} | timeout 1 ${VALIDATOR} -vv ${MAP} | head -n1 > $TMP
 		echo ${m}
 		echo ${ANSWER}
-		diff -B $TESTFILE $TMP > /dev/null && echo ok ||
-			(echo "fail"; echo "expected:"; cat $TESTFILE; echo "got:"; cat $TMP)
+		diff -B $TESTFILE $TMP > /dev/null && echo -e "\033[32;1mok\033[0m" ||
+			(echo -e "\033[31;1mfail\033[0m"; echo -e "\033[30;1mexpected:\033[0m"; cat $TESTFILE; echo -e "\033[30;1mgot:\033[0m"; cat $TMP)
 		rm $TMP
-		echo "================================================================================="
+		echo
 	done
 done
 
