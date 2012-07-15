@@ -334,7 +334,19 @@ isEnterable s (x, y) =
   unwrapState s $ \sp ->
     return (toBool (cIsEnterable sp (toEnum x) (toEnum y)))
 
+
 isSafe :: State -> Point -> Bool
 isSafe s (x, y) = isEnterable s (x, y) && get s (x, y + 1) == OEmpty && get s1 (x, y + 1) /= ORock
   where
     s1 = updateWorldIgnoringRobot s
+
+getMoveDestination :: State -> Move -> Point
+getMoveDestination s move = getRobotPoint (makeOneMove s move)
+
+imagineMoveDestination :: State -> Point -> Move -> Point
+imagineMoveDestination s pt move = getMoveDestination (imagineRobotAt s pt) move
+
+imagineAllMoveDestinations :: State -> Point -> [(Move, Point)]
+imagineAllMoveDestinations s pt = zip moves (map (imagineMoveDestination s pt) moves)
+  where
+    moves = [MLeft, MRight, MUp, MDown]
