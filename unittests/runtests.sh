@@ -5,6 +5,10 @@ GREEN="\033[32m"
 RED="\033[31m"
 PLAIN="\033[0m"
 
+MKTEMP=/bin/tempfile
+
+[ -f $MKTEMP ] || MKTEMP="mktemp -t icfp2012"
+
 if [ -z "$VALIDATOR" ]; then
   echo "Argument (validator path) missing."
   exit 1
@@ -17,7 +21,7 @@ for d in `dirname "$0"`/tests/*; do
   for INFILE in $d/*.in; do
     BASENAME=`basename $INFILE .in`
     OUTFILE=$d/$BASENAME.out
-    TMP=`mktemp`
+    TMP=`$MKTEMP`
     cat "$INFILE" | $VALIDATOR -vv $MAP | sed -e '2~1 y/123456789ABCDEFGHI/tttttttttTTTTTTTTT/' > $TMP
     if diff -B $OUTFILE $TMP > /dev/null; then
       echo -e "$GREEN$MAPNAME/$BASENAME ok $PLAIN"
