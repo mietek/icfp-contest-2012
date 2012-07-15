@@ -522,7 +522,7 @@ void move_robot(struct state *s, long x, long y) {
 
 void shave_surroundings(struct state *s, long x, long y) {
     DEBUG_ASSERT(s);
-    if(s->razor_count) {
+    if (s->razor_count) {
         int i, j;
         for (i = -1; i <= 1; i++) {
             for (j = -1; j <= 1; j++) {
@@ -666,7 +666,7 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("robot lost by crushing\n");
                 }            
-            } else if (s->beard_growth_rate && !(s->move_count % s->beard_growth_rate) && get(s0, x, y) == O_BEARD) {
+            } else if (s->beard_growth_rate && !(s->move_count % s->beard_growth_rate) && object == O_BEARD) {
                 int i, j;
                 for (i = -1; i <= 1; i++) {
                     for (j = -1; j <= 1; j++) {
@@ -675,6 +675,7 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
                         }
                     }
                 }
+                DEBUG_LOG("Beard grew around (%ld, %ld)\n", x, y);
             } else if (!ignore_robot && object == O_CLOSED_LIFT && s0->collected_lambda_count == s0->lambda_count) {
                 put(s, x, y, O_OPEN_LIFT);
                 DEBUG_LOG("robot opened lift\n");
