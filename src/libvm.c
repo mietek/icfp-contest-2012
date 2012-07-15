@@ -308,7 +308,7 @@ bool is_safe(const struct state *s, long x, long y) {
     bool safe;
     if (!is_enterable(s, x, y))
         safe = false;
-    else if (get(s, x, y + 1) == O_EMPTY) {
+    else if (get(s, x, y + 1) == O_EMPTY||get(s, x, y + 1) == O_ROBOT) {
         s1 = update_world_ignoring_robot(s);
         safe = get(s1, x, y + 1) != O_ROCK;
         free(s1);

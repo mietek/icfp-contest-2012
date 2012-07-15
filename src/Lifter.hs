@@ -29,21 +29,26 @@ chooseGoal s c (x, y) r =
 run :: MVar Builder -> State -> [Move]-> IO ()
 run resultV s0 l = goRandom s0 l []
   where
-    goRandom s (m:ms) prefix = do
+    goRandom s (m:m1:ms) prefix = do
       let r = getRobotPoint s
       let (wx, wy) = getWorldSize s
       let c = buildCostTable s r
---      flip mapM_ [1..wx] $ \x -> 
---        flip mapM_ [1..wy] $ \y -> myPrint (y == wy) $ getCost c (x,  wy+1-y)
+      flip mapM_ [1..wx] $ \x -> 
+        flip mapM_ [1..wy] $ \y -> myPrint (y == wy) $ getCost c (x,  wy+1-y)
       let (t, goal) = chooseGoal s c (wx, wy) r
       let answer = if t /= ORobot then findPath s c r goal else [m]
       let s' = makeMoves s answer
-      let result = prefix ++ answer
-      print (length(result), result)
-      dump s'
-      if  (getCondition s')/= CNone || (t == ORobot && length(result)>123) 
+      let (answer2, s'') = if (getCondition s') == CLose 
+                            then ([m1], makeMoves s [m1])
+                            else (answer, s')
+      dump s''
+      let result = prefix ++ answer2
+      print result
+      hFlush stdout
+      hFlush stderr
+      if  (getCondition s'')/= CNone || (t == ORobot && length(result)>153) 
         then print result 
-        else goRandom s' ms result
+        else goRandom s'' ms result
 --      modifyMVar_ resultV $ \result ->
 --        return (result `mappend` fromString answer)
 --      goRandom s' ms (prefix++answer)
