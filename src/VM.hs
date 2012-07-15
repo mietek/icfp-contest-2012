@@ -404,10 +404,10 @@ findPath s ct from0 to = map reverseMove (loop to [])
   where
     loop from path
       | from == from0 = path
- --      | cost > (getCost ct from) = path
       | otherwise = loop step (move : path)
         where
           moves = [MLeft, MRight, MUp, MDown]
           steps = map (imagineStep s from) moves
           costs = map (getCost ct) steps
-          (cost, step, move) = head (sort (zip3 costs steps moves))
+          minCost = head $ sort $ costs
+          (cost, step, move) = head (filter (\(x,y,z) -> x==minCost) (zip3 costs steps moves))

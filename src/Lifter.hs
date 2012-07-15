@@ -25,30 +25,34 @@ chooseGoal s c (x, y) r =
       select [] = (ORobot, r)
       select ((_,t,x):xs) = (t, x)
       clean = filter (\ (c, t, _) -> (t == OLambda || t == OOpenLift) && c< cMAX)
-      
+
+testMoves s m = 
+    let s' = makeMoves s m in
+    if (getCondition s') /= CLose then (True, s') else (False, s)
+    
+testMovesList s [] = (False, s, [])
+testMovesList s (m:ms) = let (b, s') = testMoves s m in if b then (b, s', m) else testMovesList s (ms)
+
+    
 run :: MVar Builder -> State -> [Move]-> IO ()
-run resultV s0 l = goRandom s0 l []
+run resultV s0 l = goDijkstra s0 l []
   where
-    goRandom s (m:m1:ms) prefix = do
+    goDijkstra s (m:ms) prefix = do
       let r = getRobotPoint s
       let (wx, wy) = getWorldSize s
       let c = buildCostTable s r
       flip mapM_ [1..wx] $ \x -> 
         flip mapM_ [1..wy] $ \y -> myPrint (y == wy) $ getCost c (x,  wy+1-y)
       let (t, goal) = chooseGoal s c (wx, wy) r
-      let answer = if t /= ORobot then findPath s c r goal else [m]
-      let s' = makeMoves s answer
-      let (answer2, s'') = if (getCondition s') == CLose 
-                            then ([m1], makeMoves s [m1])
-                            else (answer, s')
-      dump s''
-      let result = prefix ++ answer2
+      let moves = if t /= ORobot then [findPath s c r goal] else []
+      let (b, s', answer) =  testMovesList s (moves ++ [[m], [MRight], [MLeft], [MDown], [MUp]])
+      dump s' 
+      let result = prefix ++ answer
       print result
       hFlush stdout
-      hFlush stderr
-      if  (getCondition s'')/= CNone || (t == ORobot && length(result)>153) 
+      if  (getCondition s')/= CNone || (t == ORobot && length(result)>153) 
         then print result 
-        else goRandom s'' ms result
+        else goDijkstra s' ms result
 --      modifyMVar_ resultV $ \result ->
 --        return (result `mappend` fromString answer)
 --      goRandom s' ms (prefix++answer)
