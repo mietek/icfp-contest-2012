@@ -9,6 +9,10 @@ TARBALL = icfp-95780824.tgz
 
 all: bin/lifter bin/validator bin/debuglifter bin/debugvalidator
 
+test: testvalidator
+
+testvalidator: bin/validator
+	./unittests/runtests.sh $^
 
 bin:
 	mkdir bin
@@ -45,4 +49,5 @@ $(TARBALL): bin/lifter
 clean:
 	rm -f bin/* src/*.hi src/*.o lifter $(TARBALL)
 
-.PHONY: all tarball clean
+.PHONY: all tarball clean test testvalidator
+
