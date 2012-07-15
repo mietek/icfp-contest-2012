@@ -441,9 +441,8 @@ void clear_similar_trampolines(struct state *s, char trampoline) {
 }
 
 void execute_move(struct state *s, char move) {
-    DEBUG_ASSERT(s);
+    DEBUG_ASSERT(s && is_valid_move(move));
     DEBUG_ASSERT(s->condition == C_NONE);
-    DEBUG_ASSERT(is_valid_move(move));
     if (move == M_LEFT || move == M_RIGHT || move == M_UP || move == M_DOWN) {
         long x, y;
         char object;
