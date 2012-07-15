@@ -51,7 +51,7 @@ getIntPair action s =
         return (fromEnum a, fromEnum b)
 
 
-data Object = ORobot | OWall | ORock | OLambda | OClosedLift | OOpenLift | OEarth | OEmpty | OTrampoline Trampoline | OTarget Target deriving (Eq, Ord)
+data Object = ORobot | OWall | ORock | OLambda | OClosedLift | OOpenLift | OEarth | OEmpty | OBeard | ORazor | OTrampoline Trampoline | OTarget Target deriving (Eq, Ord)
 
 instance Show Object where
   show object = [fromObject object]
@@ -65,6 +65,8 @@ fromObject OClosedLift = 'L'
 fromObject OOpenLift   = 'O'
 fromObject OEarth      = '.'
 fromObject OEmpty      = ' '
+fromObject OBeard      = 'W'
+fromObject ORazor      = '!'
 fromObject (OTrampoline trampoline) = fromTrampoline trampoline
 fromObject (OTarget target) = fromTarget target
 
@@ -77,6 +79,8 @@ toObject 'L'  = OClosedLift
 toObject 'O'  = OOpenLift
 toObject '.'  = OEarth
 toObject ' '  = OEmpty
+toObject 'W'  = OBeard
+toObject '!'  = ORazor
 toObject c
   | isValidTrampolineChar c = OTrampoline (toTrampoline c)
   | isValidTargetChar c     = OTarget (toTarget c)
