@@ -20,7 +20,7 @@ fi
 BASEDIR=`dirname "$0"`/tests/$MAP
 if ! [ -d "$BASEDIR" ]; then
   mkdir $BASEDIR
-  cp tests/$MAP.map $BASEDIR/map || exit 2
+  cp `dirname "$0"`/../tests/$MAP.map $BASEDIR/map || exit 2
 fi
 
 if [ -z "$CASENAME" ]; then
