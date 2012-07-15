@@ -17,7 +17,7 @@ for d in `dirname "$0"`/tests/*; do
   for INFILE in $d/*.in; do
     BASENAME=`basename $INFILE .in`
     OUTFILE=$d/$BASENAME.out
-    TMP=`mktemp -t icfp2012`
+    TMP=`mktemp`
     cat "$INFILE" | $VALIDATOR -vv $MAP > $TMP
     if diff -B $OUTFILE $TMP > /dev/null; then
       echo -e "$GREEN$MAPNAME/$BASENAME ok $PLAIN"
