@@ -424,10 +424,10 @@ void copy_input_metadata(struct state *s, long input_length, const char *input) 
                     key = K_NONE;
                 } else if (key == K_BEARD_GROWTH_RATE) {
                     s->beard_growth_rate = atoi(token);
-                    key = K_NONE;   
+                    key = K_NONE;
                 } else if (key == K_RAZOR_COUNT) {
                     s->razor_count = atoi(token);
-                    key = K_NONE;                  
+                    key = K_NONE;
                 } else if (key == K_TRAMPOLINE) {
                     trampoline_i = trampoline_to_index(*token);
                     key = K_TRAMPOLINE_TARGET_KEYWORD;
@@ -466,7 +466,7 @@ void copy_input(struct state *s, long input_length, const char *input) {
                 target_i = target_to_index(input[i]);
                 size_to_point(s->world_h, w, h, &s->target_x[target_i], &s->target_y[target_i]);
             }
-            s->world[j] = input[i];            
+            s->world[j] = input[i];
             j++;
             w++;
         }
@@ -526,8 +526,8 @@ void shave_surroundings(struct state *s, long x, long y) {
         int i, j;
         for (i = -1; i <= 1; i++) {
             for (j = -1; j <= 1; j++) {
-                if (get(s, x+i, y+j) == O_BEARD) {
-                    put(s, x+i, y+j, O_EMPTY);
+                if (get(s, x + i, y + j) == O_BEARD) {
+                    put(s, x + i, y + j, O_EMPTY);
                 }
             }
         }
@@ -594,7 +594,7 @@ void execute_move(struct state *s, char move) {
             collect_lambda(s);
         } else if (object == O_RAZOR) {
             move_robot(s, x, y);
-            collect_razor(s);            
+            collect_razor(s);
         } else if (object == O_OPEN_LIFT) {
             move_robot(s, x, y);
             s->score += s->collected_lambda_count * 50;
@@ -616,7 +616,7 @@ void execute_move(struct state *s, char move) {
         s->move_count++;
         s->score--;
     } else if (move == M_SHAVE) {
-        shave_surroundings(s, s->robot_x, s->robot_y);                
+        shave_surroundings(s, s->robot_x, s->robot_y);
         s->move_count++;
         s->score--;
     } else if (move == M_WAIT) {
@@ -665,17 +665,17 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
                 if (!ignore_robot && s0->robot_x == x + 1 && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("robot lost by crushing\n");
-                }            
-            } else if (s->beard_growth_rate && !(s->move_count % s->beard_growth_rate) && object == O_BEARD) {
+                }
+            } else if (object == O_BEARD && s->beard_growth_rate && !(s->move_count % s->beard_growth_rate)) {
                 int i, j;
                 for (i = -1; i <= 1; i++) {
                     for (j = -1; j <= 1; j++) {
-                        if (get(s, x+i, y+j) == O_EMPTY) {
-                            put(s, x+i, y+j, O_BEARD);
+                        if (get(s, x + i, y + j) == O_EMPTY) {
+                            put(s, x + i, y + j, O_BEARD);
                         }
                     }
                 }
-                DEBUG_LOG("Beard grew around (%ld, %ld)\n", x, y);
+                DEBUG_LOG("beard grew around (%ld, %ld)\n", x, y);
             } else if (!ignore_robot && object == O_CLOSED_LIFT && s0->collected_lambda_count == s0->lambda_count) {
                 put(s, x, y, O_OPEN_LIFT);
                 DEBUG_LOG("robot opened lift\n");
@@ -693,7 +693,7 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
     if (!ignore_robot && s->flooding_rate && !(s->move_count % s->flooding_rate)) {
         s->water_level++;
         DEBUG_LOG("robot increased water level to %ld\n", s->water_level);
-    }    
+    }
 }
 
 
