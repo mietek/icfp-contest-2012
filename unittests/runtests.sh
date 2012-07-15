@@ -22,8 +22,10 @@ for d in `dirname "$0"`/tests/*; do
     BASENAME=`basename $INFILE .in`
     OUTFILE=$d/$BASENAME.out
     TMP=`$MKTEMP`
-    cat "$INFILE" | $VALIDATOR -vv $MAP | perl -pe 'tr/123456789ABCDEFGHI/tttttttttTTTTTTTTT/ if ($i++)' > $TMP
-    if diff -B $OUTFILE $TMP > /dev/null; then
+    cat "$INFILE" | $VALIDATOR -vv $MAP | perl -pe 'tr/123456789ABCDEFGHI/tttttttttTTTTTTTTT/ if ($i++)' | sed -e 's/\s*$//' > $TMP
+    TMPO=`$MKTEMP`
+    cat $OUTFILE | sed -e 's/\s*$//' > $TMPO
+    if diff -B $TMPO $TMP > /dev/null; then
       echo -e "$GREEN$MAPNAME/$BASENAME ok $PLAIN"
     else
       echo -e "$RED$MAPNAME/$BASENAME failed!!!$PLAIN"
@@ -34,6 +36,6 @@ for d in `dirname "$0"`/tests/*; do
       echo "Got:"
       cat $TMP
     fi
-    rm $TMP
+    rm $TMP $TMPO
   done
 done
