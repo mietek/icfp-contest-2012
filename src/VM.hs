@@ -14,7 +14,9 @@ import Foreign.Marshal.Alloc (alloca, finalizerFree)
 import Foreign.Marshal.Utils (toBool)
 import Foreign.Storable (peek)
 import System.IO.Unsafe (unsafePerformIO)
+import Data.Maybe (catMaybes)
 
+import Control.Arrow
 
 data CState
 type CStatePtr = Ptr CState
@@ -476,9 +478,31 @@ findPath s ct from0 to = map reverseMove (loop to [])
       | otherwise = loop step (move : path)
         where
           moves = [MLeft, MRight, MUp, MDown]
-          steps = map (imagineStep s from) moves 
+          steps = map (imagineStep s from) moves
           dists = map (getDist ct) steps
           costs = map (getCost ct) steps
           minDist = head $ sort $ dists
           minCost = head $ sort $ costs
           (cost, dist, step, move) = head $ sort $ (filter (\(x,y,_,m) -> y==minDist) (zip4 costs dists steps moves))
+
+
+iterateBoard :: State -> (Point -> Object -> [a] ) -> [a]
+iterateBoard s f = iter (1,1) [] where
+    (m,n) = succ *** succ  $ getWorldSize s
+    iter (x,y) acc | x == m && m == n = acc
+    iter (x,y) acc | y == n = iter (1,y+1) acc
+    iter p@(x,y) acc = iter (x+1,y) (f p (get s p) ++ acc)
+
+findRocks ::  State -> [Point]
+findRocks = flip iterateBoard (\p o -> if isRock o then [p] else [])
+
+findMoveRocks :: State -> [(Point,Move)]
+findMoveRocks st = catMaybes . map moveable $  findRocks st where
+    moveable p@(x,y) = if isEmpty (get st (x+1,y)) then Just (p,MRight)
+                       else if isEmpty (get st (x-1,y)) then Just (p,MLeft)
+                       else if isEmpty (get st (x,y+1)) then Just (p,MUp)
+                       else if isEmpty (get st (x,y-1)) then Just (p,MDown)
+                       else Nothing
+
+isEmpty = (== OEmpty)
+isRock =  (== ORock )
