@@ -2,35 +2,36 @@
 // Public
 // ---------------------------------------------------------------------------
 
-#define O_ROBOT       'R'
-#define O_WALL        '#'
-#define O_ROCK        '*'
-#define O_LAMBDA      '\\'
-#define O_CLOSED_LIFT 'L'
-#define O_OPEN_LIFT   'O'
-#define O_EARTH       '.'
-#define O_EMPTY       ' '
-#define O_BEARD       'W'
-#define O_RAZOR       '!'
+#define O_ROBOT                   'R'
+#define O_WALL                    '#'
+#define O_ROCK                    '*'
+#define O_LAMBDA                  '\\'
+#define O_CLOSED_LIFT             'L'
+#define O_OPEN_LIFT               'O'
+#define O_EARTH                   '.'
+#define O_EMPTY                   ' '
+#define O_BEARD                   'W'
+#define O_RAZOR                   '!'
+#define O_HIGHER_ORDER_ROCK       '@'
 
-#define O_FIRST_TRAMPOLINE 'A'
-#define O_LAST_TRAMPOLINE  'I'
+#define O_FIRST_TRAMPOLINE        'A'
+#define O_LAST_TRAMPOLINE         'I'
 
 #define O_FIRST_TRAMPOLINE_TARGET '1'
 #define O_LAST_TRAMPOLINE_TARGET  '9'
 
-#define M_LEFT        'L'
-#define M_RIGHT       'R'
-#define M_UP          'U'
-#define M_DOWN        'D'
-#define M_WAIT        'W'
-#define M_ABORT       'A'
-#define M_SHAVE       'S'
+#define M_LEFT                    'L'
+#define M_RIGHT                   'R'
+#define M_UP                      'U'
+#define M_DOWN                    'D'
+#define M_WAIT                    'W'
+#define M_ABORT                   'A'
+#define M_SHAVE                   'S'
 
-#define C_NONE        'N'
-#define C_WIN         'W'
-#define C_LOSE        'L'
-#define C_ABORT       'A'
+#define C_NONE                    'N'
+#define C_WIN                     'W'
+#define C_LOSE                    'L'
+#define C_ABORT                   'A'
 
 
 struct state *new(long input_length, const char *input);
@@ -164,6 +165,11 @@ inline bool is_valid_target(char target) {
 }
 
 
+inline bool is_any_rock(char rock) {
+    return rock == O_ROCK || rock == O_HIGHER_ORDER_ROCK;
+}
+
+
 inline bool is_within_world(long world_w, long world_h, long x, long y) {
     return is_valid_point(x, y) && x <= world_w && y <= world_h;
 }
@@ -265,5 +271,6 @@ void clear_similar_trampolines(struct state *s, char trampoline);
 void execute_move(struct state *s, char move);
 void update_world(struct state *s, const struct state *t, bool ignore_robot);
 
+void drop_rock(struct state *s, const struct state *s0, char rock, long x, long y, bool ignore_robot);
 long calculate_cost(const struct state *s, long step_x, long step_y, long stage);
 void run_dijkstra(struct cost_table *ct, const struct state *s);

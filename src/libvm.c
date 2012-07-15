@@ -308,9 +308,9 @@ bool is_safe(const struct state *s, long x, long y) {
     bool safe;
     if (!is_enterable(s, x, y))
         safe = false;
-    else if (get(s, x, y + 1) == O_EMPTY||get(s, x, y + 1) == O_ROBOT) {
+    else if (get(s, x, y + 1) == O_EMPTY || get(s, x, y + 1) == O_ROBOT) {
         s1 = update_world_ignoring_robot(s);
-        safe = get(s1, x, y + 1) != O_ROCK;
+        safe = !is_any_rock(get(s1, x, y + 1));
         free(s1);
     } else
         safe = true;
@@ -511,7 +511,7 @@ void teleport_robot(struct state *s, long x, long y) {
 
 void move_robot(struct state *s, long x, long y) {
     DEBUG_ASSERT(s);
-    DEBUG_ASSERT(is_enterable(s, x, y) || (get(s, x, y) == O_ROCK && get(s, x + x - s->robot_x, y) == O_EMPTY));
+    DEBUG_ASSERT(is_enterable(s, x, y) || (is_any_rock(get(s, x, y)) && get(s, x + x - s->robot_x, y) == O_EMPTY));
     char object;
     long trampoline_i, target_i;
     object = get(s, x, y);
@@ -616,10 +616,18 @@ void execute_move(struct state *s, char move) {
             move_robot(s, x, y);
             put(s, x - 1, y, O_ROCK);
             DEBUG_LOG("robot pushed rock from (%ld, %ld) to (%ld, %ld)\n", x, y, x - 1, y);
+        } else if (object == O_HIGHER_ORDER_ROCK && move == M_LEFT && get(s, x - 1, y) == O_EMPTY) {
+            move_robot(s, x, y);
+            put(s, x - 1, y, O_HIGHER_ORDER_ROCK);
+            DEBUG_LOG("robot pushed higher order rock from (%ld, %ld) to (%ld, %ld)\n", x, y, x - 1, y);
         } else if (object == O_ROCK && move == M_RIGHT && get(s, x + 1, y) == O_EMPTY) {
             move_robot(s, x, y);
             put(s, x + 1, y, O_ROCK);
             DEBUG_LOG("robot pushed rock from (%ld, %ld) to (%ld, %ld)\n", x, y, x + 1, y);
+        } else if (object == O_HIGHER_ORDER_ROCK && move == M_RIGHT && get(s, x + 1, y) == O_EMPTY) {
+            move_robot(s, x, y);
+            put(s, x + 1, y, O_HIGHER_ORDER_ROCK);
+            DEBUG_LOG("robot pushed higher order rock from (%ld, %ld) to (%ld, %ld)\n", x, y, x + 1, y);
         } else if (is_valid_trampoline(object)) {
             move_robot(s, x, y);
             clear_similar_trampolines(s, object);
@@ -642,6 +650,20 @@ void execute_move(struct state *s, char move) {
     }
 }
 
+void drop_rock(struct state *s, const struct state *s0, char rock, long x, long y, bool ignore_robot) {
+    DEBUG_ASSERT(s && s0 && is_any_rock(rock));
+    char below;
+    below = get(s0, x, y - 1);
+    if (!ignore_robot && below == O_ROBOT) {
+        s->condition = C_LOSE;
+        DEBUG_LOG("robot lost by crushing\n");
+    }
+    if (below != O_EMPTY && rock == O_HIGHER_ORDER_ROCK) {
+        put(s, x, y, O_LAMBDA);
+        DEBUG_LOG("higher order rock turned into lambda at (%ld, %ld)\n", x, y);
+    }
+}
+
 void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
     DEBUG_ASSERT(s && s0);
     DEBUG_ASSERT(s->condition == C_NONE);
@@ -650,33 +672,25 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
         for (x = 1; x <= s->world_w; x++) {
             char object;
             object = get(s0, x, y);
-            if (object == O_ROCK && get(s0, x, y - 1) == O_EMPTY) {
-                put(s, x, y, O_EMPTY);
-                put(s, x, y - 1, O_ROCK);
-                if (!ignore_robot && s0->robot_x == x && s0->robot_y == y - 2) {
-                    s->condition = C_LOSE;
-                    DEBUG_LOG("robot lost by crushing\n");
-                }
-            } else if (object == O_ROCK && get(s0, x, y - 1) == O_ROCK && get(s0, x + 1, y) == O_EMPTY && get(s0, x + 1, y - 1) == O_EMPTY) {
-                put(s, x, y, O_EMPTY);
-                put(s, x + 1, y - 1, O_ROCK);
-                if (!ignore_robot && s0->robot_x == x + 1 && s0->robot_y == y - 2) {
-                    s->condition = C_LOSE;
-                    DEBUG_LOG("robot lost by crushing\n");
-                }
-            } else if (object == O_ROCK && get(s0, x, y - 1) == O_ROCK && (get(s0, x + 1, y) != O_EMPTY || get(s0, x + 1, y - 1) != O_EMPTY) && get(s0, x - 1, y) == O_EMPTY && get(s0, x - 1, y - 1) == O_EMPTY) {
-                put(s, x, y, O_EMPTY);
-                put(s, x - 1, y - 1, O_ROCK);
-                if (!ignore_robot && s0->robot_x == x - 1 && s0->robot_y == y - 2) {
-                    s->condition = C_LOSE;
-                    DEBUG_LOG("robot lost by crushing\n");
-                }
-            } else if (object == O_ROCK && get(s0, x, y - 1) == O_LAMBDA && get(s0, x + 1, y) == O_EMPTY && get(s0, x + 1, y - 1) == O_EMPTY) {
-                put(s, x, y, O_EMPTY);
-                put(s, x + 1, y - 1, O_ROCK);
-                if (!ignore_robot && s0->robot_x == x + 1 && s0->robot_y == y - 2) {
-                    s->condition = C_LOSE;
-                    DEBUG_LOG("robot lost by crushing\n");
+            if (is_any_rock(object)) {
+                char below;
+                below = get(s0, x, y - 1);
+                if (below == O_EMPTY) {
+                    put(s, x, y, O_EMPTY);
+                    put(s, x, y - 1, object);
+                    drop_rock(s, s0, x, y - 1, ignore_robot, object);
+                } else if (is_any_rock(below) && get(s0, x + 1, y) == O_EMPTY && get(s0, x + 1, y - 1) == O_EMPTY) {
+                    put(s, x, y, O_EMPTY);
+                    put(s, x + 1, y - 1, object);
+                    drop_rock(s, s0, x + 1, y - 1, ignore_robot, object);
+                } else if (is_any_rock(below) && get(s0, x - 1, y) == O_EMPTY && get(s0, x - 1, y - 1) == O_EMPTY) {
+                    put(s, x, y, O_EMPTY);
+                    put(s, x - 1, y - 1, object);
+                    drop_rock(s, s0, x - 1, y - 1, ignore_robot, object);
+                } else if (below == O_LAMBDA && get(s0, x + 1, y) == O_EMPTY && get(s0, x + 1, y - 1) == O_EMPTY) {
+                    put(s, x, y, O_EMPTY);
+                    put(s, x + 1, y - 1, object);
+                    drop_rock(s, s0, x + 1, y - 1, ignore_robot, object);
                 }
             } else if (object == O_BEARD && s->beard_growth_rate && !(s->move_count % s->beard_growth_rate)) {
                 int i, j;
@@ -709,13 +723,23 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
 }
 
 long calculate_cost(const struct state *s, long step_x, long step_y, long stage) {
+    if (safe_get(s, step_x, step_y) == O_LAMBDA){
+        return 1;
+    }
+    if (safe_get(s, step_x, step_y) == O_EMPTY){
+        return 4;
+    }
     if (
         safe_get(s, step_x, step_y + 1) == O_ROCK ||
         (safe_get(s, step_x + 1, step_y + 1) == O_ROCK && safe_get(s, step_x + 1, step_y) == O_ROCK) ||
-        (safe_get(s, step_x - 1, step_y + 1) == O_ROCK && safe_get(s, step_x - 1, step_y) == O_ROCK)
-    )
-        return 5;
-    return 1;
+        (safe_get(s, step_x - 1, step_y + 1) == O_ROCK && safe_get(s, step_x - 1, step_y) == O_ROCK) ||
+        safe_get(s, step_x, step_y + 1) == O_HIGHER_ORDER_ROCK ||
+        (safe_get(s, step_x + 1, step_y + 1) == O_HIGHER_ORDER_ROCK && safe_get(s, step_x + 1, step_y) == O_HIGHER_ORDER_ROCK) ||
+        (safe_get(s, step_x - 1, step_y + 1) == O_HIGHER_ORDER_ROCK && safe_get(s, step_x - 1, step_y) == O_HIGHER_ORDER_ROCK)
+    ) {
+        return 40;
+    }
+    return 10;
 }
 
 void run_dijkstra(struct cost_table *ct, const struct state *s) {
@@ -736,8 +760,8 @@ void run_dijkstra(struct cost_table *ct, const struct state *s) {
                     imagine_step(s1, i, j, M_UP,    &step_x[2], &step_y[2]);
                     imagine_step(s1, i, j, M_DOWN,  &step_x[3], &step_y[3]);
                     for (k = 0; k < 4; k++) {
-                        if (is_safe(s1, step_x[k], step_y[k]) && get_dist(ct, step_x[k], step_y[k]) == MAX_COST) {
-                            put_cost(ct, step_x[k], step_y[k], stage + calculate_cost(s1, step_x[k], step_y[k], stage));
+                        if (is_safe(s1, step_x[k], step_y[k]) && get_cost(ct, step_x[k], step_y[k]) > get_cost(ct, i, k) + calculate_cost(s1, step_x[k], step_y[k], stage)) {
+                            put_cost(ct, step_x[k], step_y[k], get_cost(ct, i, k) + calculate_cost(s1, step_x[k], step_y[k], stage));
                             put_dist(ct, step_x[k], step_y[k], stage + 1);
                             change = 0;
                         }
