@@ -435,15 +435,6 @@ isTarget = is check
     check (OTarget _) = True
     check _ = False
 
-isFree :: State -> Point -> Bool
-isFree =  is check where
-  check OBeard = False
-  check OWall  = False
-  check (OTrampoline _) = False
-  check ORock = False
-  check _ = True
-
-
 makeOneMove_ :: State -> Char -> State
 makeOneMove_ s0 move =
   unwrapState s0 $ \sp0 -> do
@@ -561,12 +552,12 @@ findRocks s =
 findMoveRocks :: State -> [(Point,Move)]
 findMoveRocks s = concatMap moveable $  findRocks s where
     moveable p = catMaybes $ zipWith check [MRight,MLeft,MUp,MDown] $ cycle [p]
-    check MRight (x,y) | isEmpty s (x+1,y) && isFree s (x+1,y) =
+    check MRight (x,y) | isEmpty s (x+1,y) && isEnterable s (x+1,y) =
                       Just ((x-1,y) ,MRight)
-    check MLeft (x,y) | isEmpty s (x-1,y) && isFree s (x+1,y) =
+    check MLeft (x,y) | isEmpty s (x-1,y) && isEnterable s (x+1,y) =
                       Just ((x-1,y),MLeft)
-    check MUp (x,y)   | isEmpty s (x,y+1) && isFree s (x,y-1) =
+    check MUp (x,y)   | isEmpty s (x,y+1) && isEnterable s (x,y-1) =
                       Just ((x,y-1) ,MDown)
-    check MDown (x,y) | isEmpty s (x,y-1) && isFree s (x,y+1) =
+    check MDown (x,y) | isEmpty s (x,y-1) && isEnterable s (x,y+1) =
                       Just ((x,y+1) ,MDown)
     check _ _ = Nothing
