@@ -38,7 +38,10 @@ testMoves s m =
 testMovesList s [] = (False, s, [])
 testMovesList s (m:ms) = let (b, s') = testMoves s m in if b then (b, s', m) else testMovesList s (ms)
 
-    
+myFind _ [] = []
+myFind g ((p, m):xs) = if p==g then [m] else myFind g xs 
+ 
+ 
 -- run :: MVar Builder -> State -> [Move] -> [Int] -> IO (Int, [Move])
 run s0 ps ms = goDijkstra s0 ps ms []
   where
@@ -49,10 +52,17 @@ run s0 ps ms = goDijkstra s0 ps ms []
 --      flip mapM_ [1..wy] $ \y -> 
 --        flip mapM_ [1..wx] $ \x -> myPrint (x == wx) $ getCost c (x,  wy+1-y)
       let moves = findA s c r (\(fc, ft, fp) -> isLambda s fp || isLift s fp)
+      -- probably wrong, but i am to tired / jmi
+      let rocks = findMoveRocks s 
+      let (t, goal) = chooseGoal s c (\(fc, ft, fp) -> let myRocks = filter (\(p, m) -> p==fp) rocks in myRocks /= []) (getWorldSize s) r
+      let mak1 = if t /= ORobot then findPath s c r goal else []
+      let mak2 = if t /= ORobot then myFind goal rocks else []
+      let movesComak = mak1++mak2
+      -- /probably wrong
       let moves2 = findA s c r (\(fc, ft, fp) -> isTrampoline s fp || isRazor s fp)
       let moves3 = findA s c r (\(fc, ft, fp) -> isEarth s fp)
       -- small probability of doing nothing
-      let all = if (length prefix) < p && (p `mod` 4 == 0) then [] else [moves, moves2, moves3]
+      let all = if (length prefix) < p && (p `mod` 20 == 0) then [] else [moves, moves2, movesComak, moves3]
       let (b, s', answer) =  testMovesList s $ filter (\x -> x /= [])  $ all ++ [[m], [MRight], [MLeft], [MDown], [MUp]]
 --      dump s' 
       let result = prefix ++ answer
@@ -91,5 +101,5 @@ main = do
 --  mainT <- myThreadId
 --  _ <- installHandler sigINT (Catch (handleInterrupt resultV mainT)) Nothing
   input <- B.getContents
-  let all = [prepareRun (100-i) (new input) | i<-([1..20]::[Int])] 
+  let all = [prepareRun (100-i) (new input) | i<-([1..400]::[Int])] 
   mapM_(\x -> print =<< x) all
