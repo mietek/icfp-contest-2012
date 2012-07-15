@@ -52,7 +52,7 @@ run s0 ps ms = goDijkstra s0 ps ms []
       let moves2 = findA s c r (\(fc, ft, fp) -> isTrampoline s fp || isRazor s fp)
       let moves3 = findA s c r (\(fc, ft, fp) -> isEarth s fp)
       -- small probability of doing nothing
-      let all = if (length prefix) < p && (p `mod` 3 == 0) then [] else [moves, moves2, moves3]
+      let all = if (length prefix) < p && (p `mod` 4 == 0) then [] else [moves, moves2, moves3]
       let (b, s', answer) =  testMovesList s $ filter (\x -> x /= [])  $ all ++ [[m], [MRight], [MLeft], [MDown], [MUp]]
 --      dump s' 
       let result = prefix ++ answer
@@ -91,5 +91,5 @@ main = do
 --  mainT <- myThreadId
 --  _ <- installHandler sigINT (Catch (handleInterrupt resultV mainT)) Nothing
   input <- B.getContents
-  let all = [prepareRun (100-i) (new input) | i<-([1..100]::[Int])] 
+  let all = [prepareRun (100-i) (new input) | i<-([1..20]::[Int])] 
   mapM_(\x -> print =<< x) all

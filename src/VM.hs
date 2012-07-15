@@ -439,7 +439,7 @@ isFree :: State -> Point -> Bool
 isFree =  is check where
   check OBeard = False
   check OWall  = False
-  check OTrampoline = False
+  check OTrampoline _ = False
   check ORock = False
   check _ = True
 
@@ -543,7 +543,7 @@ findPath s ct from0 to = map reverseMove (loop to [])
           costs = map (getCost ct) steps
           minDist = head $ sort $ dists
           minCost = head $ sort $ costs
-          (cost, dist, step, move) = head $ sort $ (filter (\(x,y,_,m) -> y < minDist) (zip4 costs dists steps moves))
+          (cost, dist, step, move) = head $ sort $ (filter (\(x,y,_,m) -> y == minDist) (zip4 costs dists steps moves))
 
 
 iterateBoard :: State -> (Point -> Object -> [a] ) -> [a]
@@ -564,7 +564,7 @@ findMoveRocks s = concatMap moveable $  findRocks s where
     check MRight (x,y) | isEmpty s (x+1,y) && isFree s (x+1,y) =
                       Just ((x-1,y) ,MRight)
     check MLeft (x,y) | isEmpty s (x-1,y) && isFree s (x+1,y) =
-                      Just ((x-1,y),MLelf)
+                      Just ((x-1,y),MLeft)
     check MUp (x,y)   | isEmpty s (x,y+1) && isFree s (x,y-1) =
                       Just ((x,y-1) ,MDown)
     check MDown (x,y) | isEmpty s (x,y-1) && isFree s (x,y+1) =
