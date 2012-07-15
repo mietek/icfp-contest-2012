@@ -46,6 +46,8 @@ long get_water_level(const struct state *s);
 long get_flooding_rate(const struct state *s);
 long get_robot_waterproofing(const struct state *s);
 long get_used_robot_waterproofing(const struct state *s);
+long get_beard_growth_rate(const struct state *s);
+long get_razors_count(const struct state *s);
 long get_lambda_count(const struct state *s);
 long get_collected_lambda_count(const struct state *s);
 long get_trampoline_count(const struct state *s);
@@ -98,7 +100,9 @@ bool is_safe(const struct state *s0, long x, long y);
 
 
 #define DEFAULT_ROBOT_WATERPROOFING 10
+#define DEFAULT_BEARD_GROWTH_RATE 25
 #define MAX_TRAMPOLINE_COUNT 9
+
 
 #define IGNORE_ROBOT        true
 #define DO_NOT_IGNORE_ROBOT false
@@ -112,6 +116,8 @@ struct state {
     long flooding_rate;
     long robot_waterproofing;
     long used_robot_waterproofing;
+    long beard_growth_rate;
+    long razors_count;
     long lambda_count;
     long collected_lambda_count;
     long trampoline_count;

@@ -26,6 +26,7 @@ struct state *new(long input_length, const char *input) {
     s->world_w = world_w;
     s->world_h = world_h;
     s->robot_waterproofing = DEFAULT_ROBOT_WATERPROOFING;
+    s->beard_growth_rate = DEFAULT_BEARD_GROWTH_RATE;
     s->condition = C_NONE;
     s->world_length = world_length;
     copy_input(s, input_length, input);
@@ -76,6 +77,8 @@ void dump(const struct state *s) {
     DEBUG_LOG("flooding_rate              = %ld\n", s->flooding_rate);
     DEBUG_LOG("robot_waterproofing        = %ld\n", s->robot_waterproofing);
     DEBUG_LOG("used_robot_waterproofing   = %ld\n", s->used_robot_waterproofing);
+    DEBUG_LOG("beard_growth_rate          = %ld\n", s->beard_growth_rate);
+    DEBUG_LOG("razors_count               = %ld\n", s->razors_count);
     DEBUG_LOG("lambda_count               = %ld\n", s->lambda_count);
     DEBUG_LOG("collected_lambda_count     = %ld\n", s->collected_lambda_count);
     DEBUG_LOG("trampoline_count           = %ld\n", s->trampoline_count);
@@ -135,6 +138,16 @@ long get_robot_waterproofing(const struct state *s) {
 long get_used_robot_waterproofing(const struct state *s) {
     DEBUG_ASSERT(s);
     return s->used_robot_waterproofing;
+}
+
+long get_razors_count(const struct state *s) {
+    DEBUG_ASSERT(s);
+    return s->razors_count;
+}
+
+long get_beard_growth_rate(const struct state *s) {
+    DEBUG_ASSERT(s);
+    return s->beard_growth_rate;
 }
 
 long get_lambda_count(const struct state *s) {
@@ -303,6 +316,8 @@ enum {
     K_TRAMPOLINE,
     K_TRAMPOLINE_TARGET_KEYWORD,
     K_TRAMPOLINE_TARGET,
+    K_BEARD_GROWTH_RATE,
+    K_RAZORS,
     K_INVALID
 };
 
@@ -331,6 +346,10 @@ void copy_input_metadata(struct state *s, long input_length, const char *input) 
                     key = K_ROBOT_WATERPROOFING;
                 else if (!strcmp(token, "Trampoline"))
                     key = K_TRAMPOLINE;
+                else if (!strcmp(token, "Growth"))
+                    key = K_BEARD_GROWTH_RATE;
+                else if (!strcmp(token, "Razors"))
+                    key = K_RAZORS;
                 else {
                     key = K_INVALID;
                     DEBUG_LOG("found invalid metadata key '%s'\n", token);
@@ -345,6 +364,12 @@ void copy_input_metadata(struct state *s, long input_length, const char *input) 
                 } else if (key == K_ROBOT_WATERPROOFING) {
                     s->robot_waterproofing = atoi(token);
                     key = K_NONE;
+                } else if (key == K_BEARD_GROWTH_RATE) {
+                    s->beard_growth_rate = atoi(token);
+                    key = K_NONE;   
+                } else if (key == K_RAZORS) {
+                    s->razors_count = atoi(token);
+                    key = K_NONE;                  
                 } else if (key == K_TRAMPOLINE) {
                     trampoline_i = trampoline_to_index(*token);
                     key = K_TRAMPOLINE_TARGET_KEYWORD;
