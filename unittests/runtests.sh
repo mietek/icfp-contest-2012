@@ -11,20 +11,24 @@ if [ -z "$VALIDATOR" ]; then
 fi
 
 for d in `dirname "$0"`/tests/*; do
+  MAPNAME=`basename $d`
+  
   MAP=$d/map
-  for f in $d/paths/*; do
-    ROUTE=`basename $f`
+  for INFILE in $d/*.in; do
+    BASENAME=`basename $INFILE .in`
+    OUTFILE=$d/$BASENAME.out
     TMP=`tempfile`
-    echo "$ROUTE" | $VALIDATOR -vv $MAP > $TMP
-    if diff -B $f $TMP > /dev/null; then
-      echo -e "$GREEN$f ok $PLAIN"
+    cat "$INFILE" | $VALIDATOR -vv $MAP > $TMP
+    if diff -B $OUTFILE $TMP > /dev/null; then
+      echo -e "$GREEN$MAPNAME/$BASENAME ok $PLAIN"
     else
-      echo -e "$RED$f failed!!!$PLAIN"
-      echo "Expected:"
-      cat $f
+      echo -e "$RED$MAPNAME/$BASENAME failed!!!$PLAIN"
+      echo "Input:"
+      cat $INFILE
+      echo "Expected output:"
+      cat $OUTFILE
       echo "Got:"
       cat $TMP
-      echo ""
     fi
     rm $TMP
   done
