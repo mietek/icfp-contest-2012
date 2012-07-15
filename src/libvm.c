@@ -387,6 +387,7 @@ void copy_input_metadata(struct state *s, long input_length, const char *input) 
     DEBUG_ASSERT(s && input);
     char key = K_NONE, token[MAX_TOKEN_SIZE + 1];
     long w = 0, i, trampoline_i, target_i;
+    trampoline_i = 0;
     for (i = 0; i < input_length; i++) {
         if (input[i] != ' ' && input[i] != '\n')
             w++;
