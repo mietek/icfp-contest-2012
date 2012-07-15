@@ -154,6 +154,12 @@ foreign import ccall unsafe "libvm.h get_robot_waterproofing"
 foreign import ccall unsafe "libvm.h get_used_robot_waterproofing"
   cGetUsedRobotWaterproofing :: CStatePtr -> CLong
 
+foreign import ccall unsafe "libvm.h get_beard_growth_rate"
+  cGetBeardGrowthRate :: CStatePtr -> CLong
+
+foreign import ccall unsafe "libvm.h get_razor_count"
+  cGetRazorCount :: CStatePtr -> CLong
+
 foreign import ccall unsafe "libvm.h get_lambda_count"
   cGetLambdaCount :: CStatePtr -> CLong
 
@@ -247,6 +253,12 @@ getRobotWaterproofing = getInt cGetRobotWaterproofing
 
 getUsedRobotWaterproofing :: State -> Int
 getUsedRobotWaterproofing = getInt cGetUsedRobotWaterproofing
+
+getBeardGrowthRate :: State -> Int
+getBeardGrowthRate = getInt cGetBeardGrowthRate
+
+getRazorCount :: State -> Int
+getRazorCount = getInt cGetRazorCount
 
 getLambdaCount :: State -> Int
 getLambdaCount = getInt cGetLambdaCount

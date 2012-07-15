@@ -142,14 +142,14 @@ long get_used_robot_waterproofing(const struct state *s) {
     return s->used_robot_waterproofing;
 }
 
-long get_razor_count(const struct state *s) {
-    DEBUG_ASSERT(s);
-    return s->razor_count;
-}
-
 long get_beard_growth_rate(const struct state *s) {
     DEBUG_ASSERT(s);
     return s->beard_growth_rate;
+}
+
+long get_razor_count(const struct state *s) {
+    DEBUG_ASSERT(s);
+    return s->razor_count;
 }
 
 long get_lambda_count(const struct state *s) {
