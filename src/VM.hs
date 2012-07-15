@@ -569,3 +569,4 @@ findMoveRocks s = catMaybes . map moveable $  findRocks s where
                       Just ((x,y-1) ,MDown)
     check MDown (x,y) | isEmpty s (x,y-1) && isFree s (x,y+1) =
                       Just ((x,y+1) ,MDown)
+    check _ _ = Nothing
