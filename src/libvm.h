@@ -65,9 +65,14 @@ struct state *make_moves(const struct state *s0, const char *moves);
 
 struct state *update_world_ignoring_robot(const struct state *s0);
 struct state *imagine_robot_at(const struct state *s0, long x, long y);
+void get_step(const struct state *s, char move, long *out_x, long *out_y);
+void imagine_step(const struct state *s, long x, long y, char move, long *out_x, long *out_y);
 
 bool is_enterable(const struct state *s, long x, long y);
-bool is_safe(const struct state *s0, long x, long y);
+bool is_safe(const struct state *s, long x, long y);
+
+struct cost_table *build_cost_table(const struct state *s, long x, long y);
+long safe_get_cost(const struct cost_table *ct, long x, long y);
 
 
 // ---------------------------------------------------------------------------
@@ -108,6 +113,8 @@ bool is_safe(const struct state *s0, long x, long y);
 #define IGNORE_ROBOT        true
 #define DO_NOT_IGNORE_ROBOT false
 
+#define MAX_COST LONG_MAX
+
 
 struct state {
     long world_w, world_h;
@@ -132,6 +139,12 @@ struct state {
     char world[];
 };
 
+struct cost_table {
+    long world_w, world_h;
+    long world_length;
+    long world_cost[];
+};
+
 
 inline bool is_valid_point(long x, long y) {
     return x >= 1 && y >= 1;
@@ -150,29 +163,37 @@ inline bool is_valid_target(char target) {
 }
 
 
-inline bool is_within_world(const struct state *s, long x, long y) {
-    return is_valid_point(x, y) && x <= s->world_w && y <= s->world_h;
+inline bool is_within_world(long world_w, long world_h, long x, long y) {
+    return is_valid_point(x, y) && x <= world_w && y <= world_h;
 }
 
 
-inline void size_to_point(const struct state *s, long w, long h, long *out_x, long *out_y) {
-    DEBUG_ASSERT(s && out_x && out_y);
+inline void size_to_point(long world_h, long w, long h, long *out_x, long *out_y) {
+    DEBUG_ASSERT(out_x && out_y);
     *out_x = w + 1;
-    *out_y = s->world_h - h;
+    *out_y = world_h - h;
 }
 
-inline void point_to_size(const struct state *s, long x, long y, long *out_w, long *out_h) {
-    DEBUG_ASSERT(s && out_w && out_h);
+inline void point_to_size(long world_h, long x, long y, long *out_w, long *out_h) {
+    DEBUG_ASSERT(out_w && out_h);
     *out_w = x - 1;
-    *out_h = s->world_h - y;
+    *out_h = world_h - y;
 }
 
 
 inline long point_to_index(const struct state *s, long x, long y) {
     DEBUG_ASSERT(s);
     long w, h, i;
-    point_to_size(s, x, y, &w, &h);
+    point_to_size(s->world_h, x, y, &w, &h);
     i = h * (s->world_w + 1) + w;
+    return i;
+}
+
+inline long point_to_cost_table_index(const struct cost_table *ct, long x, long y) {
+    DEBUG_ASSERT(ct);
+    long w, h, i;
+    point_to_size(ct->world_h, x, y, &w, &h);
+    i = h * ct->world_w + w;
     return i;
 }
 
@@ -198,17 +219,27 @@ inline long target_to_index(char target) {
 
 
 inline char get(const struct state *s, long x, long y) {
-    DEBUG_ASSERT(s && is_within_world(s, x, y));
+    DEBUG_ASSERT(s && is_within_world(s->world_w, s->world_h, x, y));
     return s->world[point_to_index(s, x, y)];
 }
 
 inline void put(struct state *s, long x, long y, char object) {
-    DEBUG_ASSERT(s && is_within_world(s, x, y));
+    DEBUG_ASSERT(s && is_within_world(s->world_w, s->world_h, x, y));
     s->world[point_to_index(s, x, y)] = object;
 }
 
+inline long get_cost(const struct cost_table *ct, long x, long y) {
+    DEBUG_ASSERT(ct && is_within_world(ct->world_w, ct->world_h, x, y));
+    return ct->world_cost[point_to_cost_table_index(ct, x, y)];
+}
 
-void scan_input(long input_length, const char *input, long *out_world_w, long *out_world_h, long *out_world_length);
+inline void put_cost(struct cost_table *ct, long x, long y, long cost) {
+    DEBUG_ASSERT(ct && is_within_world(ct->world_w, ct->world_h, x, y));
+    ct->world_cost[point_to_cost_table_index(ct, x, y)] = cost;
+}
+
+
+void scan_input(long input_length, const char *input, long *out_world_w, long *out_world_h);
 
 void copy_input_metadata(struct state *s, long input_length, const char *input);
 void copy_input(struct state *s, long input_length, const char *input);
@@ -221,3 +252,5 @@ void shave_surroundings(struct state *s, long x, long y);
 void clear_similar_trampolines(struct state *s, char trampoline);
 void execute_move(struct state *s, char move);
 void update_world(struct state *s, const struct state *t, bool ignore_robot);
+
+void run_dijkstra(struct cost_table *ct, const struct state *s);

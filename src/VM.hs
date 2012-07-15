@@ -5,6 +5,7 @@ module VM where
 
 import Data.ByteString (ByteString)
 import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
+import Data.List (sort)
 import Foreign.Ptr (Ptr)
 import Foreign.ForeignPtr (ForeignPtr, newForeignPtr, withForeignPtr)
 import Foreign.C.String (CString, castCharToCChar, castCCharToChar, withCString)
@@ -87,6 +88,14 @@ fromMove MUp    = 'U'
 fromMove MDown  = 'D'
 fromMove MWait  = 'W'
 fromMove MAbort = 'A'
+
+reverseMove :: Move -> Move
+reverseMove MLeft  = MRight
+reverseMove MRight = MLeft
+reverseMove MUp    = MDown
+reverseMove MDown  = MUp
+reverseMove MWait  = MWait
+reverseMove MAbort = MAbort
 
 
 data Condition = CNone | CWin | CLose | CAbort deriving (Eq, Ord)
@@ -189,6 +198,9 @@ foreign import ccall unsafe "libvm.h imagine_robot_at"
 
 foreign import ccall unsafe "libvm.h is_enterable"
   cIsEnterable :: CStatePtr -> CLong -> CLong -> CChar
+
+foreign import ccall unsafe "libvm.h is_safe"
+  cIsSafe :: CStatePtr -> CLong -> CLong -> CChar
 
 
 new :: ByteString -> State
@@ -329,24 +341,60 @@ imagineRobotAt s0 (x, y) =
     sp <- cImagineRobotAt sp0 (toEnum x) (toEnum y)
     wrapState sp
 
+getStep :: State -> Move -> Point
+getStep s move = getRobotPoint (makeOneMove s move)
+
+imagineStep :: State -> Point -> Move -> Point
+imagineStep s from move = getStep (imagineRobotAt s from) move
+
 isEnterable :: State -> Point -> Bool
 isEnterable s (x, y) =
   unwrapState s $ \sp ->
     return (toBool (cIsEnterable sp (toEnum x) (toEnum y)))
 
-
 isSafe :: State -> Point -> Bool
-isSafe s (x, y) = isEnterable s (x, y) && get s (x, y + 1) == OEmpty && get s1 (x, y + 1) /= ORock
+isSafe s (x, y) =
+  unwrapState s $ \sp ->
+    return (toBool (cIsSafe sp (toEnum x) (toEnum y)))
+
+
+data CCostTable
+type CCostTablePtr = Ptr CCostTable
+type CCostTableFPtr = ForeignPtr CCostTable
+data CostTable = CostTable !(CCostTableFPtr)
+
+type Cost = Int
+
+
+foreign import ccall unsafe "libvm.h build_cost_table"
+  cBuildCostTable :: CStatePtr -> CLong -> CLong -> IO CCostTablePtr
+
+foreign import ccall unsafe "libvm.h safe_get_cost"
+  cGetCost :: CCostTablePtr -> CLong -> CLong -> CLong
+
+
+buildCostTable :: State -> Point -> CostTable
+buildCostTable s (x, y) =
+  unwrapState s $ \sp -> do
+    ctp <- cBuildCostTable sp (toEnum x) (toEnum y)
+    ctfp <- newForeignPtr finalizerFree ctp
+    return (CostTable ctfp)
+
+getCost :: CostTable -> Point -> Cost
+getCost (CostTable ctfp) (x, y) =
+  unsafePerformIO $
+    withForeignPtr ctfp $ \ctp ->
+      return (fromEnum (cGetCost ctp (toEnum x) (toEnum y)))
+
+
+findPath :: State -> CostTable -> Point -> Point -> [Move]
+findPath s ct from0 to = map reverseMove (loop to [])
   where
-    s1 = updateWorldIgnoringRobot s
-
-getMoveDestination :: State -> Move -> Point
-getMoveDestination s move = getRobotPoint (makeOneMove s move)
-
-imagineMoveDestination :: State -> Point -> Move -> Point
-imagineMoveDestination s pt move = getMoveDestination (imagineRobotAt s pt) move
-
-imagineAllMoveDestinations :: State -> Point -> [(Move, Point)]
-imagineAllMoveDestinations s pt = zip moves (map (imagineMoveDestination s pt) moves)
-  where
-    moves = [MLeft, MRight, MUp, MDown]
+    loop from path
+      | from == from0 = path
+      | otherwise = loop step (move : path)
+        where
+          moves = [MLeft, MRight, MUp, MDown]
+          steps = map (imagineStep s from) moves
+          costs = map (getCost ct) steps
+          (_, step, move) = head (sort (zip3 costs steps moves))

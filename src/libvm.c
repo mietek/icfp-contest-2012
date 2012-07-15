@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,7 +20,8 @@ struct state *new(long input_length, const char *input) {
     DEBUG_ASSERT(input);
     long world_w, world_h, world_length;
     struct state *s;
-    scan_input(input_length, input, &world_w, &world_h, &world_length);
+    scan_input(input_length, input, &world_w, &world_h);
+    world_length = (world_w + 1) * world_h + 1;
     if (!(s = malloc(sizeof(struct state) + world_length)))
         PERROR_EXIT("malloc");
     memset(s, 0, sizeof(struct state));
@@ -214,9 +216,9 @@ char get_condition(const struct state *s) {
 
 char safe_get(const struct state *s, long x, long y) {
     DEBUG_ASSERT(s);
-    if (x < 1 || x > s->world_w || y < 1 || y > s->world_h)
+    if (!is_within_world(s->world_w, s->world_h, x, y))
         return O_WALL;
-    return s->world[point_to_index(s, x, y)];
+    return get(s, x, y);
 }
 
 
@@ -272,14 +274,71 @@ struct state *imagine_robot_at(const struct state *s0, long x, long y) {
     return s;
 }
 
+void get_step(const struct state *s, char move, long *out_x, long *out_y) {
+    DEBUG_ASSERT(s && is_valid_move(move) && out_x && out_y);
+    struct state *s1;
+    s1 = make_one_move(s, move);
+    get_robot_point(s1, out_x, out_y);
+    free(s1);
+}
+
+void imagine_step(const struct state *s, long x, long y, char move, long *out_x, long *out_y) {
+    DEBUG_ASSERT(s && is_valid_move(move) && out_x && out_y);
+    struct state *s1;
+    s1 = imagine_robot_at(s, x, y);
+    get_step(s1, move, out_x, out_y);
+    free(s1);
+}
+
 
 bool is_enterable(const struct state *s, long x, long y) {
     DEBUG_ASSERT(s);
     char object;
-    if (!is_within_world(s, x, y))
+    if (!is_within_world(s->world_w, s->world_h, x, y))
         return false;
     object = get(s, x, y);
     return object == O_EMPTY || object == O_EARTH || object == O_LAMBDA || object == O_RAZOR || object == O_OPEN_LIFT || is_valid_trampoline(object);
+}
+
+bool is_safe(const struct state *s, long x, long y) {
+    DEBUG_ASSERT(s);
+    struct state *s1;
+    bool safe;
+    if (!is_enterable(s, x, y))
+        safe = false;
+    else if (get(s, x, y + 1) == O_EMPTY) {
+        s1 = update_world_ignoring_robot(s);
+        safe = get(s1, x, y + 1) != O_ROCK;
+        free(s1);
+    } else
+        safe = true;
+    return safe;
+}
+
+
+struct cost_table *build_cost_table(const struct state *s, long x, long y) {
+    DEBUG_ASSERT(s && is_within_world(s->world_w, s->world_h, x, y));
+    long world_length, i;
+    struct cost_table *ct;
+    world_length = s->world_w * s->world_h;
+    if (!(ct = malloc(sizeof(struct cost_table) + (world_length * sizeof(long)))))
+        PERROR_EXIT("malloc");
+    memset(ct, 0, sizeof(struct cost_table));
+    ct->world_w = s->world_w;
+    ct->world_h = s->world_h;
+    ct->world_length = world_length;
+    for (i = 0; i < world_length; i++)
+        ct->world_cost[i] = MAX_COST;
+    put_cost(ct, x, y, 0);
+    run_dijkstra(ct, s);
+    return ct;
+}
+
+long safe_get_cost(const struct cost_table *ct, long x, long y) {
+    DEBUG_ASSERT(ct);
+    if (!is_within_world(ct->world_w, ct->world_h, x, y))
+        return MAX_COST;
+    return get_cost(ct, x, y);
 }
 
 
@@ -287,7 +346,7 @@ bool is_enterable(const struct state *s, long x, long y) {
 // Private
 // ---------------------------------------------------------------------------
 
-void scan_input(long input_length, const char *input, long *out_world_w, long *out_world_h, long *out_world_length) {
+void scan_input(long input_length, const char *input, long *out_world_w, long *out_world_h) {
     DEBUG_ASSERT(input && out_world_w && out_world_h);
     long world_w = 0, world_h = 0, w = 0, i;
     for (i = 0; i < input_length; i++) {
@@ -304,7 +363,6 @@ void scan_input(long input_length, const char *input, long *out_world_w, long *o
     }
     *out_world_w = world_w;
     *out_world_h = world_h;
-    *out_world_length = (world_w + 1) * world_h + 1;
 }
 
 
@@ -396,17 +454,17 @@ void copy_input(struct state *s, long input_length, const char *input) {
     for (i = 0; i < input_length; i++) {
         if (input[i] != '\n') {
             if (input[i] == O_ROBOT)
-                size_to_point(s, w, h, &s->robot_x, &s->robot_y);
+                size_to_point(s->world_h, w, h, &s->robot_x, &s->robot_y);
             else if (input[i] == O_LAMBDA)
                 s->lambda_count++;
             else if (input[i] == O_CLOSED_LIFT)
-                size_to_point(s, w, h, &s->lift_x, &s->lift_y);
+                size_to_point(s->world_h, w, h, &s->lift_x, &s->lift_y);
             else if (is_valid_trampoline(input[i])) {
                 trampoline_i = trampoline_to_index(input[i]);
-                size_to_point(s, w, h, &s->trampoline_x[trampoline_i], &s->trampoline_y[trampoline_i]);
+                size_to_point(s->world_h, w, h, &s->trampoline_x[trampoline_i], &s->trampoline_y[trampoline_i]);
             } else if (is_valid_target(input[i])) {
                 target_i = target_to_index(input[i]);
-                size_to_point(s, w, h, &s->target_x[target_i], &s->target_y[target_i]);
+                size_to_point(s->world_h, w, h, &s->target_x[target_i], &s->target_y[target_i]);
             }
             s->world[j] = input[i];            
             j++;
@@ -635,4 +693,38 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
         s->water_level++;
         DEBUG_LOG("robot increased water level to %ld\n", s->water_level);
     }    
+}
+
+
+void run_dijkstra(struct cost_table *ct, const struct state *s) {
+    DEBUG_ASSERT(ct);
+    long change, stage, step_x[4], step_y[4], i, j, k;
+    struct state *s1, *s2;
+    s1 = copy(s);
+    change = 0;
+    stage = 0;
+    do {
+        change++;
+        stage++;
+        for (i = 1; i <= ct->world_w; i++) {
+            for (j = 1; j <= ct->world_h; j++) {
+                if (get_cost(ct, i, j) == stage) {
+                    imagine_step(s1, i, j, M_LEFT,  &step_x[0], &step_y[0]);
+                    imagine_step(s1, i, j, M_RIGHT, &step_x[1], &step_y[1]);
+                    imagine_step(s1, i, j, M_UP,    &step_x[2], &step_y[2]);
+                    imagine_step(s1, i, j, M_DOWN,  &step_x[3], &step_y[3]);
+                    for (k = 0; k < 4; k++) {
+                        if (is_safe(s1, step_x[k], step_y[k]) && get_cost(ct, step_x[k], step_y[k]) == MAX_COST) {
+                            put_cost(ct, step_x[k], step_y[k], stage + 1);
+                            change = 0;
+                        }
+                    }
+                }
+            }
+        }
+        s2 = update_world_ignoring_robot(s1);
+        free(s1);
+        s1 = s2;
+    } while (!change);
+    free(s1);
 }
