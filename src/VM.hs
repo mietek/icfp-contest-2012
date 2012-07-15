@@ -83,7 +83,7 @@ toObject c
 toObject _    = undefined
 
 
-data Trampoline = OTrampolineA | OTrampolineB | OTrampolineC | OTrampolineD | OTrampolineE | OTrampolineF | OTrampolineG | OTrampolineH | OTrampolineI deriving (Enum, Eq, Ord)
+data Trampoline = TA | TB | TC | TD | TE | TF | TG | TH | TI deriving (Enum, Eq, Ord)
 
 instance Show Trampoline where
   show trampoline = [fromTrampoline trampoline]
@@ -106,7 +106,7 @@ toTrampoline c
 toTrampoline _ = undefined
 
 
-data Target = OTarget1 | OTarget2 | OTarget3 | OTarget4 | OTarget5 | OTarget6 | OTarget7 | OTarget8 | OTarget9 deriving (Enum, Eq, Ord)
+data Target = T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 deriving (Enum, Eq, Ord)
 
 instance Show Target where
   show target = [fromTarget target]
