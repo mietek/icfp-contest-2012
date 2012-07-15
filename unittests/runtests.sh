@@ -17,9 +17,15 @@ for d in `dirname "$0"`/tests/*; do
     TMP=`tempfile`
     echo "$ROUTE" | $VALIDATOR -vv $MAP > $TMP
     if diff -B $f $TMP > /dev/null; then
-      echo -e "$GREEN$f ok $PLAIN"; rm $TMP
+      echo -e "$GREEN$f ok $PLAIN"
     else
       echo -e "$RED$f failed!!!$PLAIN"
+      echo "Expected:"
+      cat $f
+      echo "Got:"
+      cat $TMP
+      echo ""
     fi
+    rm $TMP
   done
 done
