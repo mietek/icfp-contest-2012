@@ -708,12 +708,12 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
     }
 }
 
-long calculate_cost(const struct state s1, long step_x, long step_y, stage){
-    if(safe_get(s1, step_x, step_y+1) == O_ROCK
-    ||(safe_get(s1, step_x+1, step_y+1) == O_ROCK
-     &&safe_get(s1, step_x+1, step_y) == O_ROCK)
-    ||(safe_get(s1, step_x-1, step_y+1) == O_ROCK
-     &&safe_get(s1, step_x-1, step_y) == O_ROCK))
+long calculate_cost(const struct state *s, long step_x, long step_y, long stage) {
+    if (
+        safe_get(s, step_x, step_y + 1) == O_ROCK ||
+        (safe_get(s, step_x + 1, step_y + 1) == O_ROCK && safe_get(s, step_x + 1, step_y) == O_ROCK) ||
+        (safe_get(s, step_x - 1, step_y + 1) == O_ROCK && safe_get(s, step_x - 1, step_y) == O_ROCK)
+    )
         return 5;
     return 1;
 }
