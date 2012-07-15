@@ -468,8 +468,8 @@ void shave_surroundings(struct state *s, long x, long y) {
         int i, j;
         for (i = -1; i <= 1; i++) {
             for (j = -1; j <= 1; j++) {
-                if (get(s, x, y) == O_BEARD) {
-                    put(s, x, y, O_EMPTY);
+                if (get(s, x+i, y+j) == O_BEARD) {
+                    put(s, x+i, y+j, O_EMPTY);
                 }
             }
         }
@@ -607,7 +607,8 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
                 if (!ignore_robot && s0->robot_x == x + 1 && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("robot lost by crushing\n");
-                }
+                }            
+                
             } else if (!ignore_robot && object == O_CLOSED_LIFT && s0->collected_lambda_count == s0->lambda_count) {
                 put(s, x, y, O_OPEN_LIFT);
                 DEBUG_LOG("robot opened lift\n");
@@ -625,5 +626,5 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
     if (!ignore_robot && s->flooding_rate && !(s->move_count % s->flooding_rate)) {
         s->water_level++;
         DEBUG_LOG("robot increased water level to %ld\n", s->water_level);
-    }
+    }    
 }
