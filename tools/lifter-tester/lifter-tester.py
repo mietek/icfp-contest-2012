@@ -50,12 +50,18 @@ for n in range(nruns):
     p = subprocess.Popen(["cat " + mapfile + " | " + lifter], stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
     pid = p.pid
 
-    time.sleep(150)
+    for i in range(150/15):
+        time.sleep(15)
+        print (i+1) * (150/15), "%",
+        sys.stdout.flush()
 
     try:
         os.kill(pid, signal.SIGINT)
     except OSError:
         pass
+
+    print "SIGINT",
+    sys.stdout.flush()
 
     time.sleep(10)
 
@@ -64,8 +70,12 @@ for n in range(nruns):
     except OSError:
         pass
 
+    print "SIGKILL"
+    sys.stdout.flush()
+
     answer = p.communicate()[0].rstrip()
     score, finalmap = validatorOutput(validator, mapfile, answer)
     logs.append((score, answer))
 
-print logs
+for score, answer in sorted(logs):
+    print score, answer
