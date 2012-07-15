@@ -666,7 +666,7 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("robot lost by crushing\n");
                 }
-            } else if (object == O_BEARD && s->beard_growth_rate && !(s->move_count % s->beard_growth_rate)) {
+            } else if (!ignore_robot && object == O_BEARD && s->beard_growth_rate && !(s->move_count % s->beard_growth_rate)) {
                 int i, j;
                 for (i = -1; i <= 1; i++) {
                     for (j = -1; j <= 1; j++) {
