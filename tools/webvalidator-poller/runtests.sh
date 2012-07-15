@@ -1,6 +1,11 @@
 #!/bin/sh
 
-VALIDATORS="validator lambdamine validate.py"
+if [ "$1" ]
+then
+	VALIDATORS="$1"
+else
+	VALIDATORS="validator lambdamine validate.py"
+fi
 
 for v in ${VALIDATORS}
 do
@@ -11,10 +16,14 @@ do
 		m=`echo ${t} | cut -d'-' -f 1`
 		MAP="../../tests/${m}.map"
 		ANSWER=`echo ${t} | cut -d'-' -f 2`
-		TMP=`mktemp test.${v}.${m}.${ANSWER}.XXXXX.fail`
+		TMP=`mktemp /tmp/test.${m}.${ANSWER}.XXXXX`
 		echo ${ANSWER} | timeout 1 ${VALIDATOR} -vv ${MAP} | head -n1 > $TMP
-		echo
-		diff -B $TESTFILE $TMP && (echo $TESTFILE ok; echo; rm $TMP) || (echo "$TESTFILE failed; output in $TMP"; echo)
+		echo ${m}
+		echo ${ANSWER}
+		diff -B $TESTFILE $TMP > /dev/null && echo ok ||
+			(echo "fail"; echo "expected:"; cat $TESTFILE; echo "got:"; cat $TMP)
+		rm $TMP
+		echo "================================================================================="
 	done
 done
 
