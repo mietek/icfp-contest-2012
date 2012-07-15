@@ -2,7 +2,7 @@
 
 VALIDATOR=${1-./lambdamine}
 
-for d in "`dirname "$0"`/tests/*"; do
+for d in `dirname "$0"`/tests/*; do
   MAP=$d/map
   for f in $d/paths/*; do
     ROUTE=`basename $f`
