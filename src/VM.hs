@@ -488,8 +488,8 @@ findPath s ct from0 to = map reverseMove (loop to [])
 
 iterateBoard :: State -> (Point -> Object -> [a] ) -> [a]
 iterateBoard s f = iter (1,1) [] where
-    (m,n) = succ *** succ  $ getWorldSize s
-    iter (x,y) acc | x == m && m == n = acc
+    (m,n) = succ *** id  $ getWorldSize s
+    iter (x,y) acc | x == m && y == n = acc
     iter (x,y) acc | x == m = iter (1,y+1) acc
     iter p@(x,y) acc = iter (x+1,y) (f p (get s p) ++ acc)
 
