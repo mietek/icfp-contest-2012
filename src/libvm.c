@@ -553,7 +553,7 @@ void collect_lambda(struct state *s) {
     DEBUG_ASSERT(s->collected_lambda_count < s->lambda_count);
     DEBUG_ASSERT(get(s, s->lift_x, s->lift_y) == O_CLOSED_LIFT);
     s->collected_lambda_count++;
-    s->score += 25;
+    s->score += 50;
     DEBUG_LOG("robot collected lambda\n");
 }
 
@@ -644,7 +644,6 @@ void execute_move(struct state *s, char move) {
         s->move_count++;
         s->score--;
     } else if (move == M_ABORT) {
-        s->score += s->collected_lambda_count * 25;
         s->condition = C_ABORT;
         DEBUG_LOG("robot aborted\n");
     }
