@@ -262,6 +262,8 @@ struct state *update_world_ignoring_robot(const struct state *s0) {
     DEBUG_ASSERT(s0);
     struct state *s;
     s = copy(s0);
+    s->move_count++;
+    s->score--;
     update_world(s, s0, IGNORE_ROBOT);
     return s;
 }
@@ -666,7 +668,7 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("robot lost by crushing\n");
                 }
-            } else if (!ignore_robot && object == O_BEARD && s->beard_growth_rate && !(s->move_count % s->beard_growth_rate)) {
+            } else if (object == O_BEARD && s->beard_growth_rate && !(s->move_count % s->beard_growth_rate)) {
                 int i, j;
                 for (i = -1; i <= 1; i++) {
                     for (j = -1; j <= 1; j++) {
@@ -676,9 +678,9 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
                     }
                 }
                 DEBUG_LOG("beard grew around (%ld, %ld)\n", x, y);
-            } else if (!ignore_robot && object == O_CLOSED_LIFT && s0->collected_lambda_count == s0->lambda_count) {
+            } else if (object == O_CLOSED_LIFT && s0->collected_lambda_count == s0->lambda_count) {
                 put(s, x, y, O_OPEN_LIFT);
-                DEBUG_LOG("robot opened lift\n");
+                DEBUG_LOG("lift opened\n");
             }
         }
     }
@@ -690,9 +692,9 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
             DEBUG_LOG("robot lost by drowning\n");
         }
     }
-    if (!ignore_robot && s->flooding_rate && !(s->move_count % s->flooding_rate)) {
+    if (s->flooding_rate && !(s->move_count % s->flooding_rate)) {
         s->water_level++;
-        DEBUG_LOG("robot increased water level to %ld\n", s->water_level);
+        DEBUG_LOG("water level increased to %ld\n", s->water_level);
     }
 }
 
