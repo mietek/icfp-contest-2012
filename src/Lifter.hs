@@ -6,6 +6,7 @@ import Blaze.ByteString.Builder.Char8 (fromChar)
 import Control.Concurrent (ThreadId, killThread, myThreadId, threadDelay)
 import Control.Concurrent.MVar (MVar, modifyMVar_, newMVar, takeMVar)
 import qualified Data.ByteString.Char8 as B
+import Data.List (sort, zip4)
 import Data.Monoid (mappend, mempty)
 -- import System.Posix.Signals (Handler(Catch), installHandler, sigINT)
 import System.Random
@@ -18,13 +19,17 @@ myPrint c x =
     let str2 = if c then "\n" else "" in
     putStr (str ++ str2)
 
-chooseGoal s c (x, y) r =
-      let l = clean [ ((getCost c (i, j)), (get s (i, j)), (i, j)) | i <- [1..x], j<- [1..y]] in 
+chooseGoal s c p (x, y) r =
+      let l = sort $ clean [ ((getCost c (i, j)), (get s (i, j)), (i, j)) | i <- [1..x], j<- [1..y]] in 
       select l
    where 
       select [] = (ORobot, r)
       select ((_,t,x):xs) = (t, x)
-      clean = filter (\ (c, t, _) -> (t == OLambda || t == OOpenLift) && c< cMAX)
+      clean = (filter p) . (filter (\(c, _, _) -> c < cMAX))
+
+findA s c r p = 
+      let (t, goal) = chooseGoal s c p (getWorldSize s) r in
+      if t /= ORobot then findPath s c r goal else []
 
 testMoves s m = 
     let s' = makeMoves s m in
@@ -41,16 +46,18 @@ run resultV s0 l = goDijkstra s0 l []
       let r = getRobotPoint s
       let (wx, wy) = getWorldSize s
       let c = buildCostTable s r
-      flip mapM_ [1..wx] $ \x -> 
-        flip mapM_ [1..wy] $ \y -> myPrint (y == wy) $ getCost c (x,  wy+1-y)
-      let (t, goal) = chooseGoal s c (wx, wy) r
-      let moves = if t /= ORobot then [findPath s c r goal] else []
-      let (b, s', answer) =  testMovesList s (moves ++ [[m], [MRight], [MLeft], [MDown], [MUp]])
+      flip mapM_ [1..wy] $ \y -> 
+        flip mapM_ [1..wx] $ \x -> myPrint (x == wx) $ getCost c (x,  wy+1-y)
+      let moves = findA s c r (\(fc, ft, fp) -> elem ft [OLambda, OOpenLift])
+      print moves
+      hFlush stdout
+      let moves2 = findA s c r (\(fc, ft, fp) -> elem ft [OEarth])
+      let (b, s', answer) =  testMovesList s $ filter (\x -> x /= []) [moves, moves2, [m], [MRight], [MLeft], [MDown], [MUp]]
       dump s' 
       let result = prefix ++ answer
       print result
       hFlush stdout
-      if  (getCondition s')/= CNone || (t == ORobot && length(result)>153) 
+      if  (getCondition s')/= CNone || (moves == [] && length(result)>153) 
         then print result 
         else goDijkstra s' ms result
 --      modifyMVar_ resultV $ \result ->

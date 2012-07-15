@@ -5,7 +5,7 @@ module VM where
 
 import Data.ByteString (ByteString)
 import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
-import Data.List (sort)
+import Data.List (sort, zip4)
 import Foreign.Ptr (Ptr)
 import Foreign.ForeignPtr (ForeignPtr, newForeignPtr, withForeignPtr)
 import Foreign.C.String (CString, castCharToCChar, castCCharToChar, withCString)
@@ -383,6 +383,8 @@ foreign import ccall unsafe "libvm.h build_cost_table"
 
 foreign import ccall unsafe "libvm.h safe_get_cost"
   cGetCost :: CCostTablePtr -> CLong -> CLong -> CLong
+foreign import ccall unsafe "libvm.h safe_get_dist"
+  cGetDist :: CCostTablePtr -> CLong -> CLong -> CLong
 
 
 buildCostTable :: State -> Point -> CostTable
@@ -398,16 +400,25 @@ getCost (CostTable ctfp) (x, y) =
     withForeignPtr ctfp $ \ctp ->
       return (fromEnum (cGetCost ctp (toEnum x) (toEnum y)))
 
+getDist :: CostTable -> Point -> Cost
+getDist (CostTable ctfp) (x, y) =
+  unsafePerformIO $
+    withForeignPtr ctfp $ \ctp ->
+      return (fromEnum (cGetDist ctp (toEnum x) (toEnum y)))
+
 
 findPath :: State -> CostTable -> Point -> Point -> [Move]
 findPath s ct from0 to = map reverseMove (loop to [])
   where
     loop from path
       | from == from0 = path
+      | (getDist ct from) <= minDist = []
       | otherwise = loop step (move : path)
         where
           moves = [MLeft, MRight, MUp, MDown]
-          steps = map (imagineStep s from) moves
+          steps = map (imagineStep s from) moves 
+          dists = map (getDist ct) steps
           costs = map (getCost ct) steps
+          minDist = head $ sort $ dists
           minCost = head $ sort $ costs
-          (cost, step, move) = head (filter (\(x,y,z) -> x==minCost) (zip3 costs steps moves))
+          (cost, dist, step, move) = head $ sort $ (filter (\(x,y,_,m) -> y==minDist) (zip4 costs dists steps moves))

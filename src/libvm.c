@@ -323,15 +323,18 @@ struct cost_table *build_cost_table(const struct state *s, long x, long y) {
     long world_length, i;
     struct cost_table *ct;
     world_length = s->world_w * s->world_h;
-    if (!(ct = malloc(sizeof(struct cost_table) + (world_length * sizeof(long)))))
+    if (!(ct = malloc(sizeof(struct cost_table) + (2*world_length * sizeof(long)))))
         PERROR_EXIT("malloc");
     memset(ct, 0, sizeof(struct cost_table));
     ct->world_w = s->world_w;
     ct->world_h = s->world_h;
     ct->world_length = world_length;
-    for (i = 0; i < world_length; i++)
+    for (i = 0; i < world_length; i++){
         ct->world_cost[i] = MAX_COST;
+        ct->world_cost[ct->world_length+i] = MAX_COST;
+    }
     put_cost(ct, x, y, 0);
+    put_dist(ct, x, y, 0);
     run_dijkstra(ct, s);
     return ct;
 }
@@ -343,6 +346,12 @@ long safe_get_cost(const struct cost_table *ct, long x, long y) {
     return get_cost(ct, x, y);
 }
 
+long safe_get_dist(const struct cost_table *ct, long x, long y) {
+    DEBUG_ASSERT(ct);
+    if (!is_within_world(ct->world_w, ct->world_h, x, y))
+        return MAX_COST;
+    return get_dist(ct, x, y);
+}
 
 // ---------------------------------------------------------------------------
 // Private
@@ -699,6 +708,15 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
     }
 }
 
+long calculate_cost(const struct state s1, long step_x, long step_y, stage){
+    if(safe_get(s1, step_x, step_y+1) == O_ROCK
+    ||(safe_get(s1, step_x+1, step_y+1) == O_ROCK
+     &&safe_get(s1, step_x+1, step_y) == O_ROCK)
+    ||(safe_get(s1, step_x-1, step_y+1) == O_ROCK
+     &&safe_get(s1, step_x-1, step_y) == O_ROCK))
+        return 5;
+    return 1;
+}
 
 void run_dijkstra(struct cost_table *ct, const struct state *s) {
     DEBUG_ASSERT(ct);
@@ -711,15 +729,16 @@ void run_dijkstra(struct cost_table *ct, const struct state *s) {
         change++;
         for (i = 1; i <= ct->world_w; i++) {
             for (j = 1; j <= ct->world_h; j++) {
-                if (get_cost(ct, i, j) == stage) {
+                if (get_dist(ct, i, j) == stage) {
                     // TODO: This is suboptimal.
                     imagine_step(s1, i, j, M_LEFT,  &step_x[0], &step_y[0]);
                     imagine_step(s1, i, j, M_RIGHT, &step_x[1], &step_y[1]);
                     imagine_step(s1, i, j, M_UP,    &step_x[2], &step_y[2]);
                     imagine_step(s1, i, j, M_DOWN,  &step_x[3], &step_y[3]);
                     for (k = 0; k < 4; k++) {
-                        if (is_safe(s1, step_x[k], step_y[k]) && get_cost(ct, step_x[k], step_y[k]) == MAX_COST) {
-                            put_cost(ct, step_x[k], step_y[k], stage + 1);
+                        if (is_safe(s1, step_x[k], step_y[k]) && get_dist(ct, step_x[k], step_y[k]) == MAX_COST) {
+                            put_cost(ct, step_x[k], step_y[k], stage + calculate_cost(s1, step_x[k], step_y[k], stage));
+                            put_dist(ct, step_x[k], step_y[k], stage + 1);
                             change = 0;
                         }
                     }
