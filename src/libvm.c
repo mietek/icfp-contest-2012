@@ -652,12 +652,13 @@ void execute_move(struct state *s, char move) {
 
 void drop_rock(struct state *s, const struct state *s0, char rock, long x, long y, bool ignore_robot) {
     DEBUG_ASSERT(s && s0 && is_any_rock(rock));
-    char object = get(s0, x, y - 1);
-    if (!ignore_robot && object == O_ROBOT) {
+    char below;
+    below = get(s0, x, y - 1);
+    if (!ignore_robot && below == O_ROBOT) {
         s->condition = C_LOSE;
         DEBUG_LOG("robot lost by crushing\n");
     }
-    if (object != O_EMPTY && rock == O_HIGHER_ORDER_ROCK) {
+    if (below != O_EMPTY && rock == O_HIGHER_ORDER_ROCK) {
         put(s, x, y, O_LAMBDA);
         DEBUG_LOG("higher order rock turned into lambda at (%ld, %ld)\n", x, y);
     }
@@ -671,22 +672,26 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
         for (x = 1; x <= s->world_w; x++) {
             char object;
             object = get(s0, x, y);
-            if (is_any_rock(object) && get(s0, x, y - 1) == O_EMPTY) {
-                put(s, x, y, O_EMPTY);
-                put(s, x, y - 1, object);
-                drop_rock(s, s0, x, y - 1, ignore_robot, object);
-            } else if (is_any_rock(object) && is_any_rock(get(s0, x, y - 1)) && get(s0, x + 1, y) == O_EMPTY && get(s0, x + 1, y - 1) == O_EMPTY) {
-                put(s, x, y, O_EMPTY);
-                put(s, x + 1, y - 1, object);
-                drop_rock(s, s0, x + 1, y - 1, ignore_robot, object);
-            } else if (is_any_rock(object) && is_any_rock(get(s0, x, y - 1)) && (get(s0, x + 1, y) != O_EMPTY || get(s0, x + 1, y - 1) != O_EMPTY) && get(s0, x - 1, y) == O_EMPTY && get(s0, x - 1, y - 1) == O_EMPTY) {
-                put(s, x, y, O_EMPTY);
-                put(s, x - 1, y - 1, object);
-                drop_rock(s, s0, x - 1, y - 1, ignore_robot, object);
-            } else if (is_any_rock(object) && get(s0, x, y - 1) == O_LAMBDA && get(s0, x + 1, y) == O_EMPTY && get(s0, x + 1, y - 1) == O_EMPTY) {
-                put(s, x, y, O_EMPTY);
-                put(s, x + 1, y - 1, object);
-                drop_rock(s, s0, x + 1, y - 1, ignore_robot, object);
+            if (is_any_rock(object)) {
+                char below;
+                below = get(s0, x, y - 1);
+                if (below == O_EMPTY) {
+                    put(s, x, y, O_EMPTY);
+                    put(s, x, y - 1, object);
+                    drop_rock(s, s0, x, y - 1, ignore_robot, object);
+                } else if (is_any_rock(below) && get(s0, x + 1, y) == O_EMPTY && get(s0, x + 1, y - 1) == O_EMPTY) {
+                    put(s, x, y, O_EMPTY);
+                    put(s, x + 1, y - 1, object);
+                    drop_rock(s, s0, x + 1, y - 1, ignore_robot, object);
+                } else if (is_any_rock(below) && get(s0, x - 1, y) == O_EMPTY && get(s0, x - 1, y - 1) == O_EMPTY) {
+                    put(s, x, y, O_EMPTY);
+                    put(s, x - 1, y - 1, object);
+                    drop_rock(s, s0, x - 1, y - 1, ignore_robot, object);
+                } else if (below == O_LAMBDA && get(s0, x + 1, y) == O_EMPTY && get(s0, x + 1, y - 1) == O_EMPTY) {
+                    put(s, x, y, O_EMPTY);
+                    put(s, x + 1, y - 1, object);
+                    drop_rock(s, s0, x + 1, y - 1, ignore_robot, object);
+                }
             } else if (object == O_BEARD && s->beard_growth_rate && !(s->move_count % s->beard_growth_rate)) {
                 int i, j;
                 for (i = -1; i <= 1; i++) {
