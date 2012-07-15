@@ -710,6 +710,7 @@ void run_dijkstra(struct cost_table *ct, const struct state *s) {
         for (i = 1; i <= ct->world_w; i++) {
             for (j = 1; j <= ct->world_h; j++) {
                 if (get_cost(ct, i, j) == stage) {
+                    // TODO: This is suboptimal.
                     imagine_step(s1, i, j, M_LEFT,  &step_x[0], &step_y[0]);
                     imagine_step(s1, i, j, M_RIGHT, &step_x[1], &step_y[1]);
                     imagine_step(s1, i, j, M_UP,    &step_x[2], &step_y[2]);
