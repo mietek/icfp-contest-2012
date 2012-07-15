@@ -195,21 +195,33 @@ class Board
   end
 
   def parse_board(file)
+    @data = load_map(file)
+    load_metadata(file)
+  end
+
+  def load_map(file)
     result = []
     file.each_line do |line|
       break if line == "\n"
       result << line.split('')
     end
-    @data       = result.reverse
-    begin
-      @water      = file.readline.split[1].to_i - 1
-      @flooding   = file.readline.split[1].to_i
-      @waterproof = file.readline.split[1].to_i
-    rescue EOFError
-      @water      = -1
-      @flooding   = 0
-      @waterproof = 10
+    result.reverse
+  end
+
+  def load_metadata(file)
+    @water      = -1
+    @flooding   = 0
+    @waterproof = 10
+    while line = file.readline
+      if line =~ /Water /
+        @water = line.split[1].to_i - 1
+      elsif line =~ /Flooding /
+        @flooding = line.split[1].to_i
+      elsif line =~ /Waterproof /
+        @waterproof = line.split[1].to_i
+      end
     end
+  rescue EOFError
   end
 
   def current_position
