@@ -181,17 +181,14 @@ foreign import ccall unsafe "libvm.h make_one_move"
 foreign import ccall unsafe "libvm.h make_moves"
   cMakeMoves :: CStatePtr -> CString -> IO CStatePtr
 
-foreign import ccall unsafe "libvm.h imagine_no_robot"
-  cImagineNoRobot :: CStatePtr -> IO CStatePtr
+foreign import ccall unsafe "libvm.h update_world_ignoring_robot"
+  cUpdateWorldIgnoringRobot :: CStatePtr -> IO CStatePtr
 
 foreign import ccall unsafe "libvm.h imagine_robot_at"
   cImagineRobotAt :: CStatePtr -> CLong -> CLong -> IO CStatePtr
 
 foreign import ccall unsafe "libvm.h is_enterable"
   cIsEnterable :: CStatePtr -> CLong -> CLong -> CChar
-
-foreign import ccall unsafe "libvm.h is_safe"
-  cIsSafe :: CStatePtr -> CLong -> CLong -> CChar
 
 
 new :: ByteString -> State
@@ -320,10 +317,10 @@ makeMoves s0 moves =
 makeMoves' :: State -> [Move] -> State
 makeMoves' s0 moves = makeMoves s0 (map fromMove moves)
 
-imagineNoRobot :: State -> State
-imagineNoRobot s0 =
+updateWorldIgnoringRobot :: State -> State
+updateWorldIgnoringRobot s0 =
   unwrapState s0 $ \sp0 -> do
-    sp <- cImagineNoRobot sp0
+    sp <- cUpdateWorldIgnoringRobot sp0
     wrapState sp
 
 imagineRobotAt :: State -> Point -> State
@@ -338,6 +335,6 @@ isEnterable s (x, y) =
     return (toBool (cIsEnterable sp (toEnum x) (toEnum y)))
 
 isSafe :: State -> Point -> Bool
-isSafe s (x, y) =
-  unwrapState s $ \sp ->
-    return (toBool (cIsSafe sp (toEnum x) (toEnum y)))
+isSafe s (x, y) = isEnterable s (x, y) && get s (x, y + 1) == OEmpty && get s1 (x, y + 1) /= ORock
+  where
+    s1 = updateWorldIgnoringRobot s

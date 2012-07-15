@@ -60,7 +60,7 @@ char safe_get(const struct state *s, long x, long y);
 struct state *make_one_move(const struct state *s0, char move);
 struct state *make_moves(const struct state *s0, const char *moves);
 
-struct state *imagine_no_robot(const struct state *s0);
+struct state *update_world_ignoring_robot(const struct state *s0);
 struct state *imagine_robot_at(const struct state *s0, long x, long y);
 
 bool is_enterable(const struct state *s, long x, long y);
@@ -107,7 +107,6 @@ bool is_safe(const struct state *s0, long x, long y);
 struct state {
     long world_w, world_h;
     long robot_x, robot_y;
-    bool ignore_robot;
     long lift_x, lift_y;
     long water_level;
     long flooding_rate;
@@ -212,4 +211,4 @@ void move_robot(struct state *s, long x, long y);
 void collect_lambda(struct state *s);
 void clear_similar_trampolines(struct state *s, char trampoline);
 void execute_move(struct state *s, char move);
-void update_world(struct state *s, const struct state *t);
+void update_world(struct state *s, const struct state *t, bool ignore_robot);
