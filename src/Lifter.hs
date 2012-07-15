@@ -5,6 +5,7 @@ import Blaze.ByteString.Builder (Builder, toByteStringIO)
 import Blaze.ByteString.Builder.Char8 (fromChar)
 import Control.Concurrent (ThreadId, killThread, myThreadId, threadDelay)
 import Control.Concurrent.MVar (MVar, modifyMVar_, newMVar, takeMVar)
+import Control.Monad (sequence)
 import qualified Data.ByteString.Char8 as B
 import Data.List (sort, zip4)
 import Data.Monoid (mappend, mempty)
@@ -101,5 +102,7 @@ main = do
 --  mainT <- myThreadId
 --  _ <- installHandler sigINT (Catch (handleInterrupt resultV mainT)) Nothing
   input <- B.getContents
-  let all = [prepareRun (100-i) (new input) | i<-([1..400]::[Int])] 
-  mapM_(\x -> print =<< x) all
+  let runs = [prepareRun (100-i) (new input) | i<-([1..400]::[Int])]
+  results <- sequence runs
+  let (maxScore, maxMoves) = maximum results
+  putStrLn (map fromMove maxMoves)
