@@ -53,7 +53,10 @@ getIntPair action s =
 
 data LiftState = Closed | Open deriving (Eq, Ord, Show)
 
-data Object = ORobot | OWall | ORock | OLambda | OLift LiftState | OEarth | OEmpty | OBeard | ORazor | OTrampoline Trampoline | OTarget Target deriving (Eq, Ord)
+data Object = ORobot | OWall | ORock | OLambda | OLift LiftState
+            | OEarth | OEmpty | OBeard | ORazor | OTrampoline Trampoline
+            | OTarget Target | OHoRock
+  deriving (Eq, Ord)
 
 instance Show Object where
   show object = [fromObject object]
@@ -69,6 +72,7 @@ fromObject OEarth                   = '.'
 fromObject OEmpty                   = ' '
 fromObject OBeard                   = 'W'
 fromObject ORazor                   = '!'
+fromObject OHoRock                  = '@'
 fromObject (OTrampoline trampoline) = fromTrampoline trampoline
 fromObject (OTarget target)         = fromTarget target
 
@@ -83,6 +87,7 @@ toObject '.'                = OEarth
 toObject ' '                = OEmpty
 toObject 'W'                = OBeard
 toObject '!'                = ORazor
+toObject '@'                = OHoRock
 toObject c
   | isValidTrampolineChar c = OTrampoline (toTrampoline c)
   | isValidTargetChar c     = OTarget (toTarget c)
@@ -402,6 +407,9 @@ isWall = is (== OWall)
 isRock :: State -> Point -> Bool
 isRock = is (== ORock)
 
+isHoRock :: State -> Point -> Bool
+isHoRock = is ( == OHoRock)
+
 isLambda :: State -> Point -> Bool
 isLambda = is (== OLambda)
 
@@ -547,7 +555,7 @@ iterateBoard s f = iter (1,1) [] where
 findRocks ::  State -> [Point]
 findRocks s =
   iterateBoard s $ \p o ->
-    if isRock s p then [p] else []
+    if isRock s p || isHoRock s p then [p] else []
 
 findMoveRocks :: State -> [(Point,Move)]
 findMoveRocks s = concatMap moveable $  findRocks s where
