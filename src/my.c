@@ -21,7 +21,7 @@ void reverse(char *s) {
 
 void anyMove(struct state *s, char **a, int stage){
 	int k,is,js;
-	char *answer = malloc( (2)*sizeof( char ));
+	char *answer = calloc(2, sizeof(char));
 	struct state *t=copy(s);
 	answer[1]='\0';
 	for(k=0; k<=5 ; k++){
@@ -35,7 +35,7 @@ void anyMove(struct state *s, char **a, int stage){
 		if(t->condition == C_NONE)
 			break;
     }
-	//free(t);
+	free(t);
 	*a=answer;
 	return;
 }
@@ -116,25 +116,25 @@ int main(int argc, char *argv[]){
   for(j=1; j<2; j++){
     stage=0;
 	strcpy(result, "");
-//	free(s);
+	free(s);
 	s = copy(s0);
 	i= j%80+1;
 	do{
 		t = copy(s);
 		status=goSomewhere(t, &answer, i);
-//		free(t);
+		free(t);
 		t = copy(s);
 		if(status==0)
 			s = make_moves(s, answer);
 		if(status==1 || s->condition == C_LOSE || (j>30 && rand()*100>180-j)){
-//			free(s);
+			free(s);
 			s=copy(t);
 			anyMove(t, &answer, rand()*5);
 			stage++;
      		s = make_moves(s, answer);
 		}
 		strcat(result, answer);
-		//free(t);
+		free(t);
 	}while(s->condition == C_NONE && stage < s->world_h*8 && s->score>-1000 );
 
 	s = make_moves(s0, result);
