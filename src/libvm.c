@@ -762,7 +762,7 @@ long calc_cost(const struct state* s/*state*/
 }
 
 void run_dijkstra(struct cost_table *ct, const struct state *s) {
-  return;
+  run_dijkstra_ho(ct,s,calc_cost);
 }
 void run_dijkstra_ho(struct cost_table *ct, const struct state *s, cc_func fp) {
     DEBUG_ASSERT(ct);
