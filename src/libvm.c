@@ -610,7 +610,7 @@ void execute_move(struct state *s, char move) {
         } else if (object == O_ROCK && move == M_RIGHT && get(s, x + 1, y) == O_EMPTY) {
             move_robot(s, x, y);
             put(s, x + 1, y, O_ROCK);
-            DEBUG_LOG("robot pushed rock from (%ld, %ld) to (%ld, %ld\n", x, y, x + 1, y);
+            DEBUG_LOG("robot pushed rock from (%ld, %ld) to (%ld, %ld)\n", x, y, x + 1, y);
         } else if (is_valid_trampoline(object)) {
             move_robot(s, x, y);
             clear_similar_trampolines(s, object);
