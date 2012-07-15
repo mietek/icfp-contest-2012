@@ -654,6 +654,7 @@ void drop_rock(struct state *s, const struct state *s0, long x, long y, bool ign
     char below;
     below = get(s0, x, y - 1);
     if (!ignore_robot && below == O_ROBOT) {
+        s->score -= s->collected_lambda_count * 25;
         s->condition = C_LOSE;
         DEBUG_LOG("robot lost by crushing\n");
     }
@@ -711,6 +712,7 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
         DEBUG_LOG("robot is underwater\n");
         s->used_robot_waterproofing++;
         if (s->used_robot_waterproofing > s->robot_waterproofing) {
+            s->score -= s->collected_lambda_count * 25;
             s->condition = C_LOSE;
             DEBUG_LOG("robot lost by drowning\n");
         }
