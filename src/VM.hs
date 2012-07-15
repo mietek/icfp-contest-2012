@@ -547,7 +547,7 @@ iterateBoard s f = iter (1,1) [] where
 findRocks ::  State -> [Point]
 findRocks s =
   iterateBoard s $ \p o ->
-    if isRock s p then [p] else []
+    if isRock s p || isHthen [p] else []
 
 findMoveRocks :: State -> [(Point,Move)]
 findMoveRocks s = concatMap moveable $  findRocks s where
@@ -561,3 +561,20 @@ findMoveRocks s = concatMap moveable $  findRocks s where
     check MDown (x,y) | isEmpty s (x,y-1) && isEnterable s (x,y+1) =
                       Just ((x,y+1) ,MDown)
     check _ _ = Nothing
+
+evalMoves :: Move -> Point -> Point
+evalMoves MLeft (x,y) = (pred x ,y)
+evalMoves MRight (x,y) = (succ x ,y)
+evalMoves MUp (x,y) = (x ,succ y )
+evalMoves MDown (x,y) = (x ,pred y )
+evalMoves MWait (x,y) = (x ,y)
+evalMoves MAbort (x,y) = undefined -- halt ?
+
+
+canMove :: State -> Point -> Bool
+canMove s p =any (isEnterable s . flip evalMoves p) moves where
+    moves = [MDown,MLeft,MRight,MUp]
+
+willDeadLock :: State -> Move -> Point -> Bool
+willDeadLock s m = canMove s' $ getRobotPoint s'
+  s' = imagineStep s p
