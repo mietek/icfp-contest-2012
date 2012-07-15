@@ -51,36 +51,38 @@ getIntPair action s =
         return (fromEnum a, fromEnum b)
 
 
-data Object = ORobot | OWall | ORock | OLambda | OClosedLift | OOpenLift | OEarth | OEmpty | OBeard | ORazor | OTrampoline Trampoline | OTarget Target deriving (Eq, Ord)
+data LiftState = Closed | Open deriving (Eq, Ord, Show)
+
+data Object = ORobot | OWall | ORock | OLambda | OLift LiftState | OEarth | OEmpty | OBeard | ORazor | OTrampoline Trampoline | OTarget Target deriving (Eq, Ord)
 
 instance Show Object where
   show object = [fromObject object]
 
 fromObject :: Object -> Char
-fromObject ORobot      = 'R'
-fromObject OWall       = '#'
-fromObject ORock       = '*'
-fromObject OLambda     = '\\'
-fromObject OClosedLift = 'L'
-fromObject OOpenLift   = 'O'
-fromObject OEarth      = '.'
-fromObject OEmpty      = ' '
-fromObject OBeard      = 'W'
-fromObject ORazor      = '!'
+fromObject ORobot                   = 'R'
+fromObject OWall                    = '#'
+fromObject ORock                    = '*'
+fromObject OLambda                  = '\\'
+fromObject (OLift Closed)           = 'L'
+fromObject (OLift Open)             = 'O'
+fromObject OEarth                   = '.'
+fromObject OEmpty                   = ' '
+fromObject OBeard                   = 'W'
+fromObject ORazor                   = '!'
 fromObject (OTrampoline trampoline) = fromTrampoline trampoline
-fromObject (OTarget target) = fromTarget target
+fromObject (OTarget target)         = fromTarget target
 
 toObject :: Char -> Object
-toObject 'R'  = ORobot
-toObject '#'  = OWall
-toObject '*'  = ORock
-toObject '\\' = OLambda
-toObject 'L'  = OClosedLift
-toObject 'O'  = OOpenLift
-toObject '.'  = OEarth
-toObject ' '  = OEmpty
-toObject 'W'  = OBeard
-toObject '!'  = ORazor
+toObject 'R'                = ORobot
+toObject '#'                = OWall
+toObject '*'                = ORock
+toObject '\\'               = OLambda
+toObject 'L'                = OLift Closed
+toObject 'O'                = OLift Open
+toObject '.'                = OEarth
+toObject ' '                = OEmpty
+toObject 'W'                = OBeard
+toObject '!'                = ORazor
 toObject c
   | isValidTrampolineChar c = OTrampoline (toTrampoline c)
   | isValidTargetChar c     = OTarget (toTarget c)
@@ -388,6 +390,51 @@ get s (x, y) =
   unwrapState s $ \sp ->
     return (toObject (castCCharToChar (cGet sp (toEnum x) (toEnum y))))
 
+is :: (Object -> Bool) -> State -> Point -> Bool
+is check s pt = check (get s pt)
+
+isRobot :: State -> Point -> Bool
+isRobot = is (== ORobot)
+
+isWall :: State -> Point -> Bool
+isWall = is (== OWall)
+
+isRock :: State -> Point -> Bool
+isRock = is (== ORock)
+
+isLambda :: State -> Point -> Bool
+isLambda = is (== OLambda)
+
+isLift :: State -> Point -> Bool
+isLift = is check
+  where
+    check (OLift _) = True
+    check _ = False
+
+isEarth :: State -> Point -> Bool
+isEarth = is (== OEarth)
+
+isEmpty :: State -> Point -> Bool
+isEmpty = is (== OEmpty)
+
+isBeard :: State -> Point -> Bool
+isBeard = is (== OBeard)
+
+isRazor :: State -> Point -> Bool
+isRazor = is (== ORazor)
+
+isTrampoline :: State -> Point -> Bool
+isTrampoline = is check
+  where
+    check (OTrampoline _) = True
+    check _ = False
+
+isTarget :: State -> Point -> Bool
+isTarget = is check
+  where
+    check (OTarget _) = True
+    check _ = False
+
 makeOneMove_ :: State -> Char -> State
 makeOneMove_ s0 move =
   unwrapState s0 $ \sp0 -> do
@@ -498,15 +545,14 @@ iterateBoard s f = iter (1,1) [] where
     iter p@(x,y) acc = iter (x+1,y) (f p (get s p) ++ acc)
 
 findRocks ::  State -> [Point]
-findRocks = flip iterateBoard (\p o -> if isRock o then [p] else [])
+findRocks s =
+  iterateBoard s $ \p o ->
+    if isRock s p then [p] else []
 
 findMoveRocks :: State -> [(Point,Move)]
-findMoveRocks st = catMaybes . map moveable $  findRocks st where
-    moveable p@(x,y) = if isEmpty (get st (x+1,y)) then Just (p,MRight)
-                       else if isEmpty (get st (x-1,y)) then Just (p,MLeft)
-                       else if isEmpty (get st (x,y+1)) then Just (p,MUp)
-                       else if isEmpty (get st (x,y-1)) then Just (p,MDown)
+findMoveRocks s = catMaybes . map moveable $  findRocks s where
+    moveable p@(x,y) = if isEmpty s (x+1,y) then Just (p,MRight)
+                       else if isEmpty s (x-1,y) then Just (p,MLeft)
+                       else if isEmpty s (x,y+1) then Just (p,MUp)
+                       else if isEmpty s (x,y-1) then Just (p,MDown)
                        else Nothing
-
-isEmpty = (== OEmpty)
-isRock =  (== ORock )

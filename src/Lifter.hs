@@ -48,7 +48,7 @@ run resultV s0 l = goDijkstra s0 l []
       let c = buildCostTable s r
       flip mapM_ [1..wy] $ \y -> 
         flip mapM_ [1..wx] $ \x -> myPrint (x == wx) $ getCost c (x,  wy+1-y)
-      let moves = findA s c r (\(fc, ft, fp) -> elem ft [OLambda, OOpenLift])
+      let moves = findA s c r (\(fc, ft, fp) -> elem ft [OLambda, OLift Open])
       print moves
       hFlush stdout
       let moves2 = findA s c r (\(fc, ft, fp) -> elem ft [OEarth])
