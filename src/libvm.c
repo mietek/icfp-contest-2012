@@ -708,7 +708,6 @@ void run_dijkstra(struct cost_table *ct, const struct state *s) {
     stage = 0;
     do {
         change++;
-        stage++;
         for (i = 1; i <= ct->world_w; i++) {
             for (j = 1; j <= ct->world_h; j++) {
                 if (get_cost(ct, i, j) == stage) {
@@ -726,6 +725,7 @@ void run_dijkstra(struct cost_table *ct, const struct state *s) {
                 }
             }
         }
+        stage++;
         s2 = update_world_ignoring_robot(s1);
         free(s1);
         s1 = s2;
