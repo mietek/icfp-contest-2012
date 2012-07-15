@@ -26,7 +26,7 @@ void anyMove(struct state *s, char **a, int stage){
 	answer[1]='\0';
 	for(k=0; k<=5 ; k++){
 		if((k+stage)%5==0){answer[0]='R';is=-1; js= 0;}
-		if((k+stage)%5==1){answer[0]='L';is= 1; js= 0;}						
+		if((k+stage)%5==1){answer[0]='L';is= 1; js= 0;}
 		if((k+stage)%5==2){answer[0]='U';is= 0; js=-1;}
 		if((k+stage)%5==3){answer[0]='D';is= 0; js= 1;}
 		if(k==4)          {answer[0]='W';is= 0; js= 0;}
@@ -48,8 +48,8 @@ int goSomewhere(struct state *s, char **a, int penalty){
 
 	long * c;
 	struct cost_table *nc;
-	
-	nc = build_cost_table(s, s->robot_x, s->robot_y);	
+
+	nc = build_cost_table(s, s->robot_x, s->robot_y);
 
 	// find the best goal
 	best=LONG_MAX;
@@ -68,16 +68,16 @@ int goSomewhere(struct state *s, char **a, int penalty){
 		printf("\n");
 	}
 	printf("\n");
-		
+
 	i=0;
 	if(best<LONG_MAX){
 		answer = malloc( (best+2)*sizeof( char ));
 		if (answer == NULL ){}
-		
+
 		while(best>0){
 			for(k=1; k<=4;k++){
 				if(k==1) {is=-1; js= 0;move='R';}
-				if(k==2) {is= 1; js= 0;move='L';}						
+				if(k==2) {is= 1; js= 0;move='L';}
 				if(k==3) {is= 0; js=-1;move='U';}
 				if(k==4) {is= 0; js= 1;move='D';}
 				if(is_within_world(s->world_w, s->world_h, wx+is, wy+js) && get_cost(nc, wx+is, wy+js) < best) {
@@ -124,7 +124,7 @@ int main(int argc, char *argv[]){
 		status=goSomewhere(t, &answer, i);
 //		free(t);
 		t = copy(s);
-		if(status==0) 
+		if(status==0)
 			s = make_moves(s, answer);
 		if(status==1 || s->condition == C_LOSE || (j>30 && rand()*100>180-j)){
 //			free(s);
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]){
 		strcat(result, answer);
 		//free(t);
 	}while(s->condition == C_NONE && stage < s->world_h*8 && s->score>-1000 );
-	
+
 	s = make_moves(s0, result);
 	printf("%d: %ld\n", j, s->score);
 	if(s->score > bestv){
