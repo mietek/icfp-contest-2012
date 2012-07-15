@@ -609,7 +609,7 @@ void execute_move(struct state *s, char move) {
             collect_razor(s);
         } else if (object == O_OPEN_LIFT) {
             put(s, s->robot_x, s->robot_y, O_EMPTY);
-            s->score += s->collected_lambda_count * 50;
+            s->score += s->collected_lambda_count * 25;
             s->condition = C_WIN;
             DEBUG_LOG("robot won\n");
         } else if (object == O_ROCK && move == M_LEFT && get(s, x - 1, y) == O_EMPTY) {
