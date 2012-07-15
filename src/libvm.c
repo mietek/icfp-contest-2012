@@ -650,7 +650,7 @@ void execute_move(struct state *s, char move) {
     }
 }
 
-void drop_rock(struct state *s, const struct state *s0, char rock, long x, long y, bool ignore_robot) {
+void drop_rock(struct state *s, const struct state *s0, long x, long y, bool ignore_robot, char rock) {
     DEBUG_ASSERT(s && s0 && is_any_rock(rock));
     char below;
     below = get(s0, x, y - 1);
