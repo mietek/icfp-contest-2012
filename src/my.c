@@ -8,14 +8,14 @@
 #include "libvm.c"
 
 //reverse string (str, 0, strlen-1)
-void reverse(char *x, int beg, int end){
-   char c;
-   if ( beg >= end )
-      return;    
-   c = *(x+beg);
-   *(x+beg) = *(x+end);
-   *(x+end) = c;
-   reverse(x, ++beg, --end);
+void reverse(char *s) {
+    int i, j;
+    char c;
+    for (i = 0, j = strlen(s) - 1; i < j; i++, j--) {
+        c = s[i];
+        s[i] = s[j];
+        s[j] = c;
+    }
 }
 
 
@@ -90,7 +90,7 @@ int goSomewhere(struct state *s, char **a, int penalty){
 			}
 		}
 		answer[i]='\0';
-		reverse(answer,0,strlen(answer)-1);
+		reverse(answer);
 	}else{
 		answer = malloc(1*sizeof( char ));
 		if (answer == NULL ){}
