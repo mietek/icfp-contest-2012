@@ -5,11 +5,13 @@ import Blaze.ByteString.Builder (Builder, toByteStringIO)
 import Blaze.ByteString.Builder.Char8 (fromChar)
 import Control.Concurrent (ThreadId, killThread, myThreadId, threadDelay)
 import Control.Concurrent.MVar (MVar, modifyMVar_, newMVar, takeMVar)
-import Control.Monad (sequence)
+import Control.Monad (forM_, sequence, when)
 import qualified Data.ByteString.Char8 as B
-import Data.List (sort, zip4)
+import Data.List (sort, sortBy, zip4)
 import Data.Monoid (mappend, mempty)
 -- import System.Posix.Signals (Handler(Catch), installHandler, sigINT)
+import System.Environment (getArgs)
+import System.IO (hPutStrLn, stderr)
 import System.Random
 import VM
 
@@ -110,6 +112,8 @@ prepareRun n input = do
        f 3 = MUp
        f  _  = MDown
 
+
+data Verbosity = MoveSequence | Dump deriving (Eq, Ord, Show)
   
 main :: IO ()
 main = do
@@ -118,6 +122,12 @@ main = do
 --  _ <- installHandler sigINT (Catch (handleInterrupt resultV mainT)) Nothing
   input <- B.getContents
   let runs = [prepareRun (100-i) (new input) | i<-([1..400]::[Int])]
-  results <- sequence runs
-  let (maxScore, maxMoves) = maximum results
+  -- TODO: Store results one by one in resultV
+  results <- fmap (sortBy (flip compare)) (sequence runs)
+  let (maxScore, maxMoves) = head results
+  -- TODO: Output using Builder/ByteString
+  args <- getArgs
+  when (args == ["-v"]) $
+    forM_ results $ \(score, moves) ->
+      hPutStrLn stderr (show score ++ " " ++ map fromMove moves)
   putStrLn (map fromMove maxMoves)
