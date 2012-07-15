@@ -439,7 +439,7 @@ isFree :: State -> Point -> Bool
 isFree =  is check where
   check OBeard = False
   check OWall  = False
-  check OTrampoline = False
+  check (OTrampoline _)= False
   check ORock = False
   check _ = True
 
@@ -560,11 +560,11 @@ findRocks s =
 
 findMoveRocks :: State -> [(Point,Move)]
 findMoveRocks s = concatMap moveable $  findRocks s where
-    moveable p = catMaybes $ zipWith check [MRight,MLeft,MUp,MDown] $ cycle p
+    moveable p = catMaybes $ zipWith check [MRight,MLeft,MUp,MDown] $ cycle [p]
     check MRight (x,y) | isEmpty s (x+1,y) && isFree s (x+1,y) =
                       Just ((x-1,y) ,MRight)
     check MLeft (x,y) | isEmpty s (x-1,y) && isFree s (x+1,y) =
-                      Just ((x-1,y),MLelf)
+                      Just ((x-1,y),MLeft)
     check MUp (x,y)   | isEmpty s (x,y+1) && isFree s (x,y-1) =
                       Just ((x,y-1) ,MDown)
     check MDown (x,y) | isEmpty s (x,y-1) && isFree s (x,y+1) =
