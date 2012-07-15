@@ -84,8 +84,8 @@ class Board
     else
       draw
       puts "You #{reason}! #{@score} points."
-      exit
     end
+    exit
   end
 
   def move_to(y, x)
@@ -96,7 +96,7 @@ class Board
       @data[current_y][current_x] = ' '
 
     elsif @data[y][x] == 'O'
-      @data[y][x] = 'R'
+      @data[y][x] = 'O'
       @data[current_y][current_x] = ' '
       win!
 
