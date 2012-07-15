@@ -216,7 +216,7 @@ struct state *make_one_move(const struct state *s0, char move) {
         if (s->condition == C_NONE) {
             struct state *s1;
             s1 = copy(s);
-            update_world(s1, s, DO_NOT_IGNORE_ROBOT);
+            update_world(s1, s);
             free(s);
             s = s1;
         }
@@ -233,7 +233,7 @@ struct state *make_moves(const struct state *s0, const char *moves) {
         if (s->condition == C_NONE) {
             struct state *s1;
             s1 = copy(s);
-            update_world(s1, s, DO_NOT_IGNORE_ROBOT);
+            update_world(s1, s);
             free(s);
             s = s1;
         }
@@ -243,18 +243,42 @@ struct state *make_moves(const struct state *s0, const char *moves) {
 }
 
 
+struct state *imagine_no_robot(const struct state *s0) {
+    DEBUG_ASSERT(s0);
+    struct state *s;
+    s = copy(s0);
+    s->ignore_robot = IGNORE_ROBOT;
+    return s;
+}
+
+struct state *imagine_robot_at(const struct state *s0, long x, long y) {
+    DEBUG_ASSERT(s0);
+    struct state *s;
+    s = copy(s0);
+    teleport_robot(s, x, y);
+    return s;
+}
+
+
+bool is_enterable(const struct state *s, long x, long y) {
+    DEBUG_ASSERT(s);
+    char object;
+    if (!is_within_world(s, x, y))
+        return false;
+    object = get(s, x, y);
+    return object == O_EMPTY || object == O_EARTH || object == O_LAMBDA || object == O_OPEN_LIFT || is_valid_trampoline(object);
+}
+
 bool is_safe(const struct state *s0, long x, long y) {
     DEBUG_ASSERT(s0);
     DEBUG_ASSERT(s0->condition == C_NONE);
     struct state *s;
     bool safe;
-    if (!is_point_in_world(s0, x, y))
+    if (!is_enterable(s0, x, y))
         safe = false;
-    else if (!is_enterable(s0, x, y))
-        safe = false;
-    else if (is_point_in_world(s0, x, y + 1) && get(s0, x, y + 1) == O_EMPTY) {
-        s = copy(s0);
-        update_world(s, s0, IGNORE_ROBOT);
+    else if (is_within_world(s0, x, y + 1) && get(s0, x, y + 1) == O_EMPTY) {
+        s = imagine_no_robot(s0);
+        update_world(s, s0);
         if (get(s, x, y + 1) == O_ROCK)
             safe = false;
         else
@@ -407,26 +431,29 @@ void copy_input(struct state *s, long input_length, const char *input) {
 }
 
 
+void teleport_robot(struct state *s, long x, long y) {
+    DEBUG_ASSERT(s);
+    put(s, s->robot_x, s->robot_y, O_EMPTY);
+    s->robot_x = x;
+    s->robot_y = y;
+    put(s, x, y, O_ROBOT);
+}
+
 void move_robot(struct state *s, long x, long y) {
     DEBUG_ASSERT(s);
     DEBUG_ASSERT(is_enterable(s, x, y) || (get(s, x, y) == O_ROCK && get(s, x + x - s->robot_x, y) == O_EMPTY));
     char object;
     long trampoline_i, target_i;
-    put(s, s->robot_x, s->robot_y, O_EMPTY);
     object = get(s, x, y);
     if (is_valid_trampoline(object)) {
         trampoline_i = trampoline_to_index(object);
         DEBUG_ASSERT(s->trampoline_x[trampoline_i]);
         target_i = s->trampoline_index_to_target_index[trampoline_i];
         DEBUG_ASSERT(s->target_x[target_i]);
-        put(s, s->target_x[target_i], s->target_y[target_i], O_ROBOT);
-        s->robot_x = s->target_x[target_i];
-        s->robot_y = s->target_y[target_i];
+        teleport_robot(s, s->target_x[target_i], s->target_y[target_i]);
         DEBUG_LOG("robot trampolined to (%ld, %ld)\n", s->robot_x, s->robot_y);
     } else {
-        put(s, x, y, O_ROBOT);
-        s->robot_x = x;
-        s->robot_y = y;
+        teleport_robot(s, x, y);
         DEBUG_LOG("robot moved to (%ld, %ld)\n", s->robot_x, s->robot_y);
     }
     if (s->used_robot_waterproofing && s->robot_y > s->water_level) {
@@ -516,7 +543,7 @@ void execute_move(struct state *s, char move) {
     }
 }
 
-void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
+void update_world(struct state *s, const struct state *s0) {
     DEBUG_ASSERT(s && s0);
     DEBUG_ASSERT(s->condition == C_NONE);
     long x, y;
@@ -527,38 +554,38 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
             if (object == O_ROCK && get(s0, x, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x, y - 1, O_ROCK);
-                if (!ignore_robot && s0->robot_x == x && s0->robot_y == y - 2) {
+                if (!s0->ignore_robot && s0->robot_x == x && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("robot lost by crushing\n");
                 }
             } else if (object == O_ROCK && get(s0, x, y - 1) == O_ROCK && get(s0, x + 1, y) == O_EMPTY && get(s0, x + 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x + 1, y - 1, O_ROCK);
-                if (!ignore_robot && s0->robot_x == x + 1 && s0->robot_y == y - 2) {
+                if (!s0->ignore_robot && s0->robot_x == x + 1 && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("robot lost by crushing\n");
                 }
             } else if (object == O_ROCK && get(s0, x, y - 1) == O_ROCK && (get(s0, x + 1, y) != O_EMPTY || get(s0, x + 1, y - 1) != O_EMPTY) && get(s0, x - 1, y) == O_EMPTY && get(s0, x - 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x - 1, y - 1, O_ROCK);
-                if (!ignore_robot && s0->robot_x == x - 1 && s0->robot_y == y - 2) {
+                if (!s0->ignore_robot && s0->robot_x == x - 1 && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("robot lost by crushing\n");
                 }
             } else if (object == O_ROCK && get(s0, x, y - 1) == O_LAMBDA && get(s0, x + 1, y) == O_EMPTY && get(s0, x + 1, y - 1) == O_EMPTY) {
                 put(s, x, y, O_EMPTY);
                 put(s, x + 1, y - 1, O_ROCK);
-                if (!ignore_robot && s0->robot_x == x + 1 && s0->robot_y == y - 2) {
+                if (!s0->ignore_robot && s0->robot_x == x + 1 && s0->robot_y == y - 2) {
                     s->condition = C_LOSE;
                     DEBUG_LOG("robot lost by crushing\n");
                 }
-            } else if (!ignore_robot && object == O_CLOSED_LIFT && s0->collected_lambda_count == s0->lambda_count) {
+            } else if (!s0->ignore_robot && object == O_CLOSED_LIFT && s0->collected_lambda_count == s0->lambda_count) {
                 put(s, x, y, O_OPEN_LIFT);
                 DEBUG_LOG("robot opened lift\n");
             }
         }
     }
-    if (!ignore_robot && s0->robot_y <= s->water_level) {
+    if (!s0->ignore_robot && s0->robot_y <= s->water_level) {
         DEBUG_LOG("robot is underwater\n");
         s->used_robot_waterproofing++;
         if (s->used_robot_waterproofing > s->robot_waterproofing) {
@@ -566,7 +593,7 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
             DEBUG_LOG("robot lost by drowning\n");
         }
     }
-    if (!ignore_robot && s->flooding_rate && !(s->move_count % s->flooding_rate)) {
+    if (!s0->ignore_robot && s->flooding_rate && !(s->move_count % s->flooding_rate)) {
         s->water_level++;
         DEBUG_LOG("robot increased water level to %ld\n", s->water_level);
     }

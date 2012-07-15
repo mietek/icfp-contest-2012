@@ -60,6 +60,10 @@ char safe_get(const struct state *s, long x, long y);
 struct state *make_one_move(const struct state *s0, char move);
 struct state *make_moves(const struct state *s0, const char *moves);
 
+struct state *imagine_no_robot(const struct state *s0);
+struct state *imagine_robot_at(const struct state *s0, long x, long y);
+
+bool is_enterable(const struct state *s, long x, long y);
 bool is_safe(const struct state *s0, long x, long y);
 
 
@@ -103,6 +107,7 @@ bool is_safe(const struct state *s0, long x, long y);
 struct state {
     long world_w, world_h;
     long robot_x, robot_y;
+    bool ignore_robot;
     long lift_x, lift_y;
     long water_level;
     long flooding_rate;
@@ -139,7 +144,7 @@ inline bool is_valid_target(char target) {
 }
 
 
-inline bool is_point_in_world(const struct state *s, long x, long y) {
+inline bool is_within_world(const struct state *s, long x, long y) {
     return is_valid_point(x, y) && x <= s->world_w && y <= s->world_h;
 }
 
@@ -187,21 +192,13 @@ inline long target_to_index(char target) {
 
 
 inline char get(const struct state *s, long x, long y) {
-    DEBUG_ASSERT(s && is_point_in_world(s, x, y));
+    DEBUG_ASSERT(s && is_within_world(s, x, y));
     return s->world[point_to_index(s, x, y)];
 }
 
 inline void put(struct state *s, long x, long y, char object) {
-    DEBUG_ASSERT(s && is_point_in_world(s, x, y));
+    DEBUG_ASSERT(s && is_within_world(s, x, y));
     s->world[point_to_index(s, x, y)] = object;
-}
-
-
-inline bool is_enterable(const struct state *s, long x, long y) {
-    DEBUG_ASSERT(s && is_point_in_world(s, x, y));
-    char object;
-    object = get(s, x, y);
-    return object == O_EMPTY || object == O_EARTH || object == O_LAMBDA || object == O_OPEN_LIFT || is_valid_trampoline(object);
 }
 
 
@@ -210,8 +207,9 @@ void scan_input(long input_length, const char *input, long *out_world_w, long *o
 void copy_input_metadata(struct state *s, long input_length, const char *input);
 void copy_input(struct state *s, long input_length, const char *input);
 
+void teleport_robot(struct state *s, long x, long y);
 void move_robot(struct state *s, long x, long y);
 void collect_lambda(struct state *s);
 void clear_similar_trampolines(struct state *s, char trampoline);
 void execute_move(struct state *s, char move);
-void update_world(struct state *s, const struct state *t, bool ignore_robot);
+void update_world(struct state *s, const struct state *t);

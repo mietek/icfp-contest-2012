@@ -181,6 +181,15 @@ foreign import ccall unsafe "libvm.h make_one_move"
 foreign import ccall unsafe "libvm.h make_moves"
   cMakeMoves :: CStatePtr -> CString -> IO CStatePtr
 
+foreign import ccall unsafe "libvm.h imagine_no_robot"
+  cImagineNoRobot :: CStatePtr -> IO CStatePtr
+
+foreign import ccall unsafe "libvm.h imagine_robot_at"
+  cImagineRobotAt :: CStatePtr -> CLong -> CLong -> IO CStatePtr
+
+foreign import ccall unsafe "libvm.h is_enterable"
+  cIsEnterable :: CStatePtr -> CLong -> CLong -> CChar
+
 foreign import ccall unsafe "libvm.h is_safe"
   cIsSafe :: CStatePtr -> CLong -> CLong -> CChar
 
@@ -310,6 +319,23 @@ makeMoves s0 moves =
 
 makeMoves' :: State -> [Move] -> State
 makeMoves' s0 moves = makeMoves s0 (map fromMove moves)
+
+imagineNoRobot :: State -> State
+imagineNoRobot s0 =
+  unwrapState s0 $ \sp0 -> do
+    sp <- cImagineNoRobot sp0
+    wrapState sp
+
+imagineRobotAt :: State -> Point -> State
+imagineRobotAt s0 (x, y) =
+  unwrapState s0 $ \sp0 -> do
+    sp <- cImagineRobotAt sp0 (toEnum x) (toEnum y)
+    wrapState sp
+
+isEnterable :: State -> Point -> Bool
+isEnterable s (x, y) =
+  unwrapState s $ \sp ->
+    return (toBool (cIsEnterable sp (toEnum x) (toEnum y)))
 
 isSafe :: State -> Point -> Bool
 isSafe s (x, y) =
