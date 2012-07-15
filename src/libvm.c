@@ -743,7 +743,28 @@ long calculate_cost(const struct state *s, long step_x, long step_y, long stage)
     return 10;
 }
 
+
+/* this gona be ugly...
+   lets create fp with function wich will decide based on input -
+   all thing that are computed during `run_dijkstra' - wich predefined staratedy apply
+*/
+
+long calc_cost(const struct state* s/*state*/
+	       ,const struct cost_table* ct /*cost_table*/
+	       , long y/*current x*/
+	       , long x/*current y*/
+	       , long k/*current k (wtf?)*/
+	       , long stage
+	       , long step_x[4]
+	       , long step_y[4]){
+  return calculate_cost(s,step_x[k],step_y[k],stage);
+
+}
+
 void run_dijkstra(struct cost_table *ct, const struct state *s) {
+  return;
+}
+void run_dijkstra_ho(struct cost_table *ct, const struct state *s, cc_func fp) {
     DEBUG_ASSERT(ct);
     long change, stage, step_x[4], step_y[4], i, j, k;
     struct state *s1, *s2;
@@ -761,7 +782,9 @@ void run_dijkstra(struct cost_table *ct, const struct state *s) {
                     imagine_step(s1, i, j, M_UP,    &step_x[2], &step_y[2]);
                     imagine_step(s1, i, j, M_DOWN,  &step_x[3], &step_y[3]);
                     for (k = 0; k < 4; k++) {
-                        if (is_safe(s1, step_x[k], step_y[k]) && get_cost(ct, step_x[k], step_y[k]) > get_cost(ct, i, k) + calculate_cost(s1, step_x[k], step_y[k], stage)) {
+		      if (is_safe(s1, step_x[k], step_y[k]) && get_cost(ct, step_x[k], step_y[k]) > get_cost(ct, i, k) +
+			  fp(s1,ct,i,j,k,stage,step_x,step_y)) {
+			    //		   calculate_cost(s1, step_x[k], step_y[k], stage)) {
                             put_cost(ct, step_x[k], step_y[k], get_cost(ct, i, k) + calculate_cost(s1, step_x[k], step_y[k], stage));
                             put_dist(ct, step_x[k], step_y[k], stage + 1);
                             change = 0;

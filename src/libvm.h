@@ -273,4 +273,16 @@ void update_world(struct state *s, const struct state *t, bool ignore_robot);
 
 void drop_rock(struct state *s, const struct state *s0, long x, long y, bool ignore_robot, char rock);
 long calculate_cost(const struct state *s, long step_x, long step_y, long stage);
+
+
+typedef long (*cc_func)(const struct state* /*state*/
+			,const struct cost_table* /*cost_table*/
+			, long /*current x*/
+			, long /*current y*/
+			, long /*current k (wtf?)*/
+			, long /*stage*/
+			, long [4] /*step x*/
+			, long [4] /*step y*/);
+
+void run_dijkstra_ho(struct cost_table *ct, const struct state *s, cc_func fp);
 void run_dijkstra(struct cost_table *ct, const struct state *s);
