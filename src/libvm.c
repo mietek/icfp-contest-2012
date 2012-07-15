@@ -78,7 +78,7 @@ void dump(const struct state *s) {
     DEBUG_LOG("robot_waterproofing        = %ld\n", s->robot_waterproofing);
     DEBUG_LOG("used_robot_waterproofing   = %ld\n", s->used_robot_waterproofing);
     DEBUG_LOG("beard_growth_rate          = %ld\n", s->beard_growth_rate);
-    DEBUG_LOG("razors_count               = %ld\n", s->razors_count);
+    DEBUG_LOG("razor_count                = %ld\n", s->razor_count);
     DEBUG_LOG("lambda_count               = %ld\n", s->lambda_count);
     DEBUG_LOG("collected_lambda_count     = %ld\n", s->collected_lambda_count);
     DEBUG_LOG("trampoline_count           = %ld\n", s->trampoline_count);
@@ -140,9 +140,9 @@ long get_used_robot_waterproofing(const struct state *s) {
     return s->used_robot_waterproofing;
 }
 
-long get_razors_count(const struct state *s) {
+long get_razor_count(const struct state *s) {
     DEBUG_ASSERT(s);
-    return s->razors_count;
+    return s->razor_count;
 }
 
 long get_beard_growth_rate(const struct state *s) {
@@ -279,7 +279,7 @@ bool is_enterable(const struct state *s, long x, long y) {
     if (!is_within_world(s, x, y))
         return false;
     object = get(s, x, y);
-    return object == O_EMPTY || object == O_EARTH || object == O_LAMBDA || object == O_OPEN_LIFT || is_valid_trampoline(object);
+    return object == O_EMPTY || object == O_EARTH || object == O_LAMBDA || object == O_RAZOR || object == O_OPEN_LIFT || is_valid_trampoline(object);
 }
 
 
@@ -317,7 +317,7 @@ enum {
     K_TRAMPOLINE_TARGET_KEYWORD,
     K_TRAMPOLINE_TARGET,
     K_BEARD_GROWTH_RATE,
-    K_RAZORS,
+    K_RAZOR_COUNT,
     K_INVALID
 };
 
@@ -349,7 +349,7 @@ void copy_input_metadata(struct state *s, long input_length, const char *input) 
                 else if (!strcmp(token, "Growth"))
                     key = K_BEARD_GROWTH_RATE;
                 else if (!strcmp(token, "Razors"))
-                    key = K_RAZORS;
+                    key = K_RAZOR_COUNT;
                 else {
                     key = K_INVALID;
                     DEBUG_LOG("found invalid metadata key '%s'\n", token);
@@ -367,8 +367,8 @@ void copy_input_metadata(struct state *s, long input_length, const char *input) 
                 } else if (key == K_BEARD_GROWTH_RATE) {
                     s->beard_growth_rate = atoi(token);
                     key = K_NONE;   
-                } else if (key == K_RAZORS) {
-                    s->razors_count = atoi(token);
+                } else if (key == K_RAZOR_COUNT) {
+                    s->razor_count = atoi(token);
                     key = K_NONE;                  
                 } else if (key == K_TRAMPOLINE) {
                     trampoline_i = trampoline_to_index(*token);
@@ -408,12 +408,7 @@ void copy_input(struct state *s, long input_length, const char *input) {
                 target_i = target_to_index(input[i]);
                 size_to_point(s, w, h, &s->target_x[target_i], &s->target_y[target_i]);
             }
-            s->world[j] = input[i];
-            // TODO:
-            if (input[i] == O_BEARD)
-                s->world[j] = O_WALL;
-            else if (input[i] == O_RAZOR)
-                s->world[j] = O_EARTH;
+            s->world[j] = input[i];            
             j++;
             w++;
         }
@@ -467,6 +462,22 @@ void move_robot(struct state *s, long x, long y) {
     }
 }
 
+void shave_surroundings(struct state *s, long x, long y) {
+    DEBUG_ASSERT(s);
+    if(s->razor_count) {
+        int i, j;
+        for (i = -1; i <= 1; i++) {
+            for (j = -1; j <= 1; j++) {
+                if (get(s, x, y) == O_BEARD) {
+                    put(s, x, y, O_EMPTY);
+                }
+            }
+        }
+        s->razor_count--;
+    }
+    DEBUG_LOG("robot shaved the surroundings\n");
+}
+
 void collect_lambda(struct state *s) {
     DEBUG_ASSERT(s);
     DEBUG_ASSERT(s->collected_lambda_count < s->lambda_count);
@@ -474,6 +485,12 @@ void collect_lambda(struct state *s) {
     s->collected_lambda_count++;
     s->score += 25;
     DEBUG_LOG("robot collected lambda\n");
+}
+
+void collect_razor(struct state *s) {
+    DEBUG_ASSERT(s);
+    s->razor_count++;
+    DEBUG_LOG("robot collected razor\n");
 }
 
 void clear_similar_trampolines(struct state *s, char trampoline) {
@@ -517,6 +534,9 @@ void execute_move(struct state *s, char move) {
         else if (object == O_LAMBDA) {
             move_robot(s, x, y);
             collect_lambda(s);
+        } else if (object == O_RAZOR) {
+            move_robot(s, x, y);
+            collect_razor(s);            
         } else if (object == O_OPEN_LIFT) {
             move_robot(s, x, y);
             s->score += s->collected_lambda_count * 50;
@@ -535,6 +555,10 @@ void execute_move(struct state *s, char move) {
             clear_similar_trampolines(s, object);
         } else
             DEBUG_LOG("robot attempted invalid move '%c' from (%ld, %ld) to (%ld, %ld) which is '%c'\n", move, s->robot_x, s->robot_y, x, y, object);
+        s->move_count++;
+        s->score--;
+    } else if (move == M_SHAVE) {
+        shave_surroundings(s, s->robot_x, s->robot_y);                
         s->move_count++;
         s->score--;
     } else if (move == M_WAIT) {

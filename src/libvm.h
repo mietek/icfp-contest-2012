@@ -25,6 +25,7 @@
 #define M_DOWN        'D'
 #define M_WAIT        'W'
 #define M_ABORT       'A'
+#define M_SHAVE       'S'
 
 #define C_NONE        'N'
 #define C_WIN         'W'
@@ -47,7 +48,7 @@ long get_flooding_rate(const struct state *s);
 long get_robot_waterproofing(const struct state *s);
 long get_used_robot_waterproofing(const struct state *s);
 long get_beard_growth_rate(const struct state *s);
-long get_razors_count(const struct state *s);
+long get_razor_count(const struct state *s);
 long get_lambda_count(const struct state *s);
 long get_collected_lambda_count(const struct state *s);
 long get_trampoline_count(const struct state *s);
@@ -117,7 +118,7 @@ struct state {
     long robot_waterproofing;
     long used_robot_waterproofing;
     long beard_growth_rate;
-    long razors_count;
+    long razor_count;
     long lambda_count;
     long collected_lambda_count;
     long trampoline_count;
@@ -137,7 +138,7 @@ inline bool is_valid_point(long x, long y) {
 }
 
 inline bool is_valid_move(char move) {
-    return move == M_LEFT || move == M_RIGHT || move == M_UP || move == M_DOWN || move == M_WAIT || move == M_ABORT;
+    return move == M_LEFT || move == M_RIGHT || move == M_UP || move == M_DOWN || move == M_WAIT || move == M_ABORT || move == M_SHAVE;
 }
 
 inline bool is_valid_trampoline(char trampoline) {
@@ -215,6 +216,8 @@ void copy_input(struct state *s, long input_length, const char *input);
 void teleport_robot(struct state *s, long x, long y);
 void move_robot(struct state *s, long x, long y);
 void collect_lambda(struct state *s);
+void collect_razor(struct state *s);
+void shave_surroundings(struct state *s, long x, long y);
 void clear_similar_trampolines(struct state *s, char trampoline);
 void execute_move(struct state *s, char move);
 void update_world(struct state *s, const struct state *t, bool ignore_robot);
