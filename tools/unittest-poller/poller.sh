@@ -3,8 +3,7 @@
 BASEDIR=`dirname "$0"`
 
 random_map() {
-  MAP=`sort -R $BASEDIR/maps | head -n1`
-  echo $MAP
+  cat $BASEDIR/maps | perl -ne 'BEGIN{$/=undef}@m=split;print $m[rand($#m)]'
 }
 
 MINUTES=11
