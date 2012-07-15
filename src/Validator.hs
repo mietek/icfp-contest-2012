@@ -13,13 +13,13 @@ runWithFile v path = do
   s0 <- newFromFile path
   moves <- getContents
   case v of
-    Score     -> print (getScore (makeMoves s0 moves))
-    FinalDump -> dump (makeMoves s0 moves)
+    Score     -> print (getScore (makeMoves_ s0 moves))
+    FinalDump -> dump (makeMoves_ s0 moves)
     AllDumps  -> dumpAndMove s0 moves
       where
         dumpAndMove _ [] = return ()
         dumpAndMove s (m : ms) = do
-          let s1 = makeOneMove s m
+          let s1 = makeOneMove_ s m
           if s1 /= s
             then do
               dump s1

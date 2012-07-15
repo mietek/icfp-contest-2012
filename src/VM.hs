@@ -298,24 +298,24 @@ get s (x, y) =
   unwrapState s $ \sp ->
     return (toObject (castCCharToChar (cGet sp (toEnum x) (toEnum y))))
 
-makeOneMove :: State -> Char -> State
-makeOneMove s0 move =
+makeOneMove_ :: State -> Char -> State
+makeOneMove_ s0 move =
   unwrapState s0 $ \sp0 -> do
     sp <- cMakeOneMove sp0 (castCharToCChar move)
     wrapState sp
 
-makeOneMove' :: State -> Move -> State
-makeOneMove' s0 move = makeOneMove s0 (fromMove move)
+makeOneMove :: State -> Move -> State
+makeOneMove s0 move = makeOneMove_ s0 (fromMove move)
 
-makeMoves :: State -> String -> State
-makeMoves s0 moves =
+makeMoves_ :: State -> String -> State
+makeMoves_ s0 moves =
   unwrapState s0 $ \sp0 -> do
     withCString moves $ \ms -> do
       sp <- cMakeMoves sp0 ms
       wrapState sp
 
-makeMoves' :: State -> [Move] -> State
-makeMoves' s0 moves = makeMoves s0 (map fromMove moves)
+makeMoves :: State -> [Move] -> State
+makeMoves s0 moves = makeMoves_ s0 (map fromMove moves)
 
 updateWorldIgnoringRobot :: State -> State
 updateWorldIgnoringRobot s0 =

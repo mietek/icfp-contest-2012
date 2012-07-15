@@ -81,7 +81,7 @@ You can use the following functions:
     getCondition :: State -> Condition
     get :: State -> Point -> Object
 
-    makeOneMove :: State -> Char -> State
-    makeMoves :: State -> String -> State
+    makeOneMove :: State -> Move -> State
+    makeMoves :: State -> [Move] -> State
 
     isSafe :: State -> Point -> Bool

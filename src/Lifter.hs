@@ -16,7 +16,7 @@ run resultV s0 l = goRandom s0 l
   where
     goRandom s (m:ms) = do
       dump s
-      let s' = makeOneMove s m
+      let s' = makeOneMove_ s m
       modifyMVar_ resultV $ \result ->
         return (result `mappend` fromChar m)
       threadDelay 500000
