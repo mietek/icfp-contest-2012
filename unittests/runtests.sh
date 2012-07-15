@@ -18,7 +18,7 @@ for d in `dirname "$0"`/tests/*; do
     BASENAME=`basename $INFILE .in`
     OUTFILE=$d/$BASENAME.out
     TMP=`mktemp`
-    cat "$INFILE" | $VALIDATOR -vv $MAP > $TMP
+    cat "$INFILE" | $VALIDATOR -vv $MAP | sed -e '2~1 y/123456789ABCDEFGHI/tttttttttTTTTTTTTT/' > $TMP
     if diff -B $OUTFILE $TMP > /dev/null; then
       echo -e "$GREEN$MAPNAME/$BASENAME ok $PLAIN"
     else
