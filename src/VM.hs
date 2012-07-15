@@ -49,7 +49,7 @@ getIntPair action s =
         return (fromEnum a, fromEnum b)
 
 
-data Object = ORobot | OWall | ORock | OLambda | OClosedLift | OOpenLift | OEarth | OEmpty deriving (Eq, Ord)
+data Object = ORobot | OWall | ORock | OLambda | OClosedLift | OOpenLift | OEarth | OEmpty | OTrampoline Trampoline | OTarget Target deriving (Eq, Ord)
 
 instance Show Object where
   show object = [fromObject object]
@@ -63,6 +63,8 @@ fromObject OClosedLift = 'L'
 fromObject OOpenLift   = 'O'
 fromObject OEarth      = '.'
 fromObject OEmpty      = ' '
+fromObject (OTrampoline trampoline) = fromTrampoline trampoline
+fromObject (OTarget target) = fromTarget target
 
 toObject :: Char -> Object
 toObject 'R'  = ORobot
@@ -73,7 +75,56 @@ toObject 'L'  = OClosedLift
 toObject 'O'  = OOpenLift
 toObject '.'  = OEarth
 toObject ' '  = OEmpty
+toObject c
+  | isValidTrampolineChar c = OTrampoline (toTrampoline c)
+  | isValidTargetChar c     = OTarget (toTarget c)
 toObject _    = undefined
+
+
+data Trampoline = OTrampolineA | OTrampolineB | OTrampolineC | OTrampolineD | OTrampolineE | OTrampolineF | OTrampolineG | OTrampolineH | OTrampolineI deriving (Enum, Eq, Ord)
+
+instance Show Trampoline where
+  show trampoline = [fromTrampoline trampoline]
+
+firstTrampolineChar :: Char
+firstTrampolineChar = 'A'
+
+lastTrampolineChar :: Char
+lastTrampolineChar = 'I'
+
+isValidTrampolineChar :: Char -> Bool
+isValidTrampolineChar c = c >= firstTrampolineChar && c <= lastTrampolineChar
+
+fromTrampoline :: Trampoline -> Char
+fromTrampoline trampoline = toEnum (fromEnum firstTrampolineChar + fromEnum trampoline)
+
+toTrampoline :: Char -> Trampoline
+toTrampoline c
+  | isValidTrampolineChar c = toEnum (fromEnum c - fromEnum firstTrampolineChar)
+toTrampoline _ = undefined
+
+
+data Target = OTarget1 | OTarget2 | OTarget3 | OTarget4 | OTarget5 | OTarget6 | OTarget7 | OTarget8 | OTarget9 deriving (Enum, Eq, Ord)
+
+instance Show Target where
+  show target = [fromTarget target]
+
+firstTargetChar :: Char
+firstTargetChar = '1'
+
+lastTargetChar :: Char
+lastTargetChar = '9'
+
+isValidTargetChar :: Char -> Bool
+isValidTargetChar c = c >= firstTargetChar && c <= lastTargetChar
+
+fromTarget :: Target -> Char
+fromTarget target = toEnum (fromEnum firstTargetChar + fromEnum target)
+
+toTarget :: Char -> Target
+toTarget c
+  | isValidTargetChar c = toEnum (fromEnum c - fromEnum firstTargetChar)
+toTarget _ = undefined
 
 
 data Move = MLeft | MRight | MUp | MDown | MWait | MAbort deriving (Eq, Ord)
@@ -269,8 +320,8 @@ getCollectedLambdaCount = getInt cGetCollectedLambdaCount
 getTrampolineCount :: State -> Int
 getTrampolineCount = getInt cGetTrampolineCount
 
-getTrampolinePoint :: State -> Char -> Maybe Point
-getTrampolinePoint s trampoline =
+getTrampolinePoint_ :: State -> Char -> Maybe Point
+getTrampolinePoint_ s trampoline =
   unwrapState s $ \sp ->
     alloca $ \xp ->
       alloca $ \yp -> do
@@ -282,8 +333,11 @@ getTrampolinePoint s trampoline =
             return (Just (fromEnum x, fromEnum y))
           else return Nothing
 
-getTargetPoint :: State -> Char -> Maybe Point
-getTargetPoint s target =
+getTrampolinePoint :: State -> Trampoline -> Maybe Point
+getTrampolinePoint s trampoline = getTrampolinePoint_ s (fromTrampoline trampoline)
+
+getTargetPoint_ :: State -> Char -> Maybe Point
+getTargetPoint_ s target =
   unwrapState s $ \sp ->
     alloca $ \xp ->
       alloca $ \yp -> do
@@ -295,8 +349,11 @@ getTargetPoint s target =
             return (Just (fromEnum x, fromEnum y))
           else return Nothing
 
-getTrampolineTarget :: State -> Char -> Maybe Char
-getTrampolineTarget s trampoline =
+getTargetPoint :: State -> Target -> Maybe Point
+getTargetPoint s target = getTargetPoint_ s (fromTarget target)
+
+getTrampolineTarget_ :: State -> Char -> Maybe Char
+getTrampolineTarget_ s trampoline =
   unwrapState s $ \sp ->
     alloca $ \tp -> do
       let ok = toBool (cGetTrampolineTarget sp (castCharToCChar trampoline) tp)
@@ -305,6 +362,9 @@ getTrampolineTarget s trampoline =
           target <- peek tp
           return (Just (castCCharToChar target))
         else return Nothing
+
+getTrampolineTarget :: State -> Trampoline -> Maybe Target
+getTrampolineTarget s trampoline = fmap toTarget (getTrampolineTarget_ s (fromTrampoline trampoline))
 
 getMoveCount :: State -> Int
 getMoveCount = getInt cGetMoveCount
