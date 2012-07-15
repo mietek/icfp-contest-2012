@@ -583,6 +583,6 @@ canMove :: State -> Point -> Bool
 canMove s p =any (isEnterable s . flip evalMoves p) moves where
     moves = [MDown,MLeft,MRight,MUp]
 
--- willDeadLock :: State -> Move -> Point -> Bool
--- willDeadLock s m = canMove s' $ getRobotPoint s'
---   s' = imagineStep s p
+willDeadLock :: State -> Move -> Point -> Bool
+willDeadLock s m p = canMove s' $ getRobotPoint s' where
+   s' = flip makeOneMove m $ imagineRobotAt s p
