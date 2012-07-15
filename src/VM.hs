@@ -559,8 +559,8 @@ findRocks s =
     if isRock s p then [p] else []
 
 findMoveRocks :: State -> [(Point,Move)]
-findMoveRocks s = catMaybes . map moveable $  findRocks s where
-    moveable p = catMaybes $ zipWith foo [MRight,MLeft,MUp,MDown] $ cycle p
+findMoveRocks s = concatMap moveable $  findRocks s where
+    moveable p = catMaybes $ zipWith check [MRight,MLeft,MUp,MDown] $ cycle p
     check MRight (x,y) | isEmpty s (x+1,y) && isFree s (x+1,y) =
                       Just ((x-1,y) ,MRight)
     check MLeft (x,y) | isEmpty s (x-1,y) && isFree s (x+1,y) =
