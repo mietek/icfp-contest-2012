@@ -121,7 +121,7 @@ struct state {
 
 
 inline bool is_valid_point(long x, long y) {
-    return x && y;
+    return x >= 1 && y >= 1;
 }
 
 inline bool is_valid_move(char move) {
@@ -134,6 +134,11 @@ inline bool is_valid_trampoline(char trampoline) {
 
 inline bool is_valid_target(char target) {
     return target >= O_FIRST_TRAMPOLINE_TARGET && target <= O_LAST_TRAMPOLINE_TARGET;
+}
+
+
+inline bool is_point_in_world(const struct state *s, long x, long y) {
+    return is_valid_point(x, y) && x <= s->world_w && y <= s->world_h;
 }
 
 
@@ -180,13 +185,21 @@ inline long target_to_index(char target) {
 
 
 inline char get(const struct state *s, long x, long y) {
-    DEBUG_ASSERT(s && x >= 1 && x <= s->world_w && y >= 1 && y <= s->world_h);
+    DEBUG_ASSERT(s && is_point_in_world(s, x, y));
     return s->world[point_to_index(s, x, y)];
 }
 
 inline void put(struct state *s, long x, long y, char object) {
-    DEBUG_ASSERT(s && x >= 1 && x <= s->world_w && y >= 1 && y <= s->world_h);
+    DEBUG_ASSERT(s && is_point_in_world(s, x, y));
     s->world[point_to_index(s, x, y)] = object;
+}
+
+
+inline bool is_enterable(const struct state *s, long x, long y) {
+    DEBUG_ASSERT(s && is_point_in_world(s, x, y));
+    char object;
+    object = get(s, x, y);
+    return object == O_EMPTY || object == O_EARTH || object == O_LAMBDA || object == O_OPEN_LIFT || is_valid_trampoline(object);
 }
 
 
@@ -197,5 +210,6 @@ void copy_input(struct state *s, long input_length, const char *input);
 
 void move_robot(struct state *s, long x, long y);
 void collect_lambda(struct state *s);
+void clear_similar_trampolines(struct state *s, char trampoline);
 void execute_move(struct state *s, char move);
 void update_world(struct state *s, const struct state *t, bool ignore_robot);

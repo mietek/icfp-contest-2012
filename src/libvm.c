@@ -386,13 +386,27 @@ void copy_input(struct state *s, long input_length, const char *input) {
 
 void move_robot(struct state *s, long x, long y) {
     DEBUG_ASSERT(s);
-    DEBUG_ASSERT(get(s, x, y) == O_EMPTY || get(s, x, y) == O_EARTH || get(s, x, y) == O_LAMBDA || get(s, x, y) == O_OPEN_LIFT || (get(s, x, y) == O_ROCK && get(s, x + x - s->robot_x, y) == O_EMPTY) || is_valid_target(get(s, x, y)));
+    DEBUG_ASSERT(is_enterable(s, x, y) || (get(s, x, y) == O_ROCK && get(s, x + x - s->robot_x, y) == O_EMPTY));
+    char object;
+    long trampoline_i, target_i;
     put(s, s->robot_x, s->robot_y, O_EMPTY);
-    s->robot_x = x;
-    s->robot_y = y;
-    put(s, x, y, O_ROBOT);
-    DEBUG_LOG("robot moved to (%ld, %ld)\n", x, y);
-    if (s->used_robot_waterproofing && y > s->water_level) {
+    object = get(s, x, y);
+    if (is_valid_trampoline(object)) {
+        trampoline_i = trampoline_to_index(object);
+        DEBUG_ASSERT(s->trampoline_x[trampoline_i]);
+        target_i = s->trampoline_index_to_target_index[trampoline_i];
+        DEBUG_ASSERT(s->target_x[target_i]);
+        put(s, s->target_x[target_i], s->target_y[target_i], O_ROBOT);
+        s->robot_x = s->target_x[target_i];
+        s->robot_y = s->target_y[target_i];
+        DEBUG_LOG("robot trampolined to (%ld, %ld)\n", s->robot_x, s->robot_y);
+    } else {
+        put(s, x, y, O_ROBOT);
+        s->robot_x = x;
+        s->robot_y = y;
+        DEBUG_LOG("robot moved to (%ld, %ld)\n", s->robot_x, s->robot_y);
+    }
+    if (s->used_robot_waterproofing && s->robot_y > s->water_level) {
         s->used_robot_waterproofing = 0;
         DEBUG_LOG("robot waterproofing restored\n");
     }
@@ -405,6 +419,25 @@ void collect_lambda(struct state *s) {
     s->collected_lambda_count++;
     s->score += 25;
     DEBUG_LOG("robot collected lambda\n");
+}
+
+void clear_similar_trampolines(struct state *s, char trampoline) {
+    DEBUG_ASSERT(s && is_valid_trampoline(trampoline));
+    long trampoline_i, target_i, i;
+    trampoline_i = trampoline_to_index(trampoline);
+    DEBUG_ASSERT(s->trampoline_x[trampoline_i]);
+    target_i = s->trampoline_index_to_target_index[trampoline_i];
+    DEBUG_ASSERT(s->target_x[target_i]);
+    for (i = 1; i <= MAX_TRAMPOLINE_COUNT; i++) {
+        if (s->trampoline_index_to_target_index[i] == target_i) {
+            put(s, s->trampoline_x[i], s->trampoline_y[i], O_EMPTY);
+            s->trampoline_x[i] = 0;
+            s->trampoline_y[i] = 0;
+            s->trampoline_index_to_target_index[i] = 0;
+            s->trampoline_count--;
+            DEBUG_LOG("robot cleared trampoline '%c'\n", trampoline);
+        }
+    }
 }
 
 void execute_move(struct state *s, char move) {
@@ -444,21 +477,8 @@ void execute_move(struct state *s, char move) {
             put(s, x + 1, y, O_ROCK);
             DEBUG_LOG("robot pushed rock from (%ld, %ld) to (%ld, %ld\n", x, y, x + 1, y);
         } else if (is_valid_trampoline(object)) {
-            long trampoline_i, target_i, i;
-            trampoline_i = trampoline_to_index(object);
-            DEBUG_ASSERT(s->trampoline_x[trampoline_i]);
-            target_i = s->trampoline_index_to_target_index[trampoline_i];
-            DEBUG_ASSERT(s->target_x[target_i]);
-            move_robot(s, s->target_x[target_i], s->target_y[target_i]);
-            for (i = 1; i <= MAX_TRAMPOLINE_COUNT; i++) {
-                if (s->trampoline_index_to_target_index[i] == target_i) {
-                    put(s, s->trampoline_x[i], s->trampoline_y[i], O_EMPTY);
-                    s->trampoline_x[i] = 0;
-                    s->trampoline_y[i] = 0;
-                    s->trampoline_index_to_target_index[i] = 0;
-                    s->trampoline_count--;
-                }
-            }
+            move_robot(s, x, y);
+            clear_similar_trampolines(s, object);
         } else
             DEBUG_LOG("robot attempted invalid move '%c' from (%ld, %ld) to (%ld, %ld) which is '%c'\n", move, s->robot_x, s->robot_y, x, y, object);
         s->move_count++;
