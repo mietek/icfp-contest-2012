@@ -725,6 +725,12 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
 }
 
 long calculate_cost(const struct state *s, long step_x, long step_y, long stage) {
+    if (safe_get(s, step_x, step_y) == O_LAMBDA){
+        return 1;
+    }
+    if (safe_get(s, step_x, step_y) == O_EMPTY){
+        return 4;
+    }
     if (
         safe_get(s, step_x, step_y + 1) == O_ROCK ||
         (safe_get(s, step_x + 1, step_y + 1) == O_ROCK && safe_get(s, step_x + 1, step_y) == O_ROCK) ||
@@ -733,9 +739,9 @@ long calculate_cost(const struct state *s, long step_x, long step_y, long stage)
         (safe_get(s, step_x + 1, step_y + 1) == O_HIGH_ORDER_ROCK && safe_get(s, step_x + 1, step_y) == O_HIGH_ORDER_ROCK) ||
         (safe_get(s, step_x - 1, step_y + 1) == O_HIGH_ORDER_ROCK && safe_get(s, step_x - 1, step_y) == O_HIGH_ORDER_ROCK)
     ) {
-        return 5;
+        return 40;
     }
-    return 1;
+    return 10;
 }
 
 void run_dijkstra(struct cost_table *ct, const struct state *s) {
@@ -756,8 +762,8 @@ void run_dijkstra(struct cost_table *ct, const struct state *s) {
                     imagine_step(s1, i, j, M_UP,    &step_x[2], &step_y[2]);
                     imagine_step(s1, i, j, M_DOWN,  &step_x[3], &step_y[3]);
                     for (k = 0; k < 4; k++) {
-                        if (is_safe(s1, step_x[k], step_y[k]) && get_dist(ct, step_x[k], step_y[k]) == MAX_COST) {
-                            put_cost(ct, step_x[k], step_y[k], stage + calculate_cost(s1, step_x[k], step_y[k], stage));
+                        if (is_safe(s1, step_x[k], step_y[k]) && get_dist(ct, step_x[k], step_y[k]) > get_cost(ct, i, k) + calculate_cost(s1, step_x[k], step_y[k], stage)) {
+                            put_cost(ct, step_x[k], step_y[k], get_cost(ct, i, k) + calculate_cost(s1, step_x[k], step_y[k], stage));
                             put_dist(ct, step_x[k], step_y[k], stage + 1);
                             change = 0;
                         }

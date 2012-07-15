@@ -543,7 +543,7 @@ findPath s ct from0 to = map reverseMove (loop to [])
           costs = map (getCost ct) steps
           minDist = head $ sort $ dists
           minCost = head $ sort $ costs
-          (cost, dist, step, move) = head $ sort $ (filter (\(x,y,_,m) -> y==minDist) (zip4 costs dists steps moves))
+          (cost, dist, step, move) = head $ sort $ (filter (\(x,y,_,m) -> y < minDist) (zip4 costs dists steps moves))
 
 
 iterateBoard :: State -> (Point -> Object -> [a] ) -> [a]
