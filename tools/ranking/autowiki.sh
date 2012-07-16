@@ -1,11 +1,12 @@
 #!/bin/bash
 
-TIMEOUT=150
+TIMEOUT=40
 
 BASEDIR=`dirname $0`
 TOPDIR=$BASEDIR/../..
 MAPS=`cat $BASEDIR/maps`
 LAST_COMMIT_FILE=~/.icfp2012.last_commit
+ABORT_FILE=~/.icfp2012.autowiki.abort
 
 WIKIDIR=~/icfp2012.wiki
 WIKIPAGE=$WIKIDIR/Scores.md
@@ -44,10 +45,15 @@ while true; do
       make -C $TOPDIR
       add_header `short_commit`
       for map in $MAPS; do
-        score=`$BASEDIR/ranking.rb -t $TIMEOUT -f -m $map | perl -pe 's/^.*? //'`
+        if [ -e $ABORT_FILE ]; then
+          score=skipped
+        else
+          score=`$BASEDIR/ranking.rb -t $TIMEOUT -f -m $map | perl -pe 's/^.*? //'`
+        fi
         echo $score
         record_score $map "$score"
       done
+      rm $ABORT_FILE
     fi
   fi
   last_commit=$current_commit
