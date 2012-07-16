@@ -15,7 +15,7 @@ CASENAME=$3
 
 CURL=${CURL-curl}
 
-if ! command -v $CURL 2>/dev/null; then
+if ! command -v $CURL >/dev/null; then
   echo "Curl command $CURL bad"
   exit 3
 fi
@@ -49,7 +49,6 @@ if [ -f "$OUTFILE" ]; then
   exit 3
 fi
 
-echo "Fetching validator output..."
 TMP=`$MKTEMP`
 
 if ! $CURL 'http://www.undecidable.org.uk/~edwin/cgi-bin/weblifter.cgi' -d "mapfile=$MAP&route=$SOLUTION" 2>/dev/null > $TMP; then
@@ -60,7 +59,8 @@ fi
 echo $SOLUTION > $INFILE
 
 cat $TMP | 
-  perl -ne 'BEGIN{$/=undef;} m@<pre>(.*)</pre>.*Score: (.*?)<br>@s; print "$2\n$1"' |
-  tee $OUTFILE
+  perl -ne 'BEGIN{$/=undef;} m@<pre>(.*)</pre>.*Score: (.*?)<br>@s; print "$2\n$1"' > $OUTFILE
 
 rm $TMP
+
+echo $INFILE
