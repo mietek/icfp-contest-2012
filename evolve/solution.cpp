@@ -16,7 +16,7 @@ struct rnd_gen {
     }
 };
 
-#define MAX_INITIAL_LENGTH 64
+#define MAX_INITIAL_LENGTH 10000
 
 Solution::Solution()
 {
