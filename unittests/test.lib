@@ -1,0 +1,31 @@
+#!/bin/bash
+
+MKTEMP=/bin/tempfile
+
+[ -f $MKTEMP ] || MKTEMP="mktemp -t icfp2012"
+
+run_test() {
+  FAILED=0
+  INFILE="$1"
+
+  BASENAME=`basename $INFILE .in`
+  OUTFILE=$d/$BASENAME.out
+  TMP=`$MKTEMP`
+  cat "$INFILE" | $VALIDATOR -vv $MAP | perl -pe 'tr/123456789ABCDEFGHI/tttttttttTTTTTTTTT/ if ($i++)' | perl -pe 's/\s*\n$/\n/' > $TMP
+  TMPO=`$MKTEMP`
+  cat $OUTFILE | perl -pe 's/\s*\n$/\n/' > $TMPO
+  if diff -B $TMPO $TMP > /dev/null; then
+    echo -e "$GREEN$MAPNAME/$BASENAME ok $PLAIN"
+  else
+    FAILED=1
+    echo -e "$RED$MAPNAME/$BASENAME failed!!!$PLAIN"
+    echo "Input:"
+    cat $INFILE
+    echo "Expected output:"
+    cat $OUTFILE
+    echo "Got:"
+    cat $TMP
+  fi
+  rm $TMP $TMPO
+  return $FAILED
+}

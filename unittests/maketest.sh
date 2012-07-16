@@ -15,9 +15,16 @@ CASENAME=$3
 
 CURL=${CURL-curl}
 
+if ! command -v $CURL 2>/dev/null; then
+  echo "Curl command $CURL bad"
+  exit 3
+fi
+
 if [ -z "$1" ] || [ -z "$2" ]; then
   usage
 fi
+
+. `dirname "$0"`/test.lib
 
 BASEDIR=`dirname "$0"`/tests/$MAP
 if ! [ -d "$BASEDIR" ]; then
@@ -42,9 +49,18 @@ if [ -f "$OUTFILE" ]; then
   exit 3
 fi
 
+echo "Fetching validator output..."
+TMP=`$MKTEMP`
+
+if ! $CURL 'http://www.undecidable.org.uk/~edwin/cgi-bin/weblifter.cgi' -d "mapfile=$MAP&route=$SOLUTION" 2>/dev/null > $TMP; then
+  echo "Curl error"
+  exit 5
+fi
+
 echo $SOLUTION > $INFILE
 
-echo "Fetching validator output..."
-$CURL 'http://www.undecidable.org.uk/~edwin/cgi-bin/weblifter.cgi' -d "mapfile=$MAP&route=$SOLUTION" 2>/dev/null | 
+cat $TMP | 
   perl -ne 'BEGIN{$/=undef;} m@<pre>(.*)</pre>.*Score: (.*?)<br>@s; print "$2\n$1"' |
   tee $OUTFILE
+
+rm $TMP
