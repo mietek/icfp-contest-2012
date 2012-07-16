@@ -20,11 +20,11 @@ bin/libvm.o: src/libvm.h src/libvm.c
 	$(dir_guard)
 	gcc -c $(CFLAGS) -o bin/libvm.o src/libvm.c
 
-bin/lifter: bin/libvm.o src/VM.hs src/Lifter.hs
+bin/lifter: bin/libvm.o src/VM.hs src/Utils.hs src/Lifter.hs
 	$(dir_guard)
 	cd src; ghc $(HSFLAGS) -o ../bin/lifter Lifter.hs ../bin/libvm.o
 
-bin/validator: bin/libvm.o src/VM.hs src/Validator.hs
+bin/validator: bin/libvm.o src/VM.hs src/Utils.hs src/Validator.hs
 	$(dir_guard)
 	cd src; ghc $(HSFLAGS) -o ../bin/validator Validator.hs ../bin/libvm.o
 
@@ -33,11 +33,11 @@ bin/libdebugvm.o: src/libvm.h src/libvm.c
 	$(dir_guard)
 	gcc -c $(DEBUGCFLAGS) -o bin/libdebugvm.o src/libvm.c
 
-bin/debuglifter: bin/libdebugvm.o src/VM.hs src/Lifter.hs
+bin/debuglifter: bin/libdebugvm.o src/VM.hs src/Utils.hs src/Lifter.hs
 	$(dir_guard)
 	cd src; ghc $(HSFLAGS) -o ../bin/debuglifter Lifter.hs ../bin/libdebugvm.o
 
-bin/debugvalidator: bin/libdebugvm.o src/VM.hs src/Validator.hs
+bin/debugvalidator: bin/libdebugvm.o src/VM.hs src/Utils.hs src/Validator.hs
 	$(dir_guard)
 	cd src; ghc $(HSFLAGS) -o ../bin/debugvalidator Validator.hs ../bin/libdebugvm.o
 

@@ -1,6 +1,5 @@
 module Main where
 
-import System.IO
 import Blaze.ByteString.Builder (Builder, toByteStringIO)
 import Blaze.ByteString.Builder.Char8 (fromChar)
 import Control.Concurrent (ThreadId, killThread, myThreadId, threadDelay)
@@ -13,8 +12,11 @@ import Data.Monoid (mappend, mempty)
 -- import System.Posix.Signals (Handler(Catch), installHandler, sigINT)
 import System.Environment (getArgs)
 import System.IO (hPutStrLn, stderr)
-import System.Random
+import System.Random (newStdGen, randomRs)
+
 import VM
+import Utils
+
 
 type Predicate = (Cost, Object, Point) -> Bool
 type Range = (Int, Int)
