@@ -683,6 +683,8 @@ void grow_beard(struct state *s, const struct state *s0, long x, long y) {
 void drop_rock(struct state *s, const struct state *s0, char rock, long x, long y, bool ignore_robot) {
     DEBUG_ASSERT(s && s0 && is_rock_object(rock));
     char below;
+    if (s->condition != C_NONE)
+        return;
     below = get(s0, x, y - 1);
     if (!ignore_robot && below == O_ROBOT) {
         s->score -= s->collected_lambda_count * 25;
@@ -731,6 +733,8 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
             }
         }
     }
+    if (s->condition != C_NONE)
+        return;
     if (!ignore_robot && s0->robot_y <= s->water_level) {
         DEBUG_LOG("robot is underwater\n");
         s->used_robot_waterproofing++;
