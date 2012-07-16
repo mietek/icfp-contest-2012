@@ -508,6 +508,7 @@ void copy_input(struct state *s, long input_length, const char *input) {
         }
     }
     i++;
+    s->start_lambda_count = s->lambda_count;
     s->world[j] = 0;
     copy_input_metadata(s, input_length - i, input + i);
 }
@@ -673,6 +674,11 @@ void grow_beard(struct state *s, const struct state *s0, long x, long y) {
                 put(s, x + i, y + j, O_BEARD);
                 DEBUG_LOG("beard grew at (%ld, %ld)\n", x, y);
             }
+            if (get(s0, x + i, y + j) == O_FRESH_LAMBDA) {
+                put(s, x + i, y + j, O_BEARD);
+		s->lambda_count--;
+                DEBUG_LOG("beard grew at (%ld, %ld)\n removing lambda", x, y);
+            }
         }
     }
 }
@@ -682,13 +688,19 @@ void drop_rock(struct state *s, const struct state *s0, char rock, long x, long 
     DEBUG_ASSERT(s && s0 && is_rock_object(rock));
     char below;
     below = get(s0, x, y - 1);
+
+    if (below == O_FRESH_LAMBDA)
+        s->lambda_count--;
+
     if (!ignore_robot && below == O_ROBOT) {
         s->score -= s->collected_lambda_count * 25;
         s->condition = C_LOSE;
         DEBUG_LOG("robot lost by crushing\n");
     }
+
     if (below != O_EMPTY && rock == O_HO_ROCK) {
-        put(s, x, y, O_LAMBDA);
+        add_fresh(s,x,y);
+        put(s, x, y, O_FRESH_LAMBDA);
         DEBUG_LOG("higher order rock turned into lambda at (%ld, %ld)\n", x, y);
     }
 }
@@ -729,6 +741,11 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
             }
         }
     }
+    if (!s->new_lambdas) {
+      remove_fresh(s);
+      DEBUG_LOG("reseting fresh lambdas to permanent");
+    }
+
     if (!ignore_robot && s0->robot_y <= s->water_level) {
         DEBUG_LOG("robot is underwater\n");
         s->used_robot_waterproofing++;

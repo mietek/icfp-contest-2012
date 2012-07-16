@@ -17,6 +17,10 @@
 #define O_FIRST_TRAMPOLINE 'A'
 #define O_LAST_TRAMPOLINE  'I'
 
+// imaginary lambda inserted only after horocks fall - removed afer cycle
+#define O_FRESH_LAMBDA     '&'
+
+
 #define O_FIRST_TARGET     '1'
 #define O_LAST_TARGET      '9'
 
@@ -117,6 +121,11 @@ long safe_get_dist(const struct cost_table *ct, long x, long y);
 
 #define MAX_COST LONG_MAX
 
+typedef struct list_s {
+    int x;
+    int y;
+    struct list_s * next;
+} * list_t;
 
 struct state {
     long world_w, world_h;
@@ -128,8 +137,10 @@ struct state {
     long used_robot_waterproofing;
     long beard_growth_rate;
     long razor_count;
+    long start_lambda_count;
     long lambda_count;
     long collected_lambda_count;
+    list_t new_lambdas;
     long trampoline_count;
     long trampoline_x[MAX_TRAMPOLINE_COUNT + 1], trampoline_y[MAX_TRAMPOLINE_COUNT + 1];
     long target_x[MAX_TRAMPOLINE_COUNT + 1], target_y[MAX_TRAMPOLINE_COUNT + 1];
@@ -172,6 +183,10 @@ inline bool is_rock_object(char object) {
 
 inline bool is_within_world(long world_w, long world_h, long x, long y) {
     return is_valid_point(x, y) && x <= world_w && y <= world_h;
+}
+
+inline bool is_solvable(struct state *s) {
+    return s->start_lambda_count == s->lambda_count + s->collected_lambda_count;
 }
 
 
@@ -277,3 +292,26 @@ void update_world(struct state *s, const struct state *t, bool ignore_robot);
 
 long calculate_cost(const struct state *s, long step_x, long step_y, long stage);
 void run_dijkstra(struct cost_table *ct, const struct state *s);
+
+
+
+void add_fresh(struct state * st , int x, int y) {
+  list_t el ;
+  if(! (el = malloc (sizeof(struct list_s))))
+    PERROR_EXIT("malloc");
+
+  el->x = x; el->y = y;
+  el->next = st->new_lambdas;
+  st->new_lambdas = el;
+}
+
+
+void remove_fresh(struct state * st) {
+  list_t el = st->new_lambdas;
+  if (!st) return;
+  while( (el = el->next)) {
+    put(st,el->x,el->y,O_LAMBDA);
+    free(el);
+  }
+  st->new_lambdas=NULL;
+}
