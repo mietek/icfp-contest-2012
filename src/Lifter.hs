@@ -135,9 +135,11 @@ refine = map getMin . M.elems . atSamePos where
                               else M.insert cpos [a] acc) M.empty
     getMin = head . sortBy criterium
     criterium (st1,_,ms1) (st2,_,ms2)
-        | length ms1 <= length ms2 = LT
-        | getCollectedLambdaCount st1 >= getCollectedLambdaCount st2 = LT
         | getScore st1 >= getScore st2 = LT
+        | getCollectedLambdaCount st1 >= getCollectedLambdaCount st2 = LT
+        | getBlockedLambdas st1 <= getBlockedLambdas st2
+        | length ms1 <= length ms2 = LT
+        | getRobotHealt st1 >= getRobotHealt st2 = LT
         | otherwise = GT
 >>>>>>> find best - first attempt
 
