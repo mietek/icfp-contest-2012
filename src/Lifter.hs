@@ -8,6 +8,7 @@ import Control.Concurrent.MVar (MVar, modifyMVar_, newMVar, takeMVar)
 import Control.Monad (forM_, sequence, when)
 import qualified Data.ByteString.Char8 as B
 import Data.List (sort, sortBy, zip4)
+import Data.Maybe
 import Data.Monoid (mappend, mempty)
 -- import System.Posix.Signals (Handler(Catch), installHandler, sigINT)
 import System.Environment (getArgs)
@@ -16,6 +17,7 @@ import System.Random
 import VM
 
 type Predicate = (Cost, Object, Point) -> Bool
+type Range = (Int, Int)
 -- print the dijkstra graph
 cMAX = 2147483647
 myPrint c x = 
@@ -24,14 +26,16 @@ myPrint c x =
     putStr (str ++ str2)
 
 -- where do you want to go today? specify it using p, this function will find a place
-chooseGoal s c p (x, y) r =
-      let l = sort $ clean [ ((getCost c (i, j)), (get s (i, j)), (i, j)) | i <- [1..x], j<- [1..y]] in 
+-- TODO: change (Object, Point) to Maybe Point
+chooseGoal :: State -> CostTable -> Predicate -> Range -> Point -> (Object, Point)
+chooseGoal state costs predicate (w, h) robot =
+      let l = sort $ clean [ ((getCost costs (i, j)), (get state (i, j)), (i, j)) | i <- [1..w], j<- [1..h]] in 
       select l
    where 
-      select [] = (ORobot, r)
+      select [] = (ORobot, robot)
       -- take first one --- maybe all instead?
-      select ((_,t,x):xs) = (t, x)
-      clean = (filter p) . (filter (\(c, _, _) -> c < cMAX))
+      select ((_,object,position):xs) = (object, position)
+      clean = (filter predicate) . (filter (\(costs, _, _) -> costs < cMAX))
 
 -- find a goal and a path there
 findGoalWithPath :: State -> CostTable -> Point -> Predicate -> [Move]
@@ -70,7 +74,7 @@ run s0 ps ms = goDijkstra s0 ps ms []
 -- several sequences of moves
         --find lambda!
       let moves = findGoalWithPath s c r (\(fc, ft, fp) -> isLambda s fp || isLift s fp)
-      -- probably wrong, but i am to tired / jmi
+      -- probably wrong, but i am too tired / jmi
       let rocks = findMoveRocks s 
       let (t, goal) = chooseGoal s c (\(fc, ft, fp) -> let myRocks = filter (\(p, m) -> p==fp) rocks in myRocks /= []) (getWorldSize s) r
       let mak1 = if t /= ORobot then findPath s c r goal else []
