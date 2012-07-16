@@ -1,16 +1,70 @@
 module Utils where
 
 import Control.Arrow ((***))
-import Data.List (sort, zip4)
-import Data.Maybe (catMaybes)
+import Data.List (sort, zip3, zip4)
+import Data.Maybe (catMaybes, fromJust)
 import System.Random (newStdGen, randomRs)
 
 import VM
 
 
+getEntrances :: State -> Point -> [(Point, Move)]
+getEntrances s pt@(x, y) = remote ++ local
+  where
+    local = catMaybes $
+      [if isEnterable s (x + 1, y) then Just ((x + 1, y), MLeft)  else Nothing,
+       if isEnterable s (x - 1, y) then Just ((x - 1, y), MRight) else Nothing,
+       if isEnterable s (x, y - 1) then Just ((x, y - 1), MUp)    else Nothing,
+       if isEnterable s (x, y + 1) then Just ((x, y + 1), MDown)  else Nothing]
+    remote =
+      if isTarget s pt
+        then concatMap (getEntrances s) (getTrampolinePointsWithTarget s (fromJust (getTarget s pt)))
+        else []
+
+doesTrampolineExist :: State -> Trampoline -> Bool
+doesTrampolineExist s trampoline = getTrampolinePoint s trampoline /= Nothing
+
+getAllTrampolines :: State -> [Trampoline]
+getAllTrampolines s = filter (doesTrampolineExist s) [minBound .. maxBound]
+
+doesTargetExist :: State -> Target -> Bool
+doesTargetExist s target = getTargetPoint s target /= Nothing
+
+getTrampolinesWithTarget :: State -> Target -> [Trampoline]
+getTrampolinesWithTarget s target = filter check (getAllTrampolines s)
+  where
+    check trampoline =
+      case getTrampolineTarget s trampoline of
+        Just anotherTarget -> anotherTarget == target
+        Nothing -> False
+
+getTrampolinePointsWithTarget :: State -> Target -> [Point]
+getTrampolinePointsWithTarget s target = catMaybes (map (getTrampolinePoint s) (getTrampolinesWithTarget s target))
+
+getTarget :: State -> Point -> Maybe Target
+getTarget s pt =
+  case get s pt of
+    (OTarget target) -> Just target
+    _ -> Nothing
+
 
 findPath :: State -> CostTable -> Point -> Point -> [Move]
-findPath s ct from0 to = map reverseMove (loop to [])
+findPath s ct from to = loop to []
+  where
+    loop pt path
+      | pt == from               = path
+      | getDist ct pt <= minDist = []
+      | otherwise                = loop entryPt (entryMove : path)
+        where
+          entrances = getEntrances s pt
+          (entryPts, _) = unzip entrances
+          dists = map (getDist ct) entryPts
+          costs = map (getCost ct) entryPts
+          (minDist, _, (entryPt, entryMove)) = head (sort (zip3 dists costs entrances))
+
+
+oldFindPath :: State -> CostTable -> Point -> Point -> [Move]
+oldFindPath s ct from0 to = map reverseMove (loop to [])
   where
     loop from path
       | from == from0 = path

@@ -101,7 +101,7 @@ toObject c
 toObject _                  = undefined
 
 
-data Trampoline = TA | TB | TC | TD | TE | TF | TG | TH | TI deriving (Enum, Eq, Ord)
+data Trampoline = TA | TB | TC | TD | TE | TF | TG | TH | TI deriving (Bounded, Enum, Eq, Ord)
 
 instance Show Trampoline where
   show trampoline = [fromTrampoline trampoline]
@@ -124,7 +124,7 @@ toTrampoline c
 toTrampoline _ = undefined
 
 
-data Target = T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 deriving (Enum, Eq, Ord)
+data Target = T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 deriving (Bounded, Enum, Eq, Ord)
 
 instance Show Target where
   show target = [fromTarget target]
