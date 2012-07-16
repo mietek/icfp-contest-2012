@@ -1,6 +1,6 @@
 CXXFLAGS+=-std=c++0x -W -Wall
 
-OBJS = main.o 
+OBJS = main.o vm.o planet.o solution.o
 TARGET = evolve
 
 all: compile_vm $(TARGET)
@@ -11,7 +11,7 @@ compile_vm:
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 
-$(TARGET): $(OBJS) ../bin/libvm.o vm.o
+$(TARGET): $(OBJS) ../bin/libvm.o
 	$(CXX) -o $@ $^
 
 .PHONY: all clean
