@@ -33,6 +33,8 @@ iterateBoard s f = iter (1,1) [] where
     iter (x,y) acc | x == m = iter (1,y+1) acc
     iter p@(x,y) acc = iter (x+1,y) (f p (get s p) ++ acc)
 
+
+
 findRocks ::  State -> [Point]
 findRocks s =
   iterateBoard s $ \p o ->
@@ -68,3 +70,20 @@ canMove s p =any (isEnterAndSave . flip evalMoves p) moves where
 willDeadLock :: State -> Move -> Point -> Bool
 willDeadLock s m p = canMove s' $ getRobotPoint s' where
    s' = flip makeOneMove m $ imagineRobotAt s p
+
+getRobotHealt :: State -> Int
+getRobotHealt s= getRobotWaterproofing s - getUsedRobotWaterproofing s
+
+findLambdas :: State -> Point
+findLambdas s =
+    iterateBoard s $ \p o ->
+       if isLambda s p || isHORock s p then [p] else []
+
+findBlockedLambdas :: State -> [Point]
+findBlockedLambdas s = foo where
+    lambdas = findLambdas s
+    blockedHoRocks = filter (isHORock s ) \\
+                     (filte (isHORock s .map fst $ findMoveRocks s))
+
+    -- TODO: this needs some work
+    blockedLambdas = filter (\p -> isLambda s p && (not $ canMove s p)) lambdas
