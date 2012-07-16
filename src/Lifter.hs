@@ -62,6 +62,16 @@ myFind g ((p, m):xs) = if p==g then [m] else myFind g xs
  
  
 -- run :: MVar Builder -> State -> [Move] -> [Int] -> IO (Int, [Move])
+
+-- TODO: rewrite.
+-- General idea is:
+-- 1. Generate several possible sets of moves 
+-- 2. Find out which ones are correct - should be rewritten with Maybe Monad
+-- 3. Filter out sets of moves that lead to death
+-- 4. catMaybes . filter testMoves s will be probably enough for points 2&3
+-- 5. select one of the sensible move sets. for now the first one is always used, but we should do it like described in issue #10
+-- 6. TIL that lack of knowledge about maybe monad leads to reimplementing it by yourself. Every time in a different way.
+
 -- main function
 run s0 ps ms = goDijkstra s0 ps ms []
   where
