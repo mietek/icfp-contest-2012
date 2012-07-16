@@ -21,7 +21,7 @@ import Utils
 -- print the dijkstra graph
 cMAX = 2147483647
 
-maxSteps = 2000
+maxSteps = 5000
 
 myPrint c x =
     let str = if x ==  cMAX then "X" else show x in
@@ -37,8 +37,8 @@ f :: Int -> Move
 f 1 = MRight
 f 2 = MLeft
 f 3 = MUp
-f 4 = MWait
-f  _  = MDown
+f 4 = MDown
+f _ = MShave
 
 -- where do you want to go today? specify it using p, this function will find a place
 chooseGoal s c p (x, y) r =
@@ -98,19 +98,19 @@ goDijkstra (p:ps) (m:ms) queue (bestScore, bestMoves) (s,steps,prefix)  = do
       let c = buildCostTable s r
       printCT c s
       let possibilities = filter (\x -> x /= [])  $ getSomePossibilities s c r p m steps
-      let steps' = if length(possibilities) <= 1 then steps+50 else steps+1
-      let moves = if possibilities == [] then [[MRight], [MLeft], [MDown], [MUp]] else possibilities
+      let steps' = if length(possibilities) <= 1 then steps+20 else steps+1
+      let moves = if possibilities == [] || steps<1000 then possibilities ++ [[MRight], [MLeft], [MDown], [MUp]] else possibilities
       let tMoves = testMovesList steps s prefix moves []
-      if tMoves == []
+      if moves == []
           then return ((0, [MAbort]), queue)
           else
               let ((s', _, result):answers) =  testMovesList steps s prefix moves [] in
-
               let score = getScore s' in
+              let topMoves = if bestScore>score then (bestScore, bestMoves) else (score , result) in
       --      dump s'
               if  (getCondition s')/= CNone || steps' > maxSteps
-                 then return (((getScore s') , result), queue)
-                 else goDijkstra ps ms  (queue ++ answers) (if bestScore>score then (bestScore, bestMoves) else (score , result)) (s',steps', result)
+                 then return (topMoves, queue)
+                 else goDijkstra ps ms  (queue ++ answers) topMoves (s',steps', result)
 
 -- mietek's function
 handleInterrupt :: MVar Builder -> ThreadId -> IO ()
@@ -135,10 +135,9 @@ refine = map getMin . M.elems . atSamePos where
                               else M.insert cpos [a] acc) M.empty
     getMin = head . sortBy criterium
     criterium (st1,_,ms1) (st2,_,ms2)
-        | getScore st1 >= getScore st2 = LT
-        | getCollectedLambdaCount st1 >= getCollectedLambdaCount st2 = LT
-        | getBlockedLambdas st1 <= getBlockedLambdas st2 = LT
-        | length ms1 <= length ms2 = LT
+        | getScore st1 >= 20 + getScore st2 = LT
+        | getBlockedLambdas st1 < getBlockedLambdas st2 = LT
+        | length ms1 < length ms2 = LT
         | getRobotHealt st1 >= getRobotHealt st2 = LT
         | otherwise = GT
 
