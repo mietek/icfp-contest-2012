@@ -761,7 +761,9 @@ long calculate_cost(const struct state *s, long step_x, long step_y, long stage)
     if (safe_get(s, step_x, step_y) == O_LAMBDA)
         return 1;
     if (safe_get(s, step_x, step_y) == O_EMPTY)
-        return 1;
+        return 5;
+    if (safe_get(s, step_x, step_y) == O_EARTH)
+        return 20;
     if (
         safe_get(s, step_x, step_y + 1) == O_ROCK ||
         (safe_get(s, step_x + 1, step_y + 1) == O_ROCK && safe_get(s, step_x + 1, step_y) == O_ROCK) ||
@@ -771,7 +773,7 @@ long calculate_cost(const struct state *s, long step_x, long step_y, long stage)
         (safe_get(s, step_x - 1, step_y + 1) == O_HO_ROCK && safe_get(s, step_x - 1, step_y) == O_HO_ROCK)
     )
         return 40;
-    return 1;
+    return 10;
 }
 
 void run_dijkstra(struct cost_table *ct, const struct state *s) {

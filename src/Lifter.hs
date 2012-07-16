@@ -20,6 +20,8 @@ import Utils
 
 -- print the dijkstra graph
 cMAX = 2147483647
+maxSteps = 2000
+
 myPrint c x = 
     let str = if x ==  cMAX then "X" else show x in 
     let str2 = if c then "\n" else "" in
@@ -58,7 +60,7 @@ testMoves s m =
     if (getCondition s') /= CLose then (True, s') else (False, s)
     
 -- finds the moves that do not kill robot
-testMovesList steps s _ [] l = l
+testMovesList _ s _ [] l = l
 testMovesList steps s prefix (m:ms) l = 
    let (b, s') = testMoves s m in 
    let goodMoves = if b then l ++ [(s', steps, prefix++m)] else l in
@@ -72,18 +74,18 @@ getSomePossibilities s c r p m steps = all ++ [[m]]
    where
 -- several sequences of moves
       --find lambda!
-      moves = findA s c r (\(fc, ft, fp) -> isLambda s fp || isLift s fp)
+      moves = findA s c r (\(_, _, fp) -> isLambda s fp || isLift s fp)
       -- probably wrong, but i am too tired / jmi
       rocks = findMoveRocks s 
-      (t, goal) = chooseGoal s c (\(fc, ft, fp) -> let myRocks = filter (\(p, m) -> p==fp) rocks in myRocks /= []) (getWorldSize s) r
+      (t, goal) = chooseGoal s c (\(_, _, fp) -> let myRocks = filter (\(p', _) -> p'==fp) rocks in myRocks /= []) (getWorldSize s) r
       mak1 = if t /= ORobot then findPath s c r goal else []
       mak2 = if t /= ORobot then myFind goal rocks else []
       movesComak = mak1++mak2
       -- /probably wrong
       --find trampolina! hop hop
-      moves2 = findA s c r (\(fc, ft, fp) -> isTrampoline s fp || isRazor s fp)
+      moves2 = findA s c r (\(_, _, fp) -> isTrampoline s fp || isRazor s fp)
       -- find earth!
-      moves3 = findA s c r (\(fc, ft, fp) -> isEarth s fp)
+      moves3 = findA s c r (\(_, _, fp) -> isEarth s fp)
       -- small probability of doing nothing
       all = if p then [] else [moves, moves2, movesComak, moves3]
  
@@ -103,7 +105,7 @@ goDijkstra (p:ps) (m:ms) queue (bestScore, bestMoves) (s,steps,prefix)  = do
               let ((s', _, result):answers) =  testMovesList steps s prefix moves [] in
               let score = getScore s' in
       --      dump s' 
-              if  (getCondition s')/= CNone || steps' > 1000
+              if  (getCondition s')/= CNone || steps' > maxSteps
                  then return (((getScore s') , result), queue)
                  else goDijkstra ps ms  (queue ++ answers) (if bestScore>score then (bestScore, bestMoves) else (score , result)) (s',steps', result)
  
@@ -115,7 +117,11 @@ handleInterrupt resultV mainT = do
   toByteStringIO B.putStrLn result
   killThread mainT
 
-refine x = x
+refine :: [(State, Int, [Move])] -> [(State, Int, [Move])]
+refine x = take maxSteps $ sortBy (\(s1, _, m1) -> (
+                       \(s2, _, m2) -> (
+                          if (getScore s1)-(length m1) < (getScore s2)+(length m2) then LT else GT
+                   ))) x
 
 -- initialize random values
 prepareRun :: Int -> Int -> [(State, Int, [Move])] -> [(Int, [Move])] -> IO [(Int, [Move])]
@@ -141,10 +147,10 @@ main = do
   rawInput <- B.getContents
   let input = new rawInput
 --  let runs = [prepareRun i input | i<-([1..400]::[Int])]
-  runs <- prepareRun 100 1000 [(input, 0, [])] []
+  runs <- prepareRun 1000 1000 [(input, 0, [])] []
   -- TODO: Store results one by one in resultV
   let results = sortBy (flip compare) runs
-  let (maxScore, maxMoves) = head results
+  let (_, maxMoves) = head results
   -- TODO: Output using Builder/ByteString
   args <- getArgs
   when (args == ["-v"]) $
