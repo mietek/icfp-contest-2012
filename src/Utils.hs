@@ -74,7 +74,7 @@ willDeadLock s m p = canMove s' $ getRobotPoint s' where
 getRobotHealt :: State -> Int
 getRobotHealt s= getRobotWaterproofing s - getUsedRobotWaterproofing s
 
-findLambdas :: State -> Point
+findLambdas :: State -> [Point]
 findLambdas s =
     iterateBoard s $ \p o ->
        if isLambda s p || isHORock s p then [p] else []
@@ -82,8 +82,8 @@ findLambdas s =
 findBlockedLambdas :: State -> [Point]
 findBlockedLambdas s = blockedHoRocks ++ blockedLambdas where
     lambdas = findLambdas s
-    blockedHoRocks = filter (isHORock s ) \\
-                     (filter (isHORock s .map fst $ findMoveRocks s))
+    blockedHoRocks = filter (isHORock s ) lambdas \\
+                     (filter (isHORock s .map) fst $ findMoveRocks s)
 
     -- TODO: this needs some work
     blockedLambdas = filter (\p -> isLambda s p && (not $ canMove s p)) lambdas
