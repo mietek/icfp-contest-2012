@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <iostream>
 
-#define POPULATION_SIZE 100
+#define POPULATION_SIZE 10000
 
 Planet::Planet(const VM &vm)
 : _vm(vm)
