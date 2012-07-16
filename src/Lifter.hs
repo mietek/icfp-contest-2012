@@ -81,8 +81,8 @@ run s0 ps ms = goDijkstra s0 ps ms []
       -- some default moves
       let (b, s', answer) =  testMovesList s $ filter (\x -> x /= [])  $ all ++ [[m], [MRight], [MLeft], [MDown], [MUp]]
 --      dump s' 
-      let result = prefix ++ answer
---      print result
+      let result = prefix ++ pruneCycles s answer
+--    print result
 --      hFlush stdout
       -- CHANGE 153! use deadlock detection!!
       if  (getCondition s')/= CNone || (moves == [] && length(result)>153) 
@@ -98,19 +98,29 @@ handleInterrupt resultV mainT = do
   toByteStringIO B.putStrLn result
   killThread mainT
 
+-- todo: find cycles larger than one move
+pruneCycles = pruneWaits
+
+pruneWaits :: State -> [Move] -> [Move]
+pruneWaits s [] = []
+pruneWaits s (m:ms) = 
+  if s' == s then rest else (m : rest)
+    where s' = makeOneMove s m
+          rest = pruneWaits s ms
+
 -- initialize random values
 prepareRun n input = do
   seed <- newStdGen
   let ms  = randomRs (1, 4) seed 
   let ps  = randomRs (0, n) seed
-  result <- run input ps $ map f ms
+  result <- run input ps $ map intToMove ms
   return result
   where
-       f :: Int -> Move
-       f 1 = MRight
-       f 2 = MLeft
-       f 3 = MUp
-       f  _  = MDown
+       intToMove :: Int -> Move
+       intToMove 1 = MRight
+       intToMove 2 = MLeft
+       intToMove 3 = MUp
+       intToMove  _  = MDown
 
 
 data Verbosity = MoveSequence | Dump deriving (Eq, Ord, Show)
