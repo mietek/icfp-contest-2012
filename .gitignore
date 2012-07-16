@@ -2,3 +2,4 @@ icfp-*.tgz
 lifter
 *.hi
 *.o
+bin
