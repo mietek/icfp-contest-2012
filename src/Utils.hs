@@ -83,9 +83,9 @@ findBlockedLambdas :: State -> [Point]
 findBlockedLambdas s = blockedHoRocks ++ blockedLambdas where
     lambdas = findLambdas s
     blockedHoRocks = filter (isHORock s ) lambdas \\
-                     (filter (isHORock s .map) fst $ findMoveRocks s)
+                     (filter (isHORock s) .map fst $ findMoveRocks s)
 
     -- TODO: this needs some work
     blockedLambdas = filter (\p -> isLambda s p && (not $ canMove s p)) lambdas
 
-getBlockedLambdas = lengt . findBlockedLambdas
+getBlockedLambdas = length . findBlockedLambdas
