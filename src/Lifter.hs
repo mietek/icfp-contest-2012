@@ -24,6 +24,18 @@ myPrint c x =
     let str2 = if c then "\n" else "" in
     putStr (str ++ str2)
 
+printCT c s = 
+   let (wx, wy) = getWorldSize s in 
+     flip mapM_ [1..wy] $ \y -> 
+       flip mapM_ [1..wx] $ \x -> myPrint (x == wx) $ getCost c (x,  wy+1-y)
+
+f :: Int -> Move
+f 1 = MRight
+f 2 = MLeft
+f 3 = MUp
+f 4 = MWait
+f  _  = MDown
+
 -- where do you want to go today? specify it using p, this function will find a place
 chooseGoal s c p (x, y) r =
       let l = sort $ clean [ ((getCost c (i, j)), (get s (i, j)), (i, j)) | i <- [1..x], j<- [1..y]] in 
@@ -45,14 +57,17 @@ testMoves s m =
     if (getCondition s') /= CLose then (True, s') else (False, s)
     
 -- finds the moves that do not kill robot
-testMovesList s [] = (False, s, [])
-testMovesList s (m:ms) = let (b, s') = testMoves s m in if b then (b, s', m) else testMovesList s (ms)
+testMovesList s _ [] l = l
+testMovesList s prefix (m:ms) l = 
+   let (b, s') = testMoves s m in 
+   let goodMoves = if b then l ++ [(s', prefix++m)] else l in
+   testMovesList s prefix ms goodMoves
 
 -- to complicated
 myFind _ [] = []
 myFind g ((p, m):xs) = if p==g then [m] else myFind g xs 
  
-getSomePossibilities s c r p m steps = all ++ [[m], [MRight], [MLeft], [MDown], [MUp]]
+getSomePossibilities s c r p m steps = all ++ [[m]]
    where
 -- several sequences of moves
       --find lambda!
@@ -70,32 +85,23 @@ getSomePossibilities s c r p m steps = all ++ [[m], [MRight], [MLeft], [MDown], 
       moves3 = findA s c r (\(fc, ft, fp) -> isEarth s fp)
       -- small probability of doing nothing
       all = if p then [] else [moves, moves2, movesComak, moves3]
-      -- some default moves
  
 -- run :: MVar Builder -> State -> [Move] -> [Int] -> IO (Int, [Move])
 -- main function
-run s0 ps ms = goDijkstra s0 ps ms 0 []
-  where
-    goDijkstra s (p:ps) (m:ms) steps prefix = do
+goDijkstra (s,steps,prefix) (p:ps) (m:ms) queue = do
       let r = getRobotPoint s
-      let (wx, wy) = getWorldSize s
       let c = buildCostTable s r
---      flip mapM_ [1..wy] $ \y -> 
---        flip mapM_ [1..wx] $ \x -> myPrint (x == wx) $ getCost c (x,  wy+1-y)
--- several sequences of moves
-        --find lambda!
-      -- some default moves
+      printCT c s 
       let possibilities = filter (\x -> x /= [])  $ getSomePossibilities s c r p m steps
-      let steps' = if length(head possibilities) == 1 then steps+5 else steps+1
-      let (b, s', answer) =  testMovesList s possibilities
+      let steps' = if length(possibilities) <= 1 then steps+50 else steps+1
+      let moves = if possibilities == [] then [[MRight], [MLeft], [MDown], [MUp]] else possibilities
+      let ((s', result):answers) =  testMovesList s prefix moves []
       --      dump s' 
-      let result = prefix ++ answer
       if  (getCondition s')/= CNone || steps' > 1000
-        then return ((getScore s') , result) 
-        else goDijkstra s' ps ms steps' result
---      modifyMVar_ resultV $ \result ->
---        return (result `mappend` fromString answer)
---      goRandom s' ms (prefix++answer)
+        then return (((getScore s') , result), queue)
+        else goDijkstra (s',steps', result) ps ms  (queue ++ answers)
+
+
 -- mietek's function
 handleInterrupt :: MVar Builder -> ThreadId -> IO ()
 handleInterrupt resultV mainT = do
@@ -104,19 +110,13 @@ handleInterrupt resultV mainT = do
   killThread mainT
 
 -- initialize random values
+prepareRun :: Int -> State -> IO [(Int, [Move])]
 prepareRun n input = do
   seed <- newStdGen
-  let ms  = randomRs (1, 4) seed 
+  let ms  = map f $ randomRs (1, 5) seed 
   let ps  = map (\x -> if x == 1 then True else False) $ randomRs (1, n) seed
-  result <- run input ps $ map f ms
-  return result
-  where
-       f :: Int -> Move
-       f 1 = MRight
-       f 2 = MLeft
-       f 3 = MUp
-       f  _  = MDown
-
+  (result, rest) <- goDijkstra (input,0,[]) ps ms []
+  return [result]
 
 data Verbosity = MoveSequence | Dump deriving (Eq, Ord, Show)
   
@@ -125,14 +125,17 @@ main = do
 --  resultV <- newMVar mempty
 --  mainT <- myThreadId
 --  _ <- installHandler sigINT (Catch (handleInterrupt resultV mainT)) Nothing
-  input <- B.getContents
-  let runs = [prepareRun i (new input) | i<-([1..400]::[Int])]
+  rawInput <- B.getContents
+  let input = new rawInput
+--  let runs = [prepareRun i input | i<-([1..400]::[Int])]
+  runs <- prepareRun 1000 input
   -- TODO: Store results one by one in resultV
-  results <- fmap (sortBy (flip compare)) (sequence runs)
+  let results = sortBy (flip compare) runs
   let (maxScore, maxMoves) = head results
   -- TODO: Output using Builder/ByteString
   args <- getArgs
   when (args == ["-v"]) $
-    forM_ results $ \(score, moves) ->
-      hPutStrLn stderr (show score ++ " " ++ map fromMove moves)
+--    forM_ results $ \(score, moves) ->
+--      hPutStrLn stderr (show score ++ " " ++ map fromMove moves)
+	dump $ makeMoves input maxMoves
   putStrLn (map fromMove maxMoves)
