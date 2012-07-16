@@ -5,6 +5,7 @@
 # -l, --lifter <path>
 # -v, --validator <path>
 # -m, --map <name>
+# -f, --format -- brief, stable machine-readable output format
 
 BASEDIR = File.dirname(__FILE__)
 $: << BASEDIR
@@ -19,7 +20,8 @@ opts = GetoptLong.new(
   [ '--timeout', '-t', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--lifter', '-l', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--validator', '-v', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--map', '-m', GetoptLong::REQUIRED_ARGUMENT ]
+  [ '--map', '-m', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--format', '-f', GetoptLong::NO_ARGUMENT ]
 )
 
 timelimit = 150
@@ -28,6 +30,8 @@ validator = File.join(TOPDIR, 'bin', 'validator')
 
 ranking = ICFP2012::WebRanking.get
 maps = ranking.keys
+
+$mformat = false
 
 opts.each do |opt, arg|
   case opt
@@ -39,6 +43,8 @@ opts.each do |opt, arg|
     validator = arg
   when '--map'
     maps = [arg]
+  when '--format'
+    $mformat = true
   end
 end
 
@@ -60,7 +66,7 @@ class Lifter
       stdin.close
       result = IO.select([stdout], [], [], @timelimit)
       if result.nil?
-        STDERR.print "[timeout]"
+        print ($mformat ? "!" : "[timeout]")
         Process.kill('INT', pid)
         IO.select([stdout], [], [], WAITTIME)
         Process.kill('KILL', pid)
@@ -82,10 +88,10 @@ def rank_score ranking, score
 end
 
 maps.sort.each do |map|
-  print("%12s " % map)
+  print(($mformat ? "%s " : "%12s ") % map)
   map_file = locate_map map
   soln = (lifter.run File.read(map_file)).strip
   score = `echo #{soln} | #{validator} -v #{map_file}`.to_i
   rank = rank_score ranking[map], score
-  puts("%5d (rank %4d)" % [score, rank])
+  puts(($mformat ? "%d [%d]" : "%5d (rank %4d)") % [score, rank])
 end
