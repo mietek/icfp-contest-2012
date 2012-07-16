@@ -13,6 +13,8 @@ MAP=$1
 SOLUTION=$2
 CASENAME=$3
 
+CURL=${CURL-curl}
+
 if [ -z "$1" ] || [ -z "$2" ]; then
   usage
 fi
@@ -24,9 +26,12 @@ if ! [ -d "$BASEDIR" ]; then
 fi
 
 if [ -z "$CASENAME" ]; then
-  i=0
-  while [ -f "$BASEDIR/case$i.in" ]; do i=$((i+1)); done
-  CASENAME="case$i"
+  while true; do
+    MAXID=1000
+    RND=`perl -e "printf '%03d', int(rand($MAXID))"`
+    CASENAME="case$RND"
+    [ -f "$BASEDIR/$CASENAME.out" ] || break
+  done
 fi
 
 INFILE=$BASEDIR/$CASENAME.in
@@ -40,6 +45,6 @@ fi
 echo $SOLUTION > $INFILE
 
 echo "Fetching validator output..."
-curl 'http://www.undecidable.org.uk/~edwin/cgi-bin/weblifter.cgi' -d "mapfile=$MAP&route=$SOLUTION" 2>/dev/null | 
+$CURL 'http://www.undecidable.org.uk/~edwin/cgi-bin/weblifter.cgi' -d "mapfile=$MAP&route=$SOLUTION" 2>/dev/null | 
   perl -ne 'BEGIN{$/=undef;} m@<pre>(.*)</pre>.*Score: (.*?)<br>@s; print "$2\n$1"' |
   tee $OUTFILE

@@ -6,7 +6,7 @@ random_map() {
   cat $BASEDIR/maps | perl -ne 'BEGIN{$/=undef}@m=split;print $m[rand($#m)]'
 }
 
-MINUTES=11
+THROTTLE=${THROTTLE-660}
 
 while true; do
   MAP=$(random_map)
@@ -15,6 +15,6 @@ while true; do
   $BASEDIR/../../unittests/maketest.sh $MAP $SOLN
   echo "Running tests..."
   make -C "$BASEDIR/../.." test
-  echo Sleeping for $MINUTES minutes...
-  sleep $(($MINUTES*60))
+  echo Sleeping for $THROTTLE seconds...
+  sleep $THROTTLE
 done
