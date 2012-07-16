@@ -13,7 +13,7 @@ getEntrances s pt@(x, y) = remote ++ local
   where
     makeMove m = let rm = reverseMove m
                  in if isEnterable s (evalMoves rm pt)
-                     then Just (imagineStep s m pt,rm)
+                     then Just (imagineStep s pt m,rm)
                     else Nothing
     local = catMaybes $ map makeMove [MRight,MLeft,MUp,MDown]
     remote =
