@@ -22,9 +22,9 @@ for d in `dirname "$0"`/tests/*; do
     BASENAME=`basename $INFILE .in`
     OUTFILE=$d/$BASENAME.out
     TMP=`$MKTEMP`
-    cat "$INFILE" | $VALIDATOR -vv $MAP | perl -pe 'tr/123456789ABCDEFGHI/tttttttttTTTTTTTTT/ if ($i++)' | sed -e 's/[ \r]*$//' > $TMP
+    cat "$INFILE" | $VALIDATOR -vv $MAP | perl -pe 'tr/123456789ABCDEFGHI/tttttttttTTTTTTTTT/ if ($i++)' | perl -pe 's/\s*\n$/\n/' > $TMP
     TMPO=`$MKTEMP`
-    cat $OUTFILE | sed -e 's/[ \r]*$//' > $TMPO
+    cat $OUTFILE | perl -pe 's/\s*\n$/\n/' > $TMPO
     if diff -B $TMPO $TMP > /dev/null; then
       echo -e "$GREEN$MAPNAME/$BASENAME ok $PLAIN"
     else
