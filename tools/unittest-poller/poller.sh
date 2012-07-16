@@ -22,10 +22,14 @@ while true; do
     make -C $TOPDIR bin/validator
     MAPNAME=$MAP
     MAP=$TOPDIR/tests/$MAPNAME.map
+    git add $TOPDIR/unittests
+    git commit -m"Automated test (successful)."
+    git pull
     if run_test $NEWIN; then
       echo "New test succeeds."
     else
       echo "New test fails."
+      git push origin autotest
     fi
     echo Sleeping for $THROTTLE seconds...
     sleep $THROTTLE
