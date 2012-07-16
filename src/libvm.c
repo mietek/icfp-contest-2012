@@ -695,7 +695,7 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
                 int i, j;
                 for (i = -1; i <= 1; i++) {
                     for (j = -1; j <= 1; j++) {
-                        if (get(s, x + i, y + j) == O_EMPTY)
+                        if (get(s0, x + i, y + j) == O_EMPTY)
                             put(s, x + i, y + j, O_BEARD);
                     }
                 }
