@@ -30,7 +30,8 @@ while true; do
     echo Sleeping for $THROTTLE seconds...
     sleep $THROTTLE
   else
-    echo "Fetch failed, sleeping 5 minutes..."
-    sleep $((60*5))
+    WAITTIME=${WAITTIME-60}
+    echo "Fetch failed, sleeping $WAITTIME seconds..."
+    sleep $WAITTIME
   fi
 done
