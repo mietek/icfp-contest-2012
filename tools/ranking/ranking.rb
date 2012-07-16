@@ -61,7 +61,7 @@ class Lifter
   end
   
   def run map
-    Open4.popen4 @binary, 'r+' do |pid, stdin, stdout, _|
+    Open4.popen4 @binary, 'r+' do |pid, stdin, stdout, stderr|
       stdin.print map
       stdin.close
       result = IO.select([stdout], [], [], @timelimit)
@@ -71,6 +71,7 @@ class Lifter
         IO.select([stdout], [], [], WAITTIME)
         Process.kill('KILL', pid)
       end
+      STDERR.write(stderr.read)
       return (stdout.gets || "")
     end
   end
