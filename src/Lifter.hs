@@ -139,4 +139,4 @@ main = do
 --    forM_ results $ \(score, moves) ->
 --      hPutStrLn stderr (show score ++ " " ++ map fromMove moves)
 	dump $ makeMoves input maxMoves
-  putStrLn (map fromMove maxMoves)
+  hPutStrLn stderr (map fromMove maxMoves)
