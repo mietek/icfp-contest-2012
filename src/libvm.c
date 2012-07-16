@@ -723,6 +723,16 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
     }
 }
 
+#define MOVE_LEFT(X_,Y_)           X_-1,Y_
+#define MOVE_RIGHT(X_,Y_)          X_+1,Y_
+#define MOVE_UP(X_,Y_)             X_,Y_+1
+#define MOVE_DOWN(X_,Y_)           X_,Y_-1
+#define MOVE_LEFT_UP(X_,Y_)        X_-1,Y_+1
+#define MOVE_RIGHT_UP(X_,Y_)       X_+1,Y_+1
+#define MOVE_LEFT_DOWN(X_,Y_)      X_-1,Y_-1
+#define MOVE_RIGHT_DOWN(X_,Y_)     X_+1,Y_-1
+
+
 long calculate_cost(const struct state *s, long step_x, long step_y, long stage) {
     if (safe_get(s, step_x, step_y) == O_LAMBDA){
         return 1;
@@ -731,12 +741,12 @@ long calculate_cost(const struct state *s, long step_x, long step_y, long stage)
         return 4;
     }
     if (
-        safe_get(s, step_x, step_y + 1) == O_ROCK ||
-        (safe_get(s, step_x + 1, step_y + 1) == O_ROCK && safe_get(s, step_x + 1, step_y) == O_ROCK) ||
-        (safe_get(s, step_x - 1, step_y + 1) == O_ROCK && safe_get(s, step_x - 1, step_y) == O_ROCK) ||
-        safe_get(s, step_x, step_y + 1) == O_HIGHER_ORDER_ROCK ||
-        (safe_get(s, step_x + 1, step_y + 1) == O_HIGHER_ORDER_ROCK && safe_get(s, step_x + 1, step_y) == O_HIGHER_ORDER_ROCK) ||
-        (safe_get(s, step_x - 1, step_y + 1) == O_HIGHER_ORDER_ROCK && safe_get(s, step_x - 1, step_y) == O_HIGHER_ORDER_ROCK)
+        safe_get(s, MOVE_UP(step_x, step_y) ) == O_ROCK ||
+	(safe_get(s, MOVE_RIGHT_UP(step_x, step_y)) == O_ROCK && safe_get(s, MOVE_RIGHT(step_x, step_y)) == O_ROCK) ||
+	(safe_get(s, MOVE_LEFT_UP(step_x, step_y)) == O_ROCK && safe_get(s, MOVE_LEFT(step_x,step_y)) == O_ROCK) ||
+	safe_get(s, MOVE_UP(step_x, step_y)) == O_HIGHER_ORDER_ROCK ||
+        (safe_get(s, MOVE_RIGHT_UP(step_x, step_y)) == O_HIGHER_ORDER_ROCK && safe_get(s, MOVE_RIGHT(step_x, step_y)) == O_HIGHER_ORDER_ROCK) ||
+        (safe_get(s, MOVE_LEFT_UP(step_x,step_y)) == O_HIGHER_ORDER_ROCK && safe_get(s, MOVE_LEFT(step_x, step_y)) == O_HIGHER_ORDER_ROCK)
     ) {
         return 40;
     }
@@ -746,7 +756,7 @@ long calculate_cost(const struct state *s, long step_x, long step_y, long stage)
 
 /* this gona be ugly...
    lets create fp with function wich will decide based on input -
-   all thing that are computed during `run_dijkstra' - wich predefined staratedy apply
+   all thing that are computed during `run_dijkstra' - wich predefined predifined strategy fire up
 */
 
 long calc_cost(const struct state* s/*state*/
@@ -759,6 +769,14 @@ long calc_cost(const struct state* s/*state*/
 	       , long step_y[4]){
   return calculate_cost(s,step_x[k],step_y[k],stage);
 
+}long calc_flood_cost(const struct state* s/*state*/
+	       ,const struct cost_table* ct /*cost_table*/
+	       , long y/*current x*/
+	       , long x/*current y*/
+	       , long k/*current k (wtf?)*/
+	       , long stage
+	       , long step_x[4]
+	       , long step_y[4]){
 }
 
 void run_dijkstra(struct cost_table *ct, const struct state *s) {
