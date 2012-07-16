@@ -10,7 +10,8 @@ import Data.List (sort, sortBy, zip4)
 import Data.Monoid (mappend, mempty)
 -- import System.Posix.Signals (Handler(Catch), installHandler, sigINT)
 import System.Environment (getArgs)
-import System.IO (hPutStrLn, stderr)
+import System.IO (hPutStrLn, hPutStr, stderr)
+import System.IO (hPrint)
 import System.Random (newStdGen, randomRs)
 
 import VM
@@ -22,7 +23,7 @@ cMAX = 2147483647
 myPrint c x = 
     let str = if x ==  cMAX then "X" else show x in 
     let str2 = if c then "\n" else "" in
-    putStr (str ++ str2)
+    hPutStr stderr (str ++ str2)
 
 printCT c s = 
    let (wx, wy) = getWorldSize s in 
@@ -100,7 +101,7 @@ goDijkstra (s,steps,prefix) (p:ps) (m:ms) queue = do
       if  (getCondition s')/= CNone || steps' > 1000
         then return (((getScore s') , result), queue)
         else goDijkstra (s',steps', result) ps ms  (queue ++ answers)
-
+ 
 
 -- mietek's function
 handleInterrupt :: MVar Builder -> ThreadId -> IO ()

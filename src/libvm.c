@@ -786,8 +786,8 @@ void run_dijkstra(struct cost_table *ct, const struct state *s) {
                 if (get_dist(ct, i, j) == stage) {
                     imagine_steps(s1, i, j, step_x, step_y);
                     for (k = 0; k < 4; k++) {
-                        if (is_safe(s1, step_x[k], step_y[k]) 
-			 && get_cost(ct, step_x[k], step_y[k]) > get_cost(ct, i, j) + calculate_cost(s1, step_x[k], step_y[k], stage) 
+                        if ( is_safe(s1, step_x[k], step_y[k]) &&
+			  get_cost(ct, step_x[k], step_y[k]) > get_cost(ct, i, j) + calculate_cost(s1, step_x[k], step_y[k], stage) 
 			 && get_cost(ct, i, j) < MAX_COST) {
                             put_cost(ct, step_x[k], step_y[k], get_cost(ct, i, j) + calculate_cost(s1, step_x[k], step_y[k], stage));
                             put_dist(ct, step_x[k], step_y[k], stage + 1);
