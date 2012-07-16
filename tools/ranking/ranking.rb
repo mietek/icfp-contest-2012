@@ -4,7 +4,7 @@ TOPDIR = File.join(BASEDIR, "..", "..")
 RUNNER = File.join(BASEDIR, "runner.sh")
 
 require 'icfp2012'
-require 'open3'
+require 'open4'
 
 lifter = ARGV[0] || File.join(TOPDIR, 'bin', 'lifter')
 validator = ARGV[1] || File.join(TOPDIR, 'bin', 'validator')
@@ -24,17 +24,17 @@ class Lifter
   end
   
   def run map
-    Open3.popen3 @binary, 'r+' do |stdin, stdout, _, thr|
+    Open4.popen4 @binary, 'r+' do |pid, stdin, stdout, _|
       stdin.print map
       stdin.close
       result = IO.select([stdout], [], [], TIMEOUT)
       if result.nil?
-        puts "Timeout, sending INT..."
-        Process.kill('INT', thr.pid)
+        STDERR.print "[timeout]"
+        Process.kill('INT', pid)
         IO.select([stdout], [], [], WAITTIME)
-        Process.kill('KILL', thr.pid)
+        Process.kill('KILL', pid)
       end
-      stdout.gets
+      return (stdout.gets || "")
     end
   end
 end
