@@ -20,16 +20,17 @@ import Utils
 
 -- print the dijkstra graph
 cMAX = 2147483647
+
 maxSteps = 2000
 
-myPrint c x = 
-    let str = if x ==  cMAX then "X" else show x in 
+myPrint c x =
+    let str = if x ==  cMAX then "X" else show x in
     let str2 = if c then "\n" else "" in
     hPutStr stderr (str ++ str2)
 
-printCT c s = 
-   let (wx, wy) = getWorldSize s in 
-     flip mapM_ [1..wy] $ \y -> 
+printCT c s =
+   let (wx, wy) = getWorldSize s in
+     flip mapM_ [1..wy] $ \y ->
        flip mapM_ [1..wx] $ \x -> myPrint (x == wx) $ getCost c (x,  wy+1-y)
 
 f :: Int -> Move
@@ -41,42 +42,43 @@ f  _  = MDown
 
 -- where do you want to go today? specify it using p, this function will find a place
 chooseGoal s c p (x, y) r =
-      let l = sort $ clean [ ((getCost c (i, j)), (get s (i, j)), (i, j)) | i <- [1..x], j<- [1..y]] in 
+      let l = sort $ clean [ ((getCost c (i, j)), (get s (i, j)), (i, j)) | i <- [1..x], j<- [1..y]] in
       select l
-   where 
+   where
       select [] = (ORobot, r)
       -- take first one --- maybe all instead?
       select ((_,t,x):xs) = (t, x)
       clean = (filter p) . (filter (\(c, _, _) -> c < cMAX))
 
 -- find a goal and a path there
-findA s c r p = 
+findA s c r p =
       let (t, goal) = chooseGoal s c p (getWorldSize s) r in
       if t /= ORobot then findPath s c r goal else []
 
--- checks if the moves kills the robot      
-testMoves s m = 
+-- checks if the moves kills the robot
+testMoves s m =
     let s' = makeMoves s m in
     if (getCondition s') /= CLose then (True, s') else (False, s)
-    
+
 -- finds the moves that do not kill robot
 testMovesList _ s _ [] l = l
-testMovesList steps s prefix (m:ms) l = 
-   let (b, s') = testMoves s m in 
+testMovesList steps s prefix (m:ms) l =
+   let (b, s') = testMoves s m in
    let goodMoves = if b then l ++ [(s', steps, prefix++m)] else l in
    testMovesList steps s prefix ms goodMoves
 
 -- to complicated
 myFind _ [] = []
-myFind g ((p, m):xs) = if p==g then [m] else myFind g xs 
- 
+myFind g ((p, m):xs) = if p==g then [m] else myFind g xs
+
 getSomePossibilities s c r p m steps = all ++ [[m]]
    where
 -- several sequences of moves
       --find lambda!
       moves = findA s c r (\(_, _, fp) -> isLambda s fp || isLift s fp)
       -- probably wrong, but i am too tired / jmi
-      rocks = findMoveRocks s 
+
+      rocks = findMoveRocks s
       (t, goal) = chooseGoal s c (\(_, _, fp) -> let myRocks = filter (\(p', _) -> p'==fp) rocks in myRocks /= []) (getWorldSize s) r
       mak1 = if t /= ORobot then findPath s c r goal else []
       mak2 = if t /= ORobot then myFind goal rocks else []
@@ -88,27 +90,27 @@ getSomePossibilities s c r p m steps = all ++ [[m]]
       moves3 = findA s c r (\(_, _, fp) -> isEarth s fp)
       -- small probability of doing nothing
       all = if p then [] else [moves, moves2, movesComak, moves3]
- 
+
 -- run :: MVar Builder -> State -> [Move] -> [Int] -> IO (Int, [Move])
 -- main function
 goDijkstra (p:ps) (m:ms) queue (bestScore, bestMoves) (s,steps,prefix)  = do
       let r = getRobotPoint s
       let c = buildCostTable s r
-      printCT c s 
+      printCT c s
       let possibilities = filter (\x -> x /= [])  $ getSomePossibilities s c r p m steps
       let steps' = if length(possibilities) <= 1 then steps+50 else steps+1
       let moves = if possibilities == [] then [[MRight], [MLeft], [MDown], [MUp]] else possibilities
       let tMoves = testMovesList steps s prefix moves []
-      if tMoves == [] 
-          then return ((0, [MAbort]), queue) 
-          else 
+      if tMoves == []
+          then return ((0, [MAbort]), queue)
+          else
               let ((s', _, result):answers) =  testMovesList steps s prefix moves [] in
+
               let score = getScore s' in
-      --      dump s' 
+      --      dump s'
               if  (getCondition s')/= CNone || steps' > maxSteps
                  then return (((getScore s') , result), queue)
                  else goDijkstra ps ms  (queue ++ answers) (if bestScore>score then (bestScore, bestMoves) else (score , result)) (s',steps', result)
- 
 
 -- mietek's function
 handleInterrupt :: MVar Builder -> ThreadId -> IO ()
@@ -117,18 +119,35 @@ handleInterrupt resultV mainT = do
   toByteStringIO B.putStrLn result
   killThread mainT
 
-refine :: [(State, Int, [Move])] -> [(State, Int, [Move])]
-refine x = take maxSteps $ sortBy (\(s1, _, m1) -> (
-                       \(s2, _, m2) -> (
-                          if (getScore s1)-(length m1) < (getScore s2)+(length m2) then LT else GT
-                   ))) x
+-- <<<<<<< HEAD
+-- refine :: [(State, Int, [Move])] -> [(State, Int, [Move])]
+-- refine x = take maxSteps $ sortBy (\(s1, _, m1) -> (
+--                        \(s2, _, m2) -> (
+--                           if (getScore s1)-(length m1) < (getScore s2)+(length m2) then LT else GT
+--                    ))) x
+-- =======
+refine :: [(State,Int,[Move])] -> [(State,Int,[Move])]
+refine x = map getMin $ M.elems atSamePos where
+    atSamePos = foldr (\ a@(st,x,ms) acc ->
+                           let cpos = getRobotPoint s
+                           in if cpos `M.member` acc
+                               then M.update (Just .(a:)) cpos acc
+                              else M.insert cpos [a] acc) M.empty x
+    getMin = headSafe . sortBy criterium
+    headSafe [] = []
+    criterium (st1,_,ms1) (st2,_,ms2)
+        | length ms1 <= length ms2 = LT
+        | getCollectedLambdaCount s1 >= getCollectedLambdaCount s2 = LT
+        | getScore st1 >= getScore st2 = LT
+        | otherwise = GT
+>>>>>>> find best - first attempt
 
 -- initialize random values
 prepareRun :: Int -> Int -> [(State, Int, [Move])] -> [(Int, [Move])] -> IO [(Int, [Move])]
 prepareRun _ _ [] results = do return results
 prepareRun d n (x:xs) previousResults = do
   seed <- newStdGen
-  let ms  = map f $ randomRs (1, 5) seed 
+  let ms  = map f $ randomRs (1, 5) seed
   let ps  = map (\x -> x == 1) $ randomRs (1, n) seed
   (result, rest) <- goDijkstra ps ms [] (0, [MAbort]) x
   let rest' = refine $ xs ++ rest
@@ -138,7 +157,7 @@ prepareRun d n (x:xs) previousResults = do
       else prepareRun (d-1) n rest' $ result:previousResults
 
 data Verbosity = MoveSequence | Dump deriving (Eq, Ord, Show)
-  
+
 main :: IO ()
 main = do
 --  resultV <- newMVar mempty
