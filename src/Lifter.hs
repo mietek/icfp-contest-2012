@@ -52,12 +52,31 @@ testMovesList s (m:ms) = let (b, s') = testMoves s m in if b then (b, s', m) els
 myFind _ [] = []
 myFind g ((p, m):xs) = if p==g then [m] else myFind g xs 
  
+getSomePossibilities s c r p m steps = all ++ [[m], [MRight], [MLeft], [MDown], [MUp]]
+   where
+-- several sequences of moves
+      --find lambda!
+      moves = findA s c r (\(fc, ft, fp) -> isLambda s fp || isLift s fp)
+      -- probably wrong, but i am too tired / jmi
+      rocks = findMoveRocks s 
+      (t, goal) = chooseGoal s c (\(fc, ft, fp) -> let myRocks = filter (\(p, m) -> p==fp) rocks in myRocks /= []) (getWorldSize s) r
+      mak1 = if t /= ORobot then findPath s c r goal else []
+      mak2 = if t /= ORobot then myFind goal rocks else []
+      movesComak = mak1++mak2
+      -- /probably wrong
+      --find trampolina! hop hop
+      moves2 = findA s c r (\(fc, ft, fp) -> isTrampoline s fp || isRazor s fp)
+      -- find earth!
+      moves3 = findA s c r (\(fc, ft, fp) -> isEarth s fp)
+      -- small probability of doing nothing
+      all = if p then [] else [moves, moves2, movesComak, moves3]
+      -- some default moves
  
 -- run :: MVar Builder -> State -> [Move] -> [Int] -> IO (Int, [Move])
 -- main function
-run s0 ps ms = goDijkstra s0 ps ms []
+run s0 ps ms = goDijkstra s0 ps ms 0 []
   where
-    goDijkstra s (p:ps) (m:ms) prefix = do
+    goDijkstra s (p:ps) (m:ms) steps prefix = do
       let r = getRobotPoint s
       let (wx, wy) = getWorldSize s
       let c = buildCostTable s r
@@ -65,31 +84,15 @@ run s0 ps ms = goDijkstra s0 ps ms []
 --        flip mapM_ [1..wx] $ \x -> myPrint (x == wx) $ getCost c (x,  wy+1-y)
 -- several sequences of moves
         --find lambda!
-      let moves = findA s c r (\(fc, ft, fp) -> isLambda s fp || isLift s fp)
-      -- probably wrong, but i am to tired / jmi
-      let rocks = findMoveRocks s 
-      let (t, goal) = chooseGoal s c (\(fc, ft, fp) -> let myRocks = filter (\(p, m) -> p==fp) rocks in myRocks /= []) (getWorldSize s) r
-      let mak1 = if t /= ORobot then findPath s c r goal else []
-      let mak2 = if t /= ORobot then myFind goal rocks else []
-      let movesComak = mak1++mak2
-      -- /probably wrong
-      --find trampolina! hop hop
-      let moves2 = findA s c r (\(fc, ft, fp) -> isTrampoline s fp || isRazor s fp)
-      
-      -- find earth!
-      let moves3 = findA s c r (\(fc, ft, fp) -> isEarth s fp)
-      -- small probability of doing nothing
-      let all = if (length prefix) < p && (p `mod` 20 == 0) then [] else [moves, moves2, movesComak, moves3]
       -- some default moves
-      let (b, s', answer) =  testMovesList s $ filter (\x -> x /= [])  $ all ++ [[m], [MRight], [MLeft], [MDown], [MUp]]
---      dump s' 
+      let possibilities = filter (\x -> x /= [])  $ getSomePossibilities s c r p m steps
+      let steps' = if length(head possibilities) == 1 then steps+5 else steps+1
+      let (b, s', answer) =  testMovesList s possibilities
+      --      dump s' 
       let result = prefix ++ answer
---      print result
---      hFlush stdout
-      -- CHANGE 153! use deadlock detection!!
-      if  (getCondition s')/= CNone || (moves == [] && length(result)>153) 
+      if  (getCondition s')/= CNone || steps' > 1000
         then return ((getScore s') , result) 
-        else goDijkstra s' ps ms result
+        else goDijkstra s' ps ms steps' result
 --      modifyMVar_ resultV $ \result ->
 --        return (result `mappend` fromString answer)
 --      goRandom s' ms (prefix++answer)
@@ -104,7 +107,7 @@ handleInterrupt resultV mainT = do
 prepareRun n input = do
   seed <- newStdGen
   let ms  = randomRs (1, 4) seed 
-  let ps  = randomRs (0, n) seed
+  let ps  = map (\x -> if x == 1 then True else False) $ randomRs (1, n) seed
   result <- run input ps $ map f ms
   return result
   where
@@ -123,7 +126,7 @@ main = do
 --  mainT <- myThreadId
 --  _ <- installHandler sigINT (Catch (handleInterrupt resultV mainT)) Nothing
   input <- B.getContents
-  let runs = [prepareRun (100-i) (new input) | i<-([1..400]::[Int])]
+  let runs = [prepareRun i (new input) | i<-([1..400]::[Int])]
   -- TODO: Store results one by one in resultV
   results <- fmap (sortBy (flip compare)) (sequence runs)
   let (maxScore, maxMoves) = head results
