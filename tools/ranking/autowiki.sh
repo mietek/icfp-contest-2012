@@ -5,8 +5,6 @@ TIMEOUT=40
 BASEDIR=`dirname $0`
 TOPDIR=$BASEDIR/../..
 MAPS=`cat $BASEDIR/maps`
-LAST_COMMIT_FILE=~/.icfp2012.last_commit
-ABORT_FILE=~/.icfp2012.autowiki.abort
 
 if ! [ -z "$LIFTER" ]; then
   LIFTER="-l $LIFTER"
@@ -15,6 +13,9 @@ fi
 WIKIDIR=~/icfp2012.wiki
 WIKIPAGENAME=${WIKIPAGENAME-Scores}
 WIKIPAGE=$WIKIDIR/$WIKIPAGENAME.md
+
+LAST_COMMIT_FILE=~/.icfp2012.autowiki.$WIKIPAGENAME.last_commit
+ABORT_FILE=~/.icfp2012.autowiki.$WIKIPAGENAME.abort
 
 short_commit() {
   echo $current_commit | head -c10
