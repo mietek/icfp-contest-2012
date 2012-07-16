@@ -11,11 +11,11 @@ import VM
 getEntrances :: State -> Point -> [(Point, Move)]
 getEntrances s pt@(x, y) = remote ++ local
   where
-    local = catMaybes $
-      [if isEnterable s (x + 1, y) then Just ((x + 1, y), MLeft)  else Nothing,
-       if isEnterable s (x - 1, y) then Just ((x - 1, y), MRight) else Nothing,
-       if isEnterable s (x, y - 1) then Just ((x, y - 1), MUp)    else Nothing,
-       if isEnterable s (x, y + 1) then Just ((x, y + 1), MDown)  else Nothing]
+    makeMove m = let rm = reverseMove m
+                 in if isEnterable s (evalMoves rm pt)
+                     then Just (imagineStep s m pt,rm)
+                    else Nothing
+    local = catMaybes $ map makeMove [MRight,MLeft,MUp,MDown]
     remote =
       if isTarget s pt
         then concatMap (getEntrances s) (getTrampolinePointsWithTarget s (fromJust (getTarget s pt)))
