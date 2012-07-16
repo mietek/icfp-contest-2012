@@ -61,7 +61,7 @@ evalMoves MAbort (x,y) = undefined -- halt ?
 
 
 canMove :: State -> Point -> Bool
-canMove s p =any (isEnterable s . flip evalMoves p) moves where
+canMove s p =any (uncurry (&&) . (isEnterable s *** isSafe s). flip evalMoves p) moves where
     moves = [MDown,MLeft,MRight,MUp]
 
 willDeadLock :: State -> Move -> Point -> Bool
