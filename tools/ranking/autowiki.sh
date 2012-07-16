@@ -15,8 +15,7 @@ short_commit() {
 }
 
 add_header() {
-  perl -i -pe "m@>([^<]*)</th></tr>@;
-    s@>([^<]*)</th></tr>@>\$1</th><th>$1</th></tr>@ unless \$1 eq $1;" $WIKIPAGE
+  perl -i -pe "m@>([^<]*)</th></tr>@;s@>([^<]*)</th></tr>@>\$1</th><th>$1</th></tr>@ unless \$1 eq \"$1\";" $WIKIPAGE
 }
 
 record_score() {
@@ -25,7 +24,7 @@ record_score() {
   pushd $WIKIDIR
   git pull --rebase
   
-  perl -i -pe "s@($map.*)</tr>@\$1<td>$score</td></tr>@" $WIKIPAGE
+  perl -i -pe "s@($map<.*)</tr>@\$1<td>$score</td></tr>@" $WIKIPAGE
   git add $WIKIPAGE
   git commit -a -m "Score for $map of $current_commit"
   git push
