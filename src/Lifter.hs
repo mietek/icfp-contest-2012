@@ -15,6 +15,7 @@ import System.IO (hPutStrLn, stderr)
 import System.Random
 import VM
 
+type Predicate = (Cost, Object, Point) -> Bool
 -- print the dijkstra graph
 cMAX = 2147483647
 myPrint c x = 
@@ -33,9 +34,14 @@ chooseGoal s c p (x, y) r =
       clean = (filter p) . (filter (\(c, _, _) -> c < cMAX))
 
 -- find a goal and a path there
-findA s c r p = 
-      let (t, goal) = chooseGoal s c p (getWorldSize s) r in
-      if t /= ORobot then findPath s c r goal else []
+findGoalWithPath :: State -> CostTable -> Point -> Predicate -> [Move]
+findGoalWithPath state costs robot predicate = 
+  let 
+    range = getWorldSize state
+    (object, goal) = 
+      chooseGoal state costs predicate range robot
+  in
+    if object /= ORobot then findPath state costs robot goal else []
 
 -- checks if the moves kills the robot      
 testMoves s m = 
@@ -63,7 +69,7 @@ run s0 ps ms = goDijkstra s0 ps ms []
 --        flip mapM_ [1..wx] $ \x -> myPrint (x == wx) $ getCost c (x,  wy+1-y)
 -- several sequences of moves
         --find lambda!
-      let moves = findA s c r (\(fc, ft, fp) -> isLambda s fp || isLift s fp)
+      let moves = findGoalWithPath s c r (\(fc, ft, fp) -> isLambda s fp || isLift s fp)
       -- probably wrong, but i am to tired / jmi
       let rocks = findMoveRocks s 
       let (t, goal) = chooseGoal s c (\(fc, ft, fp) -> let myRocks = filter (\(p, m) -> p==fp) rocks in myRocks /= []) (getWorldSize s) r
@@ -72,10 +78,10 @@ run s0 ps ms = goDijkstra s0 ps ms []
       let movesComak = mak1++mak2
       -- /probably wrong
       --find trampolina! hop hop
-      let moves2 = findA s c r (\(fc, ft, fp) -> isTrampoline s fp || isRazor s fp)
+      let moves2 = findGoalWithPath s c r (\(fc, ft, fp) -> isTrampoline s fp || isRazor s fp)
       
       -- find earth!
-      let moves3 = findA s c r (\(fc, ft, fp) -> isEarth s fp)
+      let moves3 = findGoalWithPath s c r (\(fc, ft, fp) -> isEarth s fp)
       -- small probability of doing nothing
       let all = if (length prefix) < p && (p `mod` 20 == 0) then [] else [moves, moves2, movesComak, moves3]
       -- some default moves
@@ -99,6 +105,7 @@ handleInterrupt resultV mainT = do
   killThread mainT
 
 -- todo: find cycles larger than one move
+pruneCycles :: State -> [Move] -> [Move]
 pruneCycles = pruneWaits
 
 pruneWaits :: State -> [Move] -> [Move]
@@ -121,7 +128,6 @@ prepareRun n input = do
        intToMove 2 = MLeft
        intToMove 3 = MUp
        intToMove  _  = MDown
-
 
 data Verbosity = MoveSequence | Dump deriving (Eq, Ord, Show)
   
