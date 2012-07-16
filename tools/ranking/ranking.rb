@@ -16,7 +16,7 @@ def locate_map map
 end
 
 class Lifter
-  TIMEOUT=10
+  TIMEOUT=150
   WAITTIME=10
 
   def initialize binary
@@ -41,11 +41,20 @@ end
 
 lifter = Lifter.new lifter
 
-maps=['contest1']
+def rank_score ranking, score
+  rank = 1
+  ranking.each do |xs|
+    sc, count = xs
+    rank += count if sc > score
+  end
+  rank
+end
 
-maps.each do |map|
-  puts "Evaluating #{map}..."
-  map = File.read(locate_map map)
-  soln = lifter.run map
-  puts soln
+maps.sort.each do |map|
+  print("%12s " % map)
+  map_file = locate_map map
+  soln = (lifter.run File.read(map_file)).strip
+  score = `echo #{soln} | #{validator} -v #{map_file}`.to_i
+  rank = rank_score ranking[map], score
+  puts("%5d (rank %4d)" % [score, rank])
 end

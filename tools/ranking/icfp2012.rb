@@ -3,8 +3,7 @@
 module ICFP2012
   module WebRanking
     CACHEFILE = "#{ENV['HOME']}/.icfp2012.webrank"
-#    URL = 'http://www.undecidable.org.uk/~edwin/cgi-bin/weblifter.cgi?standings=1'
-    URL = '/tmp/standings'
+    URL = 'http://www.undecidable.org.uk/~edwin/cgi-bin/weblifter.cgi?standings=1'
     
     def self.get
       self.update unless File.exists? CACHEFILE
