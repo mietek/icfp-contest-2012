@@ -43,11 +43,11 @@ while true; do
   current_commit=`git rev-parse HEAD`
   if [ "$last_commit" != "$current_commit" ]; then
     echo "New commit, checking build..."
-    if make -C $TOPDIR -q; then
+    if make -C $TOPDIR/evolve -q; then
       echo "Nothing changed."
     else
       echo "New build, building..."
-      make -C $TOPDIR
+      make -C $TOPDIR/evolve
       add_header `short_commit`
       for map in $MAPS; do
         if [ -e $ABORT_FILE ]; then
