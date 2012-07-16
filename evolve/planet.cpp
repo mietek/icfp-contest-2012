@@ -1,6 +1,7 @@
 #include "planet.h"
 
 #include <algorithm>
+#include <iostream>
 
 #define POPULATION_SIZE 100
 
@@ -20,5 +21,5 @@ Planet::Planet(const VM &vm)
 
 const std::string &Planet::best_moves() const
 {
-  return _population[POPULATION_SIZE - 1].moves();
+  return _population[0].moves();
 }
