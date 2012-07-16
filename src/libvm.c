@@ -101,6 +101,7 @@ void dump(const struct state *s) {
     DEBUG_LOG("condition                  = '%c'\n", s->condition);
     DEBUG_LOG("world_length               = %ld\n", s->world_length);
     printf("%ld\n%s", s->score, s->world);
+    DEBUG_LOG("\n");
 }
 
 
@@ -582,6 +583,7 @@ void clear_similar_trampolines(struct state *s, char trampoline) {
 void execute_move(struct state *s, char move) {
     DEBUG_ASSERT(s && is_valid_move(move));
     DEBUG_ASSERT(s->condition == C_NONE);
+    DEBUG_LOG("executing move '%c'\n", move);
     if (move == M_LEFT || move == M_RIGHT || move == M_UP || move == M_DOWN) {
         long x, y;
         char object;
@@ -629,7 +631,7 @@ void execute_move(struct state *s, char move) {
             move_robot(s, x, y);
             clear_similar_trampolines(s, object);
         } else
-            DEBUG_LOG("robot attempted invalid move '%c' from (%ld, %ld) to (%ld, %ld) which is '%c'\n", move, s->robot_x, s->robot_y, x, y, object);
+            DEBUG_LOG("robot bumped into '%c' at (%ld, %ld)\n", object, x, y);
         s->move_count++;
         s->score--;
     } else if (move == M_SHAVE) {
@@ -681,6 +683,8 @@ void grow_beard(struct state *s, const struct state *s0, long x, long y) {
 void drop_rock(struct state *s, const struct state *s0, char rock, long x, long y, bool ignore_robot) {
     DEBUG_ASSERT(s && s0 && is_rock_object(rock));
     char below;
+    if (s->condition != C_NONE)
+        return;
     below = get(s0, x, y - 1);
     if (!ignore_robot && below == O_ROBOT) {
         s->score -= s->collected_lambda_count * 25;
@@ -729,6 +733,8 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
             }
         }
     }
+    if (s->condition != C_NONE)
+        return;
     if (!ignore_robot && s0->robot_y <= s->water_level) {
         DEBUG_LOG("robot is underwater\n");
         s->used_robot_waterproofing++;
