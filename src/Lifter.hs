@@ -167,7 +167,7 @@ main = do
   rawInput <- B.getContents
   let input = new rawInput
 --  let runs = [prepareRun i input | i<-([1..400]::[Int])]
-  runs <- prepareRun 1000 1000 [(input, 0, [])] []
+  runs <- prepareRun 5000 500 [(input, 0, [])] []
   -- TODO: Store results one by one in resultV
   let results = sortBy (flip compare) runs
   let (_, maxMoves) = head results
