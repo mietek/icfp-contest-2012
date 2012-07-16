@@ -61,8 +61,9 @@ evalMoves MAbort (x,y) = undefined -- halt ?
 
 
 canMove :: State -> Point -> Bool
-canMove s p =any (uncurry (&&) . (isEnterable s *** isSafe s). flip evalMoves p) moves where
+canMove s p =any (isEnterAndSave . flip evalMoves p) moves where
     moves = [MDown,MLeft,MRight,MUp]
+    isEnterAndSave p = isEnterable s p && isSafe s p
 
 willDeadLock :: State -> Move -> Point -> Bool
 willDeadLock s m p = canMove s' $ getRobotPoint s' where
