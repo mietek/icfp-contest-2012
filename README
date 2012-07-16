@@ -1,2 +1,115 @@
 The Church of the Least Fixed Point
 ICFP Programming Contest 2012
+
+TODO: Team members
+
+
+# Instructions
+
+## Building
+
+    $ make
+
+
+## Packaging
+
+    $ make tarball
+
+
+## Running lifter
+
+    $ bin/lifter < MAP_FILE
+
+...or:
+
+    $ bin/debuglifter < MAP_FILE
+
+
+## Running validator
+
+    $ echo MOVE_SEQUENCE | bin/validator MAP_FILE
+
+...or:
+
+    $ echo MOVE_SEQUENCE | bin/debugvalidator MAP_FILE
+
+You can specify the following flags:
+    -v      Just the score
+    -vv     Dump state once after all moves
+    -vvv    Dump state after every move
+
+
+# Using VM functions interactively
+
+    $ ghci bin/libvm.o src/VM.hs
+
+...or:
+
+    $ ghci bin/libdebugvm.o src/VM.hs
+
+...then:
+
+    > s <- newFromFile "MAP_FILE"
+    > dump s
+    > dump (makeMoves_ s "MOVE_SEQUENCE")
+    > print (getRobotPoint s)
+    > print (get s (getRobotPoint s))
+
+You can use the following functions:
+
+    new :: ByteString -> State
+    newFromFile :: String -> IO State
+    (==) :: State -> State -> Bool
+
+    dump :: State -> IO ()
+
+    getWorldSize :: State -> Size
+    getRobotPoint :: State -> Point
+    getLiftPoint :: State -> Point
+    getWaterLevel :: State -> Int
+    getFloodingRate :: State -> Int
+    getRobotWaterproofing :: State -> Int
+    getUsedRobotWaterproofing :: State -> Int
+    getBeardGrowthRate :: State -> Int
+    getRazorCount :: State -> Int
+    getLambdaCount :: State -> Int
+    getCollectedLambdaCount :: State -> Int
+    getTrampolineCount :: State -> Int
+    getTrampolinePoint_ :: State -> Char -> Maybe Point
+    getTrampolinePoint :: State -> Trampoline -> Maybe Point
+    getTargetPoint_ :: State -> Char -> Maybe Point
+    getTargetPoint :: State -> Target -> Maybe Point
+    getTrampolineTarget_ :: State -> Char -> Maybe Char
+    getTrampolineTarget :: State -> Trampoline -> Maybe Target
+    getMoveCount :: State -> Int
+    getScore :: State -> Int
+    getCondition :: State -> Condition
+    get :: State -> Point -> Object
+
+    isRobot :: State -> Point -> Bool
+    isWall :: State -> Point -> Bool
+    isRock :: State -> Point -> Bool
+    isLambda :: State -> Point -> Bool
+    isLift :: State -> Point -> Bool
+    isEarth :: State -> Point -> Bool
+    isEmpty :: State -> Point -> Bool
+    isBeard :: State -> Point -> Bool
+    isRazor :: State -> Point -> Bool
+    isTrampoline :: State -> Point -> Bool
+    isTarget :: State -> Point -> Bool
+
+    makeOneMove_ :: State -> Char -> State
+    makeOneMove :: State -> Move -> State
+    makeMoves_ :: State -> String -> State
+    makeMoves :: State -> [Move] -> State
+
+    updateWorldIgnoringRobot :: State -> State
+    imagineRobotAt :: State -> Point -> State
+    getStep :: State -> Move -> Point
+    imagineStep :: State -> Point -> Move -> Point
+    isEnterable :: State -> Point -> Bool
+    isSafe :: State -> Point -> Bool
+
+    buildCostTable :: State -> Point -> CostTable
+    getCost :: CostTable -> Point -> Cost
+    getDist :: CostTable -> Point -> Cost

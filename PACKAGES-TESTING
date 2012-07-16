@@ -1,0 +1,3 @@
+build-essential
+haskell-platform
+libghc-blaze-builder-dev

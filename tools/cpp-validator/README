@@ -1,0 +1,15 @@
+== Compiling
+
+make
+
+== Running
+
+echo "<commands>" | ./lambdamine <map>
+
+echo "<commands>" | ./lambdamine -vv <map>
+
+In not -vv mode it prints the current map every cycle.
+In case of water present, it shows it as tilde [~] at the end of the line.
+
+The input is smart in that it disregards newlines, which enables interactive running -- without -vv, 
+you can issue commands and terminate them with newlines to get an updated map.
