@@ -13,7 +13,7 @@ import System.Environment (getArgs)
 import System.IO (hPutStrLn, hPutStr, stderr)
 import System.IO (hPrint)
 import System.Random (newStdGen, randomRs)
-
+import qualified Data.Map as M
 import VM
 import Utils
 
@@ -125,7 +125,7 @@ refine x = map getMin $ M.elems atSamePos where
     headSafe [] = []
     criterium (st1,_,ms1) (st2,_,ms2)
         | length ms1 <= length ms2 = LT
-        | getCollectedLambdaCount s1 >= getCollectedLambdaCount s2 = LT
+        | getCollectedLambdaCount st1 >= getCollectedLambdaCount st2 = LT
         | getScore st1 >= getScore st2 = LT
         | otherwise = GT
 
