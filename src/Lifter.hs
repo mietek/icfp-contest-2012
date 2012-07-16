@@ -127,14 +127,13 @@ handleInterrupt resultV mainT = do
 --                    ))) x
 -- =======
 refine :: [(State,Int,[Move])] -> [(State,Int,[Move])]
-refine x = map getMin $ M.elems atSamePos where
+refine = map getMin . M.elems . atSamePos where
     atSamePos = foldr (\ a@(st,x,ms) acc ->
-                           let cpos = getRobotPoint s
+                           let cpos = getRobotPoint st
                            in if cpos `M.member` acc
                                then M.update (Just .(a:)) cpos acc
-                              else M.insert cpos [a] acc) M.empty x
-    getMin = headSafe . sortBy criterium
-    headSafe [] = []
+                              else M.insert cpos [a] acc) M.empty
+    getMin = head . sortBy criterium
     criterium (st1,_,ms1) (st2,_,ms2)
         | length ms1 <= length ms2 = LT
         | getCollectedLambdaCount st1 >= getCollectedLambdaCount st2 = LT
