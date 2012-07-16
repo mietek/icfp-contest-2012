@@ -89,7 +89,7 @@ getSomePossibilities s c r p m steps = all ++ [[m]]
  
 -- run :: MVar Builder -> State -> [Move] -> [Int] -> IO (Int, [Move])
 -- main function
-goDijkstra (p:ps) (m:ms) queue (s,steps,prefix)  = do
+goDijkstra (p:ps) (m:ms) queue (bestScore, bestMoves) (s,steps,prefix)  = do
       let r = getRobotPoint s
       let c = buildCostTable s r
       printCT c s 
@@ -101,10 +101,11 @@ goDijkstra (p:ps) (m:ms) queue (s,steps,prefix)  = do
           then return ((0, [MAbort]), queue) 
           else 
               let ((s', _, result):answers) =  testMovesList steps s prefix moves [] in
+              let score = getScore s' in
       --      dump s' 
               if  (getCondition s')/= CNone || steps' > 1000
                  then return (((getScore s') , result), queue)
-                 else goDijkstra ps ms  (queue ++ answers) (s',steps', result)
+                 else goDijkstra ps ms  (queue ++ answers) (if bestScore>score then (bestScore, bestMoves) else (score , result)) (s',steps', result)
  
 
 -- mietek's function
@@ -123,7 +124,7 @@ prepareRun d n (x:xs) previousResults = do
   seed <- newStdGen
   let ms  = map f $ randomRs (1, 5) seed 
   let ps  = map (\x -> x == 1) $ randomRs (1, n) seed
-  (result, rest) <- goDijkstra ps ms [] x
+  (result, rest) <- goDijkstra ps ms [] (0, [MAbort]) x
   let rest' = refine $ xs ++ rest
 --  print $ length rest'
   if d == 0 || rest' == []
@@ -140,7 +141,7 @@ main = do
   rawInput <- B.getContents
   let input = new rawInput
 --  let runs = [prepareRun i input | i<-([1..400]::[Int])]
-  runs <- prepareRun 1000 1000 [(input, 0, [])] []
+  runs <- prepareRun 100 1000 [(input, 0, [])] []
   -- TODO: Store results one by one in resultV
   let results = sortBy (flip compare) runs
   let (maxScore, maxMoves) = head results
