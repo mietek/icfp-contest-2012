@@ -721,6 +721,10 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
         s->water_level++;
         DEBUG_LOG("water level increased to %ld\n", s->water_level);
     }
+    if (s->move_count == s->world_w * s->world_h) {
+        s->condition = C_ABORT;
+        DEBUG_LOG("move limit reached\n");
+    }
 }
 
 long calculate_cost(const struct state *s, long step_x, long step_y, long stage) {
