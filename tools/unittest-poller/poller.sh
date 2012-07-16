@@ -23,13 +23,16 @@ while true; do
     MAPNAME=$MAP
     MAP=$TOPDIR/tests/$MAPNAME.map
     git add $TOPDIR/unittests
-    git commit -m"Automated test (successful)."
-    git pull
+    INNAME=`basename $NEWIN .in`
     if run_test $NEWIN; then
       echo "New test succeeds."
+      git commit -m"Automated test, $MAPNAME/$INNAME (successful)."
+      git pull
     else
       echo "New test fails."
-      git push origin autotest
+      git commit -m"Automated test, $MAPNAME/$INNAME (failure)."
+      git pull
+      git push -f origin autotest
     fi
     echo Sleeping for $THROTTLE seconds...
     sleep $THROTTLE
