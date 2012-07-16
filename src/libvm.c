@@ -353,6 +353,7 @@ long safe_get_dist(const struct cost_table *ct, long x, long y) {
     return get_dist(ct, x, y);
 }
 
+
 // ---------------------------------------------------------------------------
 // Private
 // ---------------------------------------------------------------------------
@@ -383,8 +384,8 @@ enum {
     K_FLOODING_RATE,
     K_ROBOT_WATERPROOFING,
     K_TRAMPOLINE,
-    K_TRAMPOLINE_TARGET_KEYWORD,
     K_TRAMPOLINE_TARGET,
+    K_TARGET,
     K_BEARD_GROWTH_RATE,
     K_RAZOR_COUNT,
     K_INVALID
@@ -442,10 +443,10 @@ void copy_input_metadata(struct state *s, long input_length, const char *input) 
                     key = K_NONE;
                 } else if (key == K_TRAMPOLINE) {
                     trampoline_i = trampoline_to_index(*token);
-                    key = K_TRAMPOLINE_TARGET_KEYWORD;
-                } else if (key == K_TRAMPOLINE_TARGET_KEYWORD)
                     key = K_TRAMPOLINE_TARGET;
-                else if (key == K_TRAMPOLINE_TARGET) {
+                } else if (key == K_TRAMPOLINE_TARGET)
+                    key = K_TARGET;
+                else if (key == K_TARGET) {
                     target_i = target_to_index(*token);
                     s->trampoline_index_to_target_index[trampoline_i] = target_i;
                     s->trampoline_count++;

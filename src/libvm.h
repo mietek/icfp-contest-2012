@@ -2,36 +2,36 @@
 // Public
 // ---------------------------------------------------------------------------
 
-#define O_ROBOT                   'R'
-#define O_WALL                    '#'
-#define O_ROCK                    '*'
-#define O_LAMBDA                  '\\'
-#define O_LIFT_CLOSED             'L'
-#define O_LIFT_OPEN               'O'
-#define O_EARTH                   '.'
-#define O_EMPTY                   ' '
-#define O_BEARD                   'W'
-#define O_RAZOR                   '!'
-#define O_HO_ROCK                 '@'
+#define O_ROBOT            'R'
+#define O_WALL             '#'
+#define O_ROCK             '*'
+#define O_LAMBDA           '\\'
+#define O_LIFT_CLOSED      'L'
+#define O_LIFT_OPEN        'O'
+#define O_EARTH            '.'
+#define O_EMPTY            ' '
+#define O_BEARD            'W'
+#define O_RAZOR            '!'
+#define O_HO_ROCK          '@'
 
-#define O_FIRST_TRAMPOLINE        'A'
-#define O_LAST_TRAMPOLINE         'I'
+#define O_FIRST_TRAMPOLINE 'A'
+#define O_LAST_TRAMPOLINE  'I'
 
-#define O_FIRST_TRAMPOLINE_TARGET '1'
-#define O_LAST_TRAMPOLINE_TARGET  '9'
+#define O_FIRST_TARGET     '1'
+#define O_LAST_TARGET      '9'
 
-#define M_LEFT                    'L'
-#define M_RIGHT                   'R'
-#define M_UP                      'U'
-#define M_DOWN                    'D'
-#define M_WAIT                    'W'
-#define M_ABORT                   'A'
-#define M_SHAVE                   'S'
+#define M_LEFT             'L'
+#define M_RIGHT            'R'
+#define M_UP               'U'
+#define M_DOWN             'D'
+#define M_WAIT             'W'
+#define M_ABORT            'A'
+#define M_SHAVE            'S'
 
-#define C_NONE                    'N'
-#define C_WIN                     'W'
-#define C_LOSE                    'L'
-#define C_ABORT                   'A'
+#define C_NONE             'N'
+#define C_WIN              'W'
+#define C_LOSE             'L'
+#define C_ABORT            'A'
 
 
 struct state *new(long input_length, const char *input);
@@ -161,7 +161,7 @@ inline bool is_valid_trampoline(char trampoline) {
 }
 
 inline bool is_valid_target(char target) {
-    return target >= O_FIRST_TRAMPOLINE_TARGET && target <= O_LAST_TRAMPOLINE_TARGET;
+    return target >= O_FIRST_TARGET && target <= O_LAST_TARGET;
 }
 
 
@@ -216,12 +216,12 @@ inline long trampoline_to_index(char trampoline) {
 
 
 inline char index_to_target(long i) {
-    return O_FIRST_TRAMPOLINE_TARGET + i - 1;
+    return O_FIRST_TARGET + i - 1;
 }
 
 inline long target_to_index(char target) {
     DEBUG_ASSERT(is_valid_target(target));
-    return target - O_FIRST_TRAMPOLINE_TARGET + 1;
+    return target - O_FIRST_TARGET + 1;
 }
 
 
@@ -245,14 +245,14 @@ inline void put_cost(struct cost_table *ct, long x, long y, long cost) {
     ct->world_cost[point_to_cost_table_index(ct, x, y)] = cost;
 }
 
-inline void put_dist(struct cost_table *ct, long x, long y, long dist) {
-    DEBUG_ASSERT(ct && is_within_world(ct->world_w, ct->world_h, x, y));
-    ct->world_cost[ct->world_length + point_to_cost_table_index(ct, x, y)] = dist;
-}
-
 inline long get_dist(const struct cost_table *ct, long x, long y) {
     DEBUG_ASSERT(ct && is_within_world(ct->world_w, ct->world_h, x, y));
     return ct->world_cost[ct->world_length + point_to_cost_table_index(ct, x, y)];
+}
+
+inline void put_dist(struct cost_table *ct, long x, long y, long dist) {
+    DEBUG_ASSERT(ct && is_within_world(ct->world_w, ct->world_h, x, y));
+    ct->world_cost[ct->world_length + point_to_cost_table_index(ct, x, y)] = dist;
 }
 
 
