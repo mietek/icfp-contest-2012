@@ -154,6 +154,7 @@ data Move =
   | MDown
   | MWait
   | MAbort
+  | MShave
   deriving (Enum, Eq, Ord)
 
 instance Show Move where
@@ -166,6 +167,7 @@ fromMove MUp    = 'U'
 fromMove MDown  = 'D'
 fromMove MWait  = 'W'
 fromMove MAbort = 'A'
+fromMove MShave = 'S'
 
 reverseMove :: Move -> Move
 reverseMove MLeft  = MRight
