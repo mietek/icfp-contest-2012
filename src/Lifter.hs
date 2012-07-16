@@ -141,7 +141,7 @@ refine = map getMin . M.elems . atSamePos where
         | length ms1 <= length ms2 = LT
         | getRobotHealt st1 >= getRobotHealt st2 = LT
         | otherwise = GT
->>>>>>> find best - first attempt
+
 
 -- initialize random values
 prepareRun :: Int -> Int -> [(State, Int, [Move])] -> [(Int, [Move])] -> IO [(Int, [Move])]
