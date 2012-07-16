@@ -265,11 +265,15 @@ void teleport_robot(struct state *s, long x, long y);
 void move_robot(struct state *s, long x, long y);
 void collect_lambda(struct state *s);
 void collect_razor(struct state *s);
-void shave_surroundings(struct state *s, long x, long y);
 void clear_similar_trampolines(struct state *s, char trampoline);
+
 void execute_move(struct state *s, char move);
-void update_world(struct state *s, const struct state *t, bool ignore_robot);
+
+void shave_beard(struct state *s, long x, long y);
+void grow_beard(struct state *s, const struct state *s0, long x, long y);
 
 void drop_rock(struct state *s, const struct state *s0, char rock, long x, long y, bool ignore_robot);
+void update_world(struct state *s, const struct state *t, bool ignore_robot);
+
 long calculate_cost(const struct state *s, long step_x, long step_y, long stage);
 void run_dijkstra(struct cost_table *ct, const struct state *s);

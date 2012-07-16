@@ -169,7 +169,7 @@ long get_trampoline_count(const struct state *s) {
 
 bool get_trampoline_point(const struct state *s, char trampoline, long *out_trampoline_x, long *out_trampoline_y) {
     DEBUG_ASSERT(s && is_valid_trampoline(trampoline) && out_trampoline_x && out_trampoline_y);
-    int i = trampoline_to_index(trampoline);
+    long i = trampoline_to_index(trampoline);
     if (is_valid_point(s->trampoline_x[i], s->trampoline_y[i])) {
         *out_trampoline_x = s->trampoline_x[i];
         *out_trampoline_y = s->trampoline_y[i];
@@ -180,7 +180,7 @@ bool get_trampoline_point(const struct state *s, char trampoline, long *out_tram
 
 bool get_target_point(const struct state *s, char target, long *out_target_x, long *out_target_y) {
     DEBUG_ASSERT(s && is_valid_target(target) && out_target_x && out_target_y);
-    int i = target_to_index(target);
+    long i = target_to_index(target);
     if (is_valid_point(s->target_x[i], s->target_y[i])) {
         *out_target_x = s->target_x[i];
         *out_target_y = s->target_y[i];
@@ -191,7 +191,7 @@ bool get_target_point(const struct state *s, char target, long *out_target_x, lo
 
 bool get_trampoline_target(const struct state *s, char trampoline, char *out_target) {
     DEBUG_ASSERT(s && is_valid_trampoline(trampoline));
-    int i = trampoline_to_index(trampoline);
+    long i = trampoline_to_index(trampoline);
     if (is_valid_point(s->trampoline_x[i], s->trampoline_y[i])) {
         *out_target = index_to_target(s->trampoline_index_to_target_index[i]);
         return true;
@@ -532,21 +532,6 @@ void move_robot(struct state *s, long x, long y) {
     }
 }
 
-void shave_surroundings(struct state *s, long x, long y) {
-    DEBUG_ASSERT(s);
-    if (s->razor_count) {
-        int i, j;
-        for (i = -1; i <= 1; i++) {
-            for (j = -1; j <= 1; j++) {
-                if (get(s, x + i, y + j) == O_BEARD)
-                    put(s, x + i, y + j, O_EMPTY);
-            }
-        }
-        s->razor_count--;
-    }
-    DEBUG_LOG("robot shaved the surroundings\n");
-}
-
 void collect_lambda(struct state *s) {
     DEBUG_ASSERT(s);
     DEBUG_ASSERT(s->collected_lambda_count < s->lambda_count);
@@ -580,6 +565,7 @@ void clear_similar_trampolines(struct state *s, char trampoline) {
         }
     }
 }
+
 
 void execute_move(struct state *s, char move) {
     DEBUG_ASSERT(s && is_valid_move(move));
@@ -635,7 +621,7 @@ void execute_move(struct state *s, char move) {
         s->move_count++;
         s->score--;
     } else if (move == M_SHAVE) {
-        shave_surroundings(s, s->robot_x, s->robot_y);
+        shave_beard(s, s->robot_x, s->robot_y);
         s->move_count++;
         s->score--;
     } else if (move == M_WAIT) {
@@ -647,6 +633,38 @@ void execute_move(struct state *s, char move) {
         DEBUG_LOG("robot aborted\n");
     }
 }
+
+
+void shave_beard(struct state *s, long x, long y) {
+    DEBUG_ASSERT(s);
+    long i, j;
+    if (s->razor_count) {
+        for (i = -1; i <= 1; i++) {
+            for (j = -1; j <= 1; j++) {
+                if (get(s, x + i, y + j) == O_BEARD) {
+                    put(s, x + i, y + j, O_EMPTY);
+                    DEBUG_LOG("robot shaved beard at (%ld, %ld)\n", x, y);
+                }
+            }
+        }
+        s->razor_count--;
+    } else
+        DEBUG_LOG("robot attempted to shave without a razor\n");
+}
+
+void grow_beard(struct state *s, const struct state *s0, long x, long y) {
+    DEBUG_ASSERT(s && s0);
+    long i, j;
+    for (i = -1; i <= 1; i++) {
+        for (j = -1; j <= 1; j++) {
+            if (get(s0, x + i, y + j) == O_EMPTY) {
+                put(s, x + i, y + j, O_BEARD);
+                DEBUG_LOG("beard grew at (%ld, %ld)\n", x, y);
+            }
+        }
+    }
+}
+
 
 void drop_rock(struct state *s, const struct state *s0, char rock, long x, long y, bool ignore_robot) {
     DEBUG_ASSERT(s && s0 && is_rock_object(rock));
@@ -691,16 +709,9 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
                     put(s, x + 1, y - 1, object);
                     drop_rock(s, s0, object, x + 1, y - 1, ignore_robot);
                 }
-            } else if (object == O_BEARD && s->beard_growth_rate && !(s->move_count % s->beard_growth_rate)) {
-                int i, j;
-                for (i = -1; i <= 1; i++) {
-                    for (j = -1; j <= 1; j++) {
-                        if (get(s0, x + i, y + j) == O_EMPTY)
-                            put(s, x + i, y + j, O_BEARD);
-                    }
-                }
-                DEBUG_LOG("beard grew around (%ld, %ld)\n", x, y);
-            } else if (object == O_LIFT_CLOSED && s0->collected_lambda_count == s0->lambda_count) {
+            } else if (object == O_BEARD && s->beard_growth_rate && !(s->move_count % s->beard_growth_rate))
+                grow_beard(s, s0, x, y);
+            else if (object == O_LIFT_CLOSED && s0->collected_lambda_count == s0->lambda_count) {
                 put(s, x, y, O_LIFT_OPEN);
                 DEBUG_LOG("lift opened\n");
             }
@@ -724,6 +735,7 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
         DEBUG_LOG("move limit reached\n");
     }
 }
+
 
 long calculate_cost(const struct state *s, long step_x, long step_y, long stage) {
     if (safe_get(s, step_x, step_y) == O_LAMBDA)
