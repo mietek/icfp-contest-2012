@@ -2,10 +2,18 @@
 
 module ICFP2012
   module WebRanking
-    URL = 'http://www.undecidable.org.uk/~edwin/cgi-bin/weblifter.cgi?standings=1'
-#    URL = '/tmp/standings'
+    CACHEFILE = "#{ENV['HOME']}/.icfp2012.webrank"
+#    URL = 'http://www.undecidable.org.uk/~edwin/cgi-bin/weblifter.cgi?standings=1'
+    URL = '/tmp/standings'
     
     def self.get
+      self.update unless File.exists? CACHEFILE
+      File.open CACHEFILE do |f|
+        Marshal.load f
+      end
+    end
+    
+    def self.update
       require 'nokogiri'
       require 'open-uri'
       
@@ -23,7 +31,9 @@ module ICFP2012
         end
       end
       
-      ranking
+      File.open CACHEFILE, 'w' do |f|
+        Marshal.dump ranking, f
+      end
     end
   end
 end
