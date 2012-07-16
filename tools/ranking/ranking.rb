@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 BASEDIR = File.dirname(__FILE__)
+$: << BASEDIR
 TOPDIR = File.join(BASEDIR, "..", "..")
 RUNNER = File.join(BASEDIR, "runner.sh")
 
