@@ -1,0 +1,12 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    gli (1.6.0)
+    nokogiri (1.5.4)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  gli
+  nokogiri
