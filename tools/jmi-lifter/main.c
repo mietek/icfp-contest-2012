@@ -74,7 +74,7 @@ int goSomewhere(struct state *s, char **a, int penalty){
 		for(i=1; i <= s->world_w; i++){
 			for(j=1; j <= s->world_h; j++){
 				if(c[point_to_index(s,i,j)]==stage){
-					if(get(s, i, j) == O_OPEN_LIFT || get(s, i, j) == O_LAMBDA){
+					if(get(s, i, j) == O_LIFT_OPEN || get(s, i, j) == O_LAMBDA){
 						wx=i;
 						wy=j;
 						end=stage;
@@ -89,7 +89,7 @@ int goSomewhere(struct state *s, char **a, int penalty){
 						if(bounded(s,i+is,j+js)	&& c[point_to_index(s, i+is, j+js)]==UINT_MAX){
 							//can we go there?
 							if(	!bounded(s, i+is, j+js+1) || (get(s, i+is, j+js+1) != O_EMPTY || get(ns, i+is, j+js+1) != O_ROCK)){	
-								if(get(s, i+is, j+js)==O_OPEN_LIFT 
+								if(get(s, i+is, j+js)==O_LIFT_OPEN 
 								|| get(s, i+is, j+js)==O_LAMBDA 
 								|| get(s, i+is, j+js)==O_EARTH 
 								|| get(s, i+is, j+js)==O_EMPTY){

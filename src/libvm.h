@@ -6,13 +6,13 @@
 #define O_WALL                    '#'
 #define O_ROCK                    '*'
 #define O_LAMBDA                  '\\'
-#define O_CLOSED_LIFT             'L'
-#define O_OPEN_LIFT               'O'
+#define O_LIFT_CLOSED             'L'
+#define O_LIFT_OPEN               'O'
 #define O_EARTH                   '.'
 #define O_EMPTY                   ' '
 #define O_BEARD                   'W'
 #define O_RAZOR                   '!'
-#define O_HIGHER_ORDER_ROCK       '@'
+#define O_HO_ROCK                 '@'
 
 #define O_FIRST_TRAMPOLINE        'A'
 #define O_LAST_TRAMPOLINE         'I'
@@ -165,8 +165,8 @@ inline bool is_valid_target(char target) {
 }
 
 
-inline bool is_any_rock(char rock) {
-    return rock == O_ROCK || rock == O_HIGHER_ORDER_ROCK;
+inline bool is_rock_object(char object) {
+    return object == O_ROCK || object == O_HO_ROCK;
 }
 
 
@@ -271,6 +271,6 @@ void clear_similar_trampolines(struct state *s, char trampoline);
 void execute_move(struct state *s, char move);
 void update_world(struct state *s, const struct state *t, bool ignore_robot);
 
-void drop_rock(struct state *s, const struct state *s0, long x, long y, bool ignore_robot, char rock);
+void drop_rock(struct state *s, const struct state *s0, char rock, long x, long y, bool ignore_robot);
 long calculate_cost(const struct state *s, long step_x, long step_y, long stage);
 void run_dijkstra(struct cost_table *ct, const struct state *s);

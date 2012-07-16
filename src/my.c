@@ -57,7 +57,7 @@ int goSomewhere(struct state *s, char **a, int penalty){
 	for(j=s->world_h; j>0; j--){
 		for(i=1; i<=s->world_w; i++){
 			get_cost(nc, i, j)==LONG_MAX ? printf("X"):printf("%u", get_cost(nc, i, j));
-			if(safe_get(s, i, j)==O_OPEN_LIFT || safe_get(s, i, j)==O_LAMBDA){
+			if(safe_get(s, i, j)==O_LIFT_OPEN || safe_get(s, i, j)==O_LAMBDA){
 				if(get_cost(nc, i, j)<best){
 					best=get_cost(nc, i, j);
 					wx=i;

@@ -53,9 +53,19 @@ getIntPair action s =
 
 data LiftState = Closed | Open deriving (Eq, Ord, Show)
 
-data Object = ORobot | OWall | ORock | OLambda | OLift LiftState
-            | OEarth | OEmpty | OBeard | ORazor | OTrampoline Trampoline
-            | OTarget Target | OHoRock
+data Object =
+    ORobot
+  | OWall
+  | ORock
+  | OLambda
+  | OLift LiftState
+  | OEarth
+  | OEmpty
+  | OBeard
+  | ORazor
+  | OTrampoline Trampoline
+  | OTarget Target
+  | OHORock
   deriving (Eq, Ord)
 
 instance Show Object where
@@ -72,7 +82,7 @@ fromObject OEarth                   = '.'
 fromObject OEmpty                   = ' '
 fromObject OBeard                   = 'W'
 fromObject ORazor                   = '!'
-fromObject OHoRock                  = '@'
+fromObject OHORock                  = '@'
 fromObject (OTrampoline trampoline) = fromTrampoline trampoline
 fromObject (OTarget target)         = fromTarget target
 
@@ -87,7 +97,7 @@ toObject '.'                = OEarth
 toObject ' '                = OEmpty
 toObject 'W'                = OBeard
 toObject '!'                = ORazor
-toObject '@'                = OHoRock
+toObject '@'                = OHORock
 toObject c
   | isValidTrampolineChar c = OTrampoline (toTrampoline c)
   | isValidTargetChar c     = OTarget (toTarget c)
@@ -140,7 +150,14 @@ toTarget c
 toTarget _ = undefined
 
 
-data Move = MLeft | MRight | MUp | MDown | MWait | MAbort deriving (Eq, Ord)
+data Move =
+    MLeft
+  | MRight
+  | MUp
+  | MDown
+  | MWait
+  | MAbort
+  deriving (Eq, Ord)
 
 instance Show Move where
   show move = [fromMove move]
@@ -407,8 +424,8 @@ isWall = is (== OWall)
 isRock :: State -> Point -> Bool
 isRock = is (== ORock)
 
-isHoRock :: State -> Point -> Bool
-isHoRock = is ( == OHoRock)
+isHORock :: State -> Point -> Bool
+isHORock = is (== OHORock)
 
 isLambda :: State -> Point -> Bool
 isLambda = is (== OLambda)
@@ -555,7 +572,7 @@ iterateBoard s f = iter (1,1) [] where
 findRocks ::  State -> [Point]
 findRocks s =
   iterateBoard s $ \p o ->
-    if isRock s p || isHoRock s p then [p] else []
+    if isRock s p || isHORock s p then [p] else []
 
 findMoveRocks :: State -> [(Point,Move)]
 findMoveRocks s = concatMap moveable $  findRocks s where
