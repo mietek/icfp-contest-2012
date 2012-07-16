@@ -7,7 +7,6 @@ import Control.Concurrent.MVar (MVar, modifyMVar_, newMVar, takeMVar)
 import Control.Monad (forM_, sequence, when)
 import qualified Data.ByteString.Char8 as B
 import Data.List (sort, sortBy, zip4)
-import Data.Maybe
 import Data.Monoid (mappend, mempty)
 -- import System.Posix.Signals (Handler(Catch), installHandler, sigINT)
 import System.Environment (getArgs)
@@ -18,8 +17,6 @@ import VM
 import Utils
 
 
-type Predicate = (Cost, Object, Point) -> Bool
-type Range = (Int, Int)
 -- print the dijkstra graph
 cMAX = 2147483647
 myPrint c x = 
@@ -28,26 +25,19 @@ myPrint c x =
     putStr (str ++ str2)
 
 -- where do you want to go today? specify it using p, this function will find a place
--- TODO: change (Object, Point) to Maybe Point
-chooseGoal :: State -> CostTable -> Predicate -> Range -> Point -> (Object, Point)
-chooseGoal state costs predicate (w, h) robot =
-      let l = sort $ clean [ ((getCost costs (i, j)), (get state (i, j)), (i, j)) | i <- [1..w], j<- [1..h]] in 
+chooseGoal s c p (x, y) r =
+      let l = sort $ clean [ ((getCost c (i, j)), (get s (i, j)), (i, j)) | i <- [1..x], j<- [1..y]] in 
       select l
    where 
-      select [] = (ORobot, robot)
+      select [] = (ORobot, r)
       -- take first one --- maybe all instead?
-      select ((_,object,position):xs) = (object, position)
-      clean = (filter predicate) . (filter (\(costs, _, _) -> costs < cMAX))
+      select ((_,t,x):xs) = (t, x)
+      clean = (filter p) . (filter (\(c, _, _) -> c < cMAX))
 
 -- find a goal and a path there
-findGoalWithPath :: State -> CostTable -> Point -> Predicate -> [Move]
-findGoalWithPath state costs robot predicate = 
-  let 
-    range = getWorldSize state
-    (object, goal) = 
-      chooseGoal state costs predicate range robot
-  in
-    if object /= ORobot then findPath state costs robot goal else []
+findA s c r p = 
+      let (t, goal) = chooseGoal s c p (getWorldSize s) r in
+      if t /= ORobot then findPath s c r goal else []
 
 -- checks if the moves kills the robot      
 testMoves s m = 
@@ -64,16 +54,6 @@ myFind g ((p, m):xs) = if p==g then [m] else myFind g xs
  
  
 -- run :: MVar Builder -> State -> [Move] -> [Int] -> IO (Int, [Move])
-
--- TODO: rewrite.
--- General idea is:
--- 1. Generate several possible sets of moves 
--- 2. Find out which ones are correct - should be rewritten with Maybe Monad
--- 3. Filter out sets of moves that lead to death
--- 4. catMaybes . filter testMoves s will be probably enough for points 2&3
--- 5. select one of the sensible move sets. for now the first one is always used, but we should do it like described in issue #10
--- 6. TIL that lack of knowledge about maybe monad leads to reimplementing it by yourself. Every time in a different way.
-
 -- main function
 run s0 ps ms = goDijkstra s0 ps ms []
   where
@@ -85,8 +65,8 @@ run s0 ps ms = goDijkstra s0 ps ms []
 --        flip mapM_ [1..wx] $ \x -> myPrint (x == wx) $ getCost c (x,  wy+1-y)
 -- several sequences of moves
         --find lambda!
-      let moves = findGoalWithPath s c r (\(fc, ft, fp) -> isLambda s fp || isLift s fp)
-      -- probably wrong, but i am too tired / jmi
+      let moves = findA s c r (\(fc, ft, fp) -> isLambda s fp || isLift s fp)
+      -- probably wrong, but i am to tired / jmi
       let rocks = findMoveRocks s 
       let (t, goal) = chooseGoal s c (\(fc, ft, fp) -> let myRocks = filter (\(p, m) -> p==fp) rocks in myRocks /= []) (getWorldSize s) r
       let mak1 = if t /= ORobot then findPath s c r goal else []
@@ -94,17 +74,17 @@ run s0 ps ms = goDijkstra s0 ps ms []
       let movesComak = mak1++mak2
       -- /probably wrong
       --find trampolina! hop hop
-      let moves2 = findGoalWithPath s c r (\(fc, ft, fp) -> isTrampoline s fp || isRazor s fp)
+      let moves2 = findA s c r (\(fc, ft, fp) -> isTrampoline s fp || isRazor s fp)
       
       -- find earth!
-      let moves3 = findGoalWithPath s c r (\(fc, ft, fp) -> isEarth s fp)
+      let moves3 = findA s c r (\(fc, ft, fp) -> isEarth s fp)
       -- small probability of doing nothing
       let all = if (length prefix) < p && (p `mod` 20 == 0) then [] else [moves, moves2, movesComak, moves3]
       -- some default moves
       let (b, s', answer) =  testMovesList s $ filter (\x -> x /= [])  $ all ++ [[m], [MRight], [MLeft], [MDown], [MUp]]
 --      dump s' 
-      let result = prefix ++ pruneCycles s answer
---    print result
+      let result = prefix ++ answer
+--      print result
 --      hFlush stdout
       -- CHANGE 153! use deadlock detection!!
       if  (getCondition s')/= CNone || (moves == [] && length(result)>153) 
@@ -120,30 +100,20 @@ handleInterrupt resultV mainT = do
   toByteStringIO B.putStrLn result
   killThread mainT
 
--- todo: find cycles larger than one move
-pruneCycles :: State -> [Move] -> [Move]
-pruneCycles = pruneWaits
-
-pruneWaits :: State -> [Move] -> [Move]
-pruneWaits s [] = []
-pruneWaits s (m:ms) = 
-  if s' == s then rest else (m : rest)
-    where s' = makeOneMove s m
-          rest = pruneWaits s ms
-
 -- initialize random values
 prepareRun n input = do
   seed <- newStdGen
   let ms  = randomRs (1, 4) seed 
   let ps  = randomRs (0, n) seed
-  result <- run input ps $ map intToMove ms
+  result <- run input ps $ map f ms
   return result
   where
-       intToMove :: Int -> Move
-       intToMove 1 = MRight
-       intToMove 2 = MLeft
-       intToMove 3 = MUp
-       intToMove  _  = MDown
+       f :: Int -> Move
+       f 1 = MRight
+       f 2 = MLeft
+       f 3 = MUp
+       f  _  = MDown
+
 
 data Verbosity = MoveSequence | Dump deriving (Eq, Ord, Show)
   
