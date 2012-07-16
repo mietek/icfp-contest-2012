@@ -8,8 +8,13 @@ MAPS=`cat $BASEDIR/maps`
 LAST_COMMIT_FILE=~/.icfp2012.last_commit
 ABORT_FILE=~/.icfp2012.autowiki.abort
 
+if ! [ -z "$LIFTER" ]; then
+  LIFTER="-l $LIFTER"
+fi
+
 WIKIDIR=~/icfp2012.wiki
-WIKIPAGE=$WIKIDIR/Scores.md
+WIKIPAGENAME=${WIKIPAGENAME-Scores}
+WIKIPAGE=$WIKIDIR/$WIKIPAGENAME.md
 
 short_commit() {
   echo $current_commit | head -c10
@@ -48,7 +53,7 @@ while true; do
         if [ -e $ABORT_FILE ]; then
           score=skipped
         else
-          score=`$BASEDIR/ranking.rb -t $TIMEOUT -f -m $map | perl -pe 's/^.*? //'`
+          score=`$BASEDIR/ranking.rb $LIFTER -t $TIMEOUT -f -m $map | perl -pe 's/^.*? //'`
         fi
         echo $score
         record_score $map "$score"
