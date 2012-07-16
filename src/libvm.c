@@ -101,6 +101,7 @@ void dump(const struct state *s) {
     DEBUG_LOG("condition                  = '%c'\n", s->condition);
     DEBUG_LOG("world_length               = %ld\n", s->world_length);
     printf("%ld\n%s", s->score, s->world);
+    DEBUG_LOG("\n");
 }
 
 
@@ -582,6 +583,7 @@ void clear_similar_trampolines(struct state *s, char trampoline) {
 void execute_move(struct state *s, char move) {
     DEBUG_ASSERT(s && is_valid_move(move));
     DEBUG_ASSERT(s->condition == C_NONE);
+    DEBUG_LOG("executing move '%c'\n", move);
     if (move == M_LEFT || move == M_RIGHT || move == M_UP || move == M_DOWN) {
         long x, y;
         char object;
@@ -629,7 +631,7 @@ void execute_move(struct state *s, char move) {
             move_robot(s, x, y);
             clear_similar_trampolines(s, object);
         } else
-            DEBUG_LOG("robot attempted invalid move '%c' from (%ld, %ld) to (%ld, %ld) which is '%c'\n", move, s->robot_x, s->robot_y, x, y, object);
+            DEBUG_LOG("robot bumped into '%c' at (%ld, %ld)\n", object, x, y);
         s->move_count++;
         s->score--;
     } else if (move == M_SHAVE) {
