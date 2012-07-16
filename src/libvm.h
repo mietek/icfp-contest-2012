@@ -1,3 +1,5 @@
+#ifndef LIBVM_H
+#define LIBVM_H
 // ---------------------------------------------------------------------------
 // Public
 // ---------------------------------------------------------------------------
@@ -34,9 +36,11 @@
 #define C_ABORT            'A'
 
 
-struct state *new(long input_length, const char *input);
+struct state *new_vm(long input_length, const char *input);
 struct state *new_from_file(const char *path);
 struct state *copy(const struct state *s0);
+void delete_vm(struct state *s);
+
 bool equal(const struct state *s1, const struct state *s2);
 
 void dump(const struct state *s);
@@ -277,3 +281,5 @@ void update_world(struct state *s, const struct state *t, bool ignore_robot);
 
 long calculate_cost(const struct state *s, long step_x, long step_y, long stage);
 void run_dijkstra(struct cost_table *ct, const struct state *s);
+
+#endif

@@ -16,7 +16,7 @@
 // Public
 // ---------------------------------------------------------------------------
 
-struct state *new(long input_length, const char *input) {
+struct state *new_vm(long input_length, const char *input) {
     DEBUG_ASSERT(input);
     long world_w, world_h, world_length;
     struct state *s;
@@ -47,7 +47,7 @@ struct state *new_from_file(const char *path) {
         PERROR_EXIT("fstat");
     if ((input = mmap(0, info.st_size, PROT_READ, MAP_SHARED, fd, 0)) == (char *)-1)
         PERROR_EXIT("mmap");
-    s = new(info.st_size, input);
+    s = new_vm(info.st_size, input);
     munmap(input, info.st_size);
     close(fd);
     return s;
@@ -60,6 +60,10 @@ struct state *copy(const struct state *s0) {
         PERROR_EXIT("malloc");
     memcpy(s, s0, sizeof(struct state) + s0->world_length);
     return s;
+}
+
+void delete_vm(struct state *s) {
+    free(s);
 }
 
 bool equal(const struct state *s1, const struct state *s2) {

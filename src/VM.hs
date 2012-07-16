@@ -206,7 +206,7 @@ type Size = (Int, Int)
 type Point = (Int, Int)
 
 
-foreign import ccall unsafe "libvm.h new"
+foreign import ccall unsafe "libvm.h new_vm"
   cNew :: CLong -> Ptr CChar -> IO CStatePtr
 
 foreign import ccall unsafe "libvm.h new_from_file"
