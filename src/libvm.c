@@ -292,6 +292,17 @@ void imagine_step(const struct state *s, long x, long y, char move, long *out_x,
     free(s1);
 }
 
+void imagine_steps(const struct state *s, long x, long y, long out_step_x[4], long out_step_y[4]) {
+    DEBUG_ASSERT(s);
+    struct state *s1;
+    s1 = imagine_robot_at(s, x, y);
+    get_step(s1, M_LEFT,  &out_step_x[0], &out_step_y[0]);
+    get_step(s1, M_RIGHT, &out_step_x[1], &out_step_y[1]);
+    get_step(s1, M_UP,    &out_step_x[2], &out_step_y[2]);
+    get_step(s1, M_DOWN,  &out_step_x[3], &out_step_y[3]);
+    free(s1);
+}
+
 
 bool is_enterable(const struct state *s, long x, long y) {
     DEBUG_ASSERT(s);
@@ -767,11 +778,7 @@ void run_dijkstra(struct cost_table *ct, const struct state *s) {
         for (i = 1; i <= ct->world_w; i++) {
             for (j = 1; j <= ct->world_h; j++) {
                 if (get_dist(ct, i, j) == stage) {
-                    // TODO: This is suboptimal.
-                    imagine_step(s1, i, j, M_LEFT,  &step_x[0], &step_y[0]);
-                    imagine_step(s1, i, j, M_RIGHT, &step_x[1], &step_y[1]);
-                    imagine_step(s1, i, j, M_UP,    &step_x[2], &step_y[2]);
-                    imagine_step(s1, i, j, M_DOWN,  &step_x[3], &step_y[3]);
+                    imagine_steps(s1, i, j, step_x, step_y);
                     for (k = 0; k < 4; k++) {
                         if (is_safe(s1, step_x[k], step_y[k]) && get_cost(ct, step_x[k], step_y[k]) > get_cost(ct, i, k) + calculate_cost(s1, step_x[k], step_y[k], stage)) {
                             put_cost(ct, step_x[k], step_y[k], get_cost(ct, i, k) + calculate_cost(s1, step_x[k], step_y[k], stage));
