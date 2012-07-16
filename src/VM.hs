@@ -521,6 +521,7 @@ foreign import ccall unsafe "libvm.h build_cost_table"
 
 foreign import ccall unsafe "libvm.h safe_get_cost"
   cGetCost :: CCostTablePtr -> CLong -> CLong -> CLong
+
 foreign import ccall unsafe "libvm.h safe_get_dist"
   cGetDist :: CCostTablePtr -> CLong -> CLong -> CLong
 

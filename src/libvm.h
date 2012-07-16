@@ -240,12 +240,6 @@ inline long get_cost(const struct cost_table *ct, long x, long y) {
     return ct->world_cost[point_to_cost_table_index(ct, x, y)];
 }
 
-inline long get_dist(const struct cost_table *ct, long x, long y) {
-    DEBUG_ASSERT(ct && is_within_world(ct->world_w, ct->world_h, x, y));
-    return ct->world_cost[ct->world_length+point_to_cost_table_index(ct, x, y)];
-}
-
-
 inline void put_cost(struct cost_table *ct, long x, long y, long cost) {
     DEBUG_ASSERT(ct && is_within_world(ct->world_w, ct->world_h, x, y));
     ct->world_cost[point_to_cost_table_index(ct, x, y)] = cost;
@@ -253,7 +247,12 @@ inline void put_cost(struct cost_table *ct, long x, long y, long cost) {
 
 inline void put_dist(struct cost_table *ct, long x, long y, long dist) {
     DEBUG_ASSERT(ct && is_within_world(ct->world_w, ct->world_h, x, y));
-    ct->world_cost[ct->world_length+point_to_cost_table_index(ct, x, y)] = dist;
+    ct->world_cost[ct->world_length + point_to_cost_table_index(ct, x, y)] = dist;
+}
+
+inline long get_dist(const struct cost_table *ct, long x, long y) {
+    DEBUG_ASSERT(ct && is_within_world(ct->world_w, ct->world_h, x, y));
+    return ct->world_cost[ct->world_length + point_to_cost_table_index(ct, x, y)];
 }
 
 

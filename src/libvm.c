@@ -323,13 +323,13 @@ struct cost_table *build_cost_table(const struct state *s, long x, long y) {
     long world_length, i;
     struct cost_table *ct;
     world_length = s->world_w * s->world_h;
-    if (!(ct = malloc(sizeof(struct cost_table) + (2*world_length * sizeof(long)))))
+    if (!(ct = malloc(sizeof(struct cost_table) + (2 * world_length * sizeof(long)))))
         PERROR_EXIT("malloc");
     memset(ct, 0, sizeof(struct cost_table));
     ct->world_w = s->world_w;
     ct->world_h = s->world_h;
     ct->world_length = world_length;
-    for (i = 0; i < world_length; i++){
+    for (i = 0; i < world_length; i++) {
         ct->world_cost[i] = MAX_COST;
         ct->world_cost[ct->world_length+i] = MAX_COST;
     }
@@ -538,9 +538,8 @@ void shave_surroundings(struct state *s, long x, long y) {
         int i, j;
         for (i = -1; i <= 1; i++) {
             for (j = -1; j <= 1; j++) {
-                if (get(s, x + i, y + j) == O_BEARD) {
+                if (get(s, x + i, y + j) == O_BEARD)
                     put(s, x + i, y + j, O_EMPTY);
-                }
             }
         }
         s->razor_count--;
@@ -696,9 +695,8 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
                 int i, j;
                 for (i = -1; i <= 1; i++) {
                     for (j = -1; j <= 1; j++) {
-                        if (get(s, x + i, y + j) == O_EMPTY) {
+                        if (get(s, x + i, y + j) == O_EMPTY)
                             put(s, x + i, y + j, O_BEARD);
-                        }
                     }
                 }
                 DEBUG_LOG("beard grew around (%ld, %ld)\n", x, y);
@@ -728,12 +726,10 @@ void update_world(struct state *s, const struct state *s0, bool ignore_robot) {
 }
 
 long calculate_cost(const struct state *s, long step_x, long step_y, long stage) {
-    if (safe_get(s, step_x, step_y) == O_LAMBDA){
+    if (safe_get(s, step_x, step_y) == O_LAMBDA)
         return 1;
-    }
-    if (safe_get(s, step_x, step_y) == O_EMPTY){
+    if (safe_get(s, step_x, step_y) == O_EMPTY)
         return 4;
-    }
     if (
         safe_get(s, step_x, step_y + 1) == O_ROCK ||
         (safe_get(s, step_x + 1, step_y + 1) == O_ROCK && safe_get(s, step_x + 1, step_y) == O_ROCK) ||
@@ -741,9 +737,8 @@ long calculate_cost(const struct state *s, long step_x, long step_y, long stage)
         safe_get(s, step_x, step_y + 1) == O_HO_ROCK ||
         (safe_get(s, step_x + 1, step_y + 1) == O_HO_ROCK && safe_get(s, step_x + 1, step_y) == O_HO_ROCK) ||
         (safe_get(s, step_x - 1, step_y + 1) == O_HO_ROCK && safe_get(s, step_x - 1, step_y) == O_HO_ROCK)
-    ) {
+    )
         return 40;
-    }
     return 10;
 }
 
