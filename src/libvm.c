@@ -467,7 +467,7 @@ void copy_input(struct state *s, long input_length, const char *input) {
         if (input[i] != '\n') {
             if (input[i] == O_ROBOT)
                 size_to_point(s->world_h, w, h, &s->robot_x, &s->robot_y);
-            else if (input[i] == O_LAMBDA)
+            else if (input[i] == O_LAMBDA || input[i] == O_HO_ROCK)
                 s->lambda_count++;
             else if (input[i] == O_LIFT_CLOSED)
                 size_to_point(s->world_h, w, h, &s->lift_x, &s->lift_y);
