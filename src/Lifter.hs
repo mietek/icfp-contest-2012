@@ -58,11 +58,11 @@ testMoves s m =
     if (getCondition s') /= CLose then (True, s') else (False, s)
     
 -- finds the moves that do not kill robot
-testMovesList s _ [] l = l
-testMovesList s prefix (m:ms) l = 
+testMovesList steps s _ [] l = l
+testMovesList steps s prefix (m:ms) l = 
    let (b, s') = testMoves s m in 
-   let goodMoves = if b then l ++ [(s', prefix++m)] else l in
-   testMovesList s prefix ms goodMoves
+   let goodMoves = if b then l ++ [(s', steps, prefix++m)] else l in
+   testMovesList steps s prefix ms goodMoves
 
 -- to complicated
 myFind _ [] = []
@@ -89,18 +89,22 @@ getSomePossibilities s c r p m steps = all ++ [[m]]
  
 -- run :: MVar Builder -> State -> [Move] -> [Int] -> IO (Int, [Move])
 -- main function
-goDijkstra (s,steps,prefix) (p:ps) (m:ms) queue = do
+goDijkstra (p:ps) (m:ms) queue (s,steps,prefix)  = do
       let r = getRobotPoint s
       let c = buildCostTable s r
       printCT c s 
       let possibilities = filter (\x -> x /= [])  $ getSomePossibilities s c r p m steps
       let steps' = if length(possibilities) <= 1 then steps+50 else steps+1
       let moves = if possibilities == [] then [[MRight], [MLeft], [MDown], [MUp]] else possibilities
-      let ((s', result):answers) =  testMovesList s prefix moves []
+      let tMoves = testMovesList steps s prefix moves []
+      if tMoves == [] 
+          then return ((0, [MAbort]), queue) 
+          else 
+              let ((s', _, result):answers) =  testMovesList steps s prefix moves [] in
       --      dump s' 
-      if  (getCondition s')/= CNone || steps' > 1000
-        then return (((getScore s') , result), queue)
-        else goDijkstra (s',steps', result) ps ms  (queue ++ answers)
+              if  (getCondition s')/= CNone || steps' > 1000
+                 then return (((getScore s') , result), queue)
+                 else goDijkstra ps ms  (queue ++ answers) (s',steps', result)
  
 
 -- mietek's function
@@ -110,14 +114,21 @@ handleInterrupt resultV mainT = do
   toByteStringIO B.putStrLn result
   killThread mainT
 
+refine x = x
+
 -- initialize random values
-prepareRun :: Int -> State -> IO [(Int, [Move])]
-prepareRun n input = do
+prepareRun :: Int -> Int -> [(State, Int, [Move])] -> [(Int, [Move])] -> IO [(Int, [Move])]
+prepareRun _ _ [] results = do return results
+prepareRun d n (x:xs) previousResults = do
   seed <- newStdGen
   let ms  = map f $ randomRs (1, 5) seed 
-  let ps  = map (\x -> if x == 1 then True else False) $ randomRs (1, n) seed
-  (result, rest) <- goDijkstra (input,0,[]) ps ms []
-  return [result]
+  let ps  = map (\x -> x == 1) $ randomRs (1, n) seed
+  (result, rest) <- goDijkstra ps ms [] x
+  let rest' = refine $ xs ++ rest
+--  print $ length rest'
+  if d == 0 || rest' == []
+      then return $ result:previousResults
+      else prepareRun (d-1) n rest' $ result:previousResults
 
 data Verbosity = MoveSequence | Dump deriving (Eq, Ord, Show)
   
@@ -129,7 +140,7 @@ main = do
   rawInput <- B.getContents
   let input = new rawInput
 --  let runs = [prepareRun i input | i<-([1..400]::[Int])]
-  runs <- prepareRun 1000 input
+  runs <- prepareRun 1000 1000 [(input, 0, [])] []
   -- TODO: Store results one by one in resultV
   let results = sortBy (flip compare) runs
   let (maxScore, maxMoves) = head results
