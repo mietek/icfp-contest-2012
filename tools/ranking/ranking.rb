@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+# usage: ranking.rb [timeout] [lifter] [validator]
+
 BASEDIR = File.dirname(__FILE__)
 $: << BASEDIR
 TOPDIR = File.join(BASEDIR, "..", "..")
@@ -7,8 +9,9 @@ RUNNER = File.join(BASEDIR, "runner.sh")
 require 'icfp2012'
 require 'open4'
 
-lifter = ARGV[0] || File.join(TOPDIR, 'bin', 'lifter')
-validator = ARGV[1] || File.join(TOPDIR, 'bin', 'validator')
+TIMEOUT=(ARGV[0] || 150).to_i
+lifter = ARGV[1] || File.join(TOPDIR, 'bin', 'lifter')
+validator = ARGV[2] || File.join(TOPDIR, 'bin', 'validator')
 ranking = ICFP2012::WebRanking.get
 maps = ranking.keys
 
@@ -17,7 +20,6 @@ def locate_map map
 end
 
 class Lifter
-  TIMEOUT=150
   WAITTIME=10
 
   def initialize binary
