@@ -31,6 +31,7 @@ struct state *new(long input_length, const char *input) {
     s->beard_growth_rate = DEFAULT_BEARD_GROWTH_RATE;
     s->condition = C_NONE;
     s->world_length = world_length;
+    s->new_lambdas = NULL;
     copy_input(s, input_length, input);
     return s;
 }
